@@ -45,7 +45,7 @@ That's it, you're good to go!
 
 You can start a version of the Atlassian Data Center product with the default databases (PostgreSQL) with a single command:
 
-````
+```
 $ dcdx run:jira
 ```
 
