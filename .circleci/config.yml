@@ -1,0 +1,41 @@
+version: 2.1
+
+jobs:
+  publish:
+    executor: nodejs
+
+    steps:
+      - checkout
+      
+      - restore_cache:
+          keys:
+            - yarn-cache-{{ checksum "package.json" }}
+
+      - run: 
+          name: Install dependencies
+          command: yarn
+
+      - save_cache:
+          key: yarn-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+
+      - run:
+          name: Publish to NPM
+          command: |
+            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+            npm publish --access public
+
+executors:
+
+  nodejs:
+    docker:
+      - image: cimg/node:18.16
+
+workflows:
+  deploy:
+    jobs:
+      - publish:
+          filters:
+            branches:
+              only: master

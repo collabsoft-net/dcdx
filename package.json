@@ -1,6 +1,6 @@
 {
   "name": "dcdx",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "Collabsoft <info@collabsoft.net>",
   "description": "The Unofficial CLI for Atlassian Data Center Plugin Development",
   "type": "module",
