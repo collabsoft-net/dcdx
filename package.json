@@ -1,0 +1,72 @@
+{
+  "name": "dcdx",
+  "version": "0.0.1",
+  "author": "Collabsoft <info@collabsoft.net>",
+  "description": "The Unofficial CLI for Atlassian Data Center Plugin Development",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "files": [
+    "assets/",
+    "lib/",
+    "LICENSE",
+    "README",
+    "package.json"
+  ],
+  "bin": "./lib/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "clean": "rm -rf dist && rm -rf lib",
+    "lint": "yarn run eslint .",
+    "build": "yarn clean && yarn lint && yarn build:esm && yarn build:types",
+    "build:esm": "yarn run tsc && yarn run rollup -c rollup.config.js",
+    "build:types": "yarn run tsc --emitDeclarationOnly --outDir lib/types/",
+    "watch": "yarn run nodemon --watch src -e '.ts' --exec 'yarn build'",
+    "start": "./lib/index.js",
+    "reinstall": "yarn clean && yarn install",
+    "prepack": "yarn build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collabsoft-net/dcdx.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/collabsoft-net/dcdx/issues"
+  },
+  "homepage": "https://github.com/collabsoft-net/dcdx#readme",
+  "packageManager": "yarn@4.1.1",
+  "devDependencies": {
+    "@eslint/js": "9.0.0",
+    "@rollup/plugin-commonjs": "25.0.7",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-terser": "0.4.4",
+    "@types/js-yaml": "4",
+    "@types/node": "18.16.0",
+    "@types/pg": "8",
+    "@typescript-eslint/eslint-plugin": "7.6.0",
+    "@typescript-eslint/parser": "7.6.0",
+    "eslint": "9.0.0",
+    "eslint-plugin-simple-import-sort": "12.0.0",
+    "nodemon": "3.1.0",
+    "rollup": "4.14.1",
+    "rollup-plugin-executable": "1.6.3",
+    "typescript": "5.4.4",
+    "typescript-eslint": "7.6.0"
+  },
+  "dependencies": {
+    "axios": "1.6.8",
+    "commander": "12.0.0",
+    "docker-compose": "0.24.8",
+    "exit-hook": "4.0.0",
+    "js-yaml": "4.1.0",
+    "mysql2": "3.9.4",
+    "pg": "8.11.5",
+    "sequelize": "6.37.2",
+    "simple-git": "3.24.0",
+    "tedious": "18.1.0"
+  }
+}
