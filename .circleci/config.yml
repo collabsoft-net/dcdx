@@ -28,7 +28,7 @@ executors:
 
   nodejs:
     docker:
-      - image: cimg/node:18.16
+      - image: cimg/node:20.12
 
 workflows:
   deploy:
