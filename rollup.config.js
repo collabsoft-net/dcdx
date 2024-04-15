@@ -10,7 +10,7 @@ const commands = readdirSync('./src/commands');
 
 export default [
   ...[ 'index.js', ...commands.map(item => `commands/${item.replace('ts', 'js')}`) ].map(file => ({
-    input: `./dist/${file}`,
+    input: `./dist/src/${file}`,
     output: {
       file: `./lib/${file}`,
       format: 'es'

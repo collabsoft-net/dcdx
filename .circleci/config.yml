@@ -21,16 +21,14 @@ jobs:
             - node_modules
 
       - run:
-          name: Publish to NPM
-          command: |
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
-            npm publish --access public
+          name: Publish
+          command: npx semantic-release
 
 executors:
 
   nodejs:
     docker:
-      - image: cimg/node:18.16
+      - image: cimg/node:20.12
 
 workflows:
   deploy:
@@ -38,4 +36,6 @@ workflows:
       - publish:
           filters:
             branches:
-              only: main
+              only: 
+                - main
+                - next
