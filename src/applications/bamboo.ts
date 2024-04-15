@@ -11,7 +11,7 @@ import { Base } from './base';
 
 export class Bamboo extends Base {
 
-  name: SupportedApplications = 'bamboo';
+  name = SupportedApplications.BAMBOO;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/bamboo/logs/atlassian-bamboo.log';
 

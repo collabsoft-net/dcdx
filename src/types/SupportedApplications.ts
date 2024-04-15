@@ -1,2 +1,7 @@
 
-export type SupportedApplications = 'jira'|'confluence'|'bitbucket'|'bamboo';
+export enum SupportedApplications {
+  JIRA = 'jira',
+  CONFLUENCE = 'confluence',
+  BITBUCKET = 'bitbucket',
+  BAMBOO = 'bamboo'
+}
