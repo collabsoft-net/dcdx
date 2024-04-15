@@ -9,7 +9,7 @@ import { Base } from './base';
 
 export class Bitbucket extends Base {
 
-  name: SupportedApplications = 'bitbucket';
+  name = SupportedApplications.BITBUCKET;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/bitbucket/log/atlassian-bitbucket.log';
 

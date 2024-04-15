@@ -9,7 +9,7 @@ import { Base } from './base';
 
 export class Jira extends Base {
 
-  name: SupportedApplications = 'jira';
+  name = SupportedApplications.JIRA;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/jira/log/atlassian-jira.log';
 

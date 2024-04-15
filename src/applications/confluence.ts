@@ -9,7 +9,7 @@ import { Base } from './base';
 
 export class Confluence extends Base {
 
-  name: SupportedApplications = 'confluence';
+  name = SupportedApplications.CONFLUENCE;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/confluence/logs/atlassian-confluence.log';
 
