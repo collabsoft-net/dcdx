@@ -1,6 +1,6 @@
 {
   "name": "dcdx",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "author": "Collabsoft <info@collabsoft.net>",
   "description": "The Unofficial CLI for Atlassian Data Center Plugin Development",
   "type": "module",
@@ -54,6 +54,7 @@
     "nodemon": "3.1.0",
     "rollup": "4.14.1",
     "rollup-plugin-executable": "1.6.3",
+    "semantic-release": "23.0.8",
     "typescript": "5.4.4",
     "typescript-eslint": "7.6.0"
   },
@@ -68,5 +69,8 @@
     "sequelize": "6.37.2",
     "simple-git": "3.24.0",
     "tedious": "18.1.0"
+  },
+  "release": {
+    "branches": ["main", "next"]
   }
 }
