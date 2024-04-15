@@ -21,10 +21,8 @@ jobs:
             - node_modules
 
       - run:
-          name: Publish to NPM
-          command: |
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
-            npm publish --access public
+          name: Publish
+          command: npx semantic-release
 
 executors:
 
@@ -38,4 +36,6 @@ workflows:
       - publish:
           filters:
             branches:
-              only: main
+              only: 
+                - main
+                - next
