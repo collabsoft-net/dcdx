@@ -7,9 +7,13 @@ import pkg from '../package.json';
 program
   .name('dcdx')
   .description('The Unofficial Atlassian Data Center Plugin Development CLI')
-  .version(pkg.version);
+  .version(pkg.version)
+  .showHelpAfterError(true);
 
 // ------------------------------------------------------------------------------------------ Run
+
+program
+  .command('start', 'Build & install the Atlassian Data Center plugin from the current directory', { executableFile: './commands/start.js' });
 
 program
   .command('run', 'Start the Atlassian host application (standalone)', { executableFile: './commands/run.js' });

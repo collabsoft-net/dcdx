@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { spawn } from 'child_process';
-import { downAll, ps, upAll } from 'docker-compose/dist/v2.js';
+import { downAll, execCompose, ps, upAll } from 'docker-compose/dist/v2.js';
 import EventEmitter from 'events';
 import { gracefulExit } from 'exit-hook';
 import { existsSync, mkdirSync } from 'fs';
@@ -62,6 +62,20 @@ export abstract class Base extends EventEmitter {
   async stop() {
     await this.database.stop();
     await this.down();
+  }
+
+  async cp(filename: string) {
+    const service = await this.getServiceState();
+    const isRunning = service && service.state.toLowerCase().startsWith('up');
+    if (isRunning) {
+      const config = this.getDockerComposeConfig();
+      const configAsString = dump(config);
+      await execCompose('cp', [ filename, `${this.name}:/opt/quickreload/` ], {
+        cwd: cwd(),
+        configAsString,
+        log: false
+      });
+    }
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods
@@ -213,10 +227,8 @@ export abstract class Base extends EventEmitter {
       const docker = spawn(
         'docker',
         [ 'logs', '-f', '-n', '5000', service ],
-        { cwd: cwd() }
+        { cwd: cwd(), stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
   }
@@ -226,11 +238,8 @@ export abstract class Base extends EventEmitter {
       const docker = spawn(
         'docker',
         [ 'exec', '-i', service, `tail`, `-F`, `-n`, `5000`, this.logFilePath ],
-        { cwd: cwd() }
+        { cwd: cwd(), stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.on('SIGINT', () => resolve());
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
   }

@@ -7,6 +7,7 @@ import { Bamboo } from '../applications/bamboo';
 
 (async () => {
   const options = program
+    .showHelpAfterError(true)
     .addOption(new Option('-v, --version <version>', 'The version of the host application').choices([ '9.4.3' ]).default('9.4.3'))
     .addOption(new Option('-d, --database <name>', 'The database engine on which the host application will run').choices([ 'postgresql', 'mysql', 'mssql' ]).default('postgresql'))
     .addOption(new Option('-p, --port <port>', 'The HTTP port on which the host application will be accessible').default('80'))

@@ -1,8 +1,8 @@
 
 import axios from 'axios';
 
-import { getFullPath } from '../helpers/assets';
 import { timebomb } from '../helpers/licences';
+import { toAbsolutePath } from '../helpers/toAbsolutePath';
 import { ApplicationOptions } from '../types/ApplicationOptions';
 import { DatabaseEngine } from '../types/DatabaseEngine';
 import { Service } from '../types/DockerComposeV3';
@@ -31,11 +31,15 @@ export class Bamboo extends Base {
 
     return {
       build: {
-        context: getFullPath('../../assets'),
+        context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
 FROM dcdx/${this.name}:${this.options.version}
-COPY ./quickreload-5.0.2.jar /var/atlassian/application-data/bamboo/shared/plugins/quickreload-5.0.2.jar
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/bamboo/lib/mysql-connector-j-8.3.0.jar
+COPY ./quickreload-5.0.2.jar /var/atlassian/application-data/bamboo/shared/plugins/quickreload-5.0.2.jar
+RUN echo "/opt/quickreload" > /var/atlassian/application-data/bamboo/quickreload.properties; \
+    mkdir -p /opt/quickreload; \
+    chown -R bamboo:bamboo /opt/quickreload;
+
 RUN chown -R bamboo:bamboo /var/atlassian/application-data/bamboo`
       },
       ports: [
