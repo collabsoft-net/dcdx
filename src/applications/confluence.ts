@@ -1,6 +1,6 @@
 
-import { getFullPath } from '../helpers/assets';
 import { timebomb } from '../helpers/licences';
+import { toAbsolutePath } from '../helpers/toAbsolutePath';
 import { ApplicationOptions } from '../types/ApplicationOptions';
 import { DatabaseEngine } from '../types/DatabaseEngine';
 import { Service } from '../types/DockerComposeV3';
@@ -29,11 +29,15 @@ export class Confluence extends Base {
 
     return {
       build: {
-        context: getFullPath('../../assets'),
+        context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
 FROM dcdx/${this.name}:${this.options.version}
-COPY ./quickreload-5.0.2.jar /opt/atlassian/confluence/confluence/WEB-INF/atlassian-bundled-plugins/quickreload-5.0.2.jar
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/confluence/confluence/WEB-INF/lib/mysql-connector-j-8.3.0.jar
+COPY ./quickreload-5.0.2.jar /opt/atlassian/confluence/confluence/WEB-INF/atlassian-bundled-plugins/quickreload-5.0.2.jar
+RUN echo "/opt/quickreload" > /var/atlassian/application-data/confluence/quickreload.properties; \
+    mkdir -p /opt/quickreload; \
+    chown -R confluence:confluence /opt/quickreload;
+
 RUN chown -R confluence:confluence /opt/atlassian/confluence`
       },
       ports: [

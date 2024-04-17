@@ -1,6 +1,6 @@
 
-import { getFullPath } from '../helpers/assets';
 import { timebomb } from '../helpers/licences';
+import { toAbsolutePath } from '../helpers/toAbsolutePath';
 import { ApplicationOptions } from '../types/ApplicationOptions';
 import { DatabaseEngine } from '../types/DatabaseEngine';
 import { Service } from '../types/DockerComposeV3';
@@ -28,12 +28,16 @@ export class Jira extends Base {
 
     return {
       build: {
-        context: getFullPath('../../assets'),
+        context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
 FROM dcdx/${this.name}:${this.options.version}
 COPY ./jira-data-generator-5.0.0.jar /var/atlassian/application-data/jira/plugins/installed-plugins/jira-data-generator-5.0.0.jar
-COPY ./quickreload-5.0.2.jar /var/atlassian/application-data/jira/plugins/installed-plugins/quickreload-5.0.2.jar
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/jira/lib/mysql-connector-j-8.3.0.jar
+COPY ./quickreload-5.0.2.jar /var/atlassian/application-data/jira/plugins/installed-plugins/quickreload-5.0.2.jar
+RUN echo "/opt/quickreload" > /var/atlassian/application-data/jira/quickreload.properties; \
+    mkdir -p /opt/quickreload; \
+    chown -R jira:jira /opt/quickreload;
+
 RUN chown -R jira:jira /var/atlassian/application-data/jira`
       },
       ports: [

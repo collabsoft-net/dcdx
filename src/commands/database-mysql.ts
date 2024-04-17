@@ -7,6 +7,7 @@ import { MySQL } from '../databases/mysql';
 
 (async () => {
   const options = program
+    .showHelpAfterError(true)
     .addOption(new Option('-v, --version <version>', 'The version of Postgres').choices([ '8.0', '8.3' ]).default('8.3'))
     .addOption(new Option('-d, --database <database>', 'The value passed to MYSQL_DATABASE environment variable').default('dcdx'))
     .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('3306'))

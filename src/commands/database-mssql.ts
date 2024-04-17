@@ -7,6 +7,7 @@ import { MSSQL, MSSQLOptions } from '../databases/mssql';
 
 (async () => {
   const options = program
+    .showHelpAfterError(true)
     .addOption(new Option('-v, --version <version>', 'The version of Microsoft SQL Server').choices([ '2017', '2019', '2022' ]).default('2022'))
     .addOption(new Option('-e, --edition <edition>', 'The edition of Microsoft SQL Server').choices([ 'Developer', 'Express', 'Standard', 'Enterprise', 'EnterpriseCore' ]).default('Developer'))
     .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('1433'))
