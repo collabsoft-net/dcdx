@@ -109,7 +109,7 @@ export abstract class Base extends EventEmitter {
       if (response) {
         if (response.status === 200) {
           const { data } = response;
-          if (data.state === 'FIRST_RUN') {
+          if (data.state === 'FIRST_RUN' || data.state === 'RUNNING') {
             console.log(`The application ${this.name} is ready on ${this.baseUrl} 🎉`);
             return true;
           }
