@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 import { upAll } from 'docker-compose';
-import { downAll, ps } from 'docker-compose/dist/v2.js';
+import { downAll, ps, stop } from 'docker-compose/dist/v2.js';
 import EventEmitter from 'events';
 import { gracefulExit } from 'exit-hook';
 import { dump } from 'js-yaml';
@@ -42,13 +42,16 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
     return null;
   }
 
-  async start(): Promise<void> {
+  async start(clean = this.options.clean): Promise<void> {
     console.log(`Starting instance of ${this.name} ⏳`);
 
-    await this.stop();
-    await this.up();
+    if (clean) {
+      await this.down();
+    }
 
+    await this.up();
     this.emit(`${this.name}:up`);
+
     const isAvailable = await this.waitUntilReady();
     if (!isAvailable) {
       console.log(`Failed to start database ${this.name} ⛔`);
@@ -67,8 +70,17 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
     }
   }
 
-  async stop(): Promise<void> {
-    await this.down();
+  async stop(prune = this.options.prune): Promise<void> {
+    if (prune) {
+      await this.down();
+    } else {
+      const configAsString = dump(this.getDockerComposeConfig());
+      await stop({
+        cwd: cwd(),
+        configAsString,
+        log: true
+      })
+    }
     this.emit('db:stopped');
   }
 
@@ -103,7 +115,6 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
 
   private async down() {
     const configAsString = dump(this.getDockerComposeConfig());
-
     return downAll({
       cwd: cwd(),
       configAsString,
@@ -149,10 +160,8 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
       const docker = spawn(
         'docker',
         [ 'logs', '-f', '-n', '5000', service ],
-        { cwd: cwd() }
+        { cwd: cwd(), stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
   }

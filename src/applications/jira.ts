@@ -22,7 +22,7 @@ export class Jira extends Base {
 
   // ------------------------------------------------------------------------------------------ Protected Methods
 
-  protected getService = (): Service => {
+  protected getService(): Service {
     const volumes = this.getVolumes();
     const environment = this.getEnvironmentVariables();
 

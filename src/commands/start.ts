@@ -41,6 +41,8 @@ const version = AMPS.getApplicationVersion();
     .addOption(new Option('-c, --contextPath <contextPath>', 'The context path on which the host application will be accessible'))
     .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
     .addOption(new Option('-o, --outputDirectory <arg>', 'Output directory where QuickReload will look for generated JAR files').default('target'))
+    .addOption(new Option('--clean', 'Remove data files before starting the database').default(false))
+    .addOption(new Option('--prune', 'Remove data files when stopping the database').default(false))
     .addOption(new Option('--debug', 'Add support for JVM debugger on port 5005').default(true))
     .allowUnknownOption(true)
     .parse(process.argv)
@@ -51,6 +53,8 @@ const version = AMPS.getApplicationVersion();
     database: options.database,
     port: Number(options.port),
     contextPath: options.contextPath,
+    clean: options.clean,
+    prune: options.prune,
     debug: options.debug
   });
 

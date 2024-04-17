@@ -13,6 +13,8 @@ import { Postgres } from '../databases/postgres';
     .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('5432'))
     .addOption(new Option('-U, --username <username>', 'The value passed to POSTGRES_USER environment variable').default('dcdx'))
     .addOption(new Option('-P, --password <password>', 'The value passed to POSTGRES_PASSWORD environment variable').default('dcdx'))
+    .addOption(new Option('--clean', 'Remove data files before starting the database').default(false))
+    .addOption(new Option('--prune', 'Remove data files when stopping the database').default(false))
     .parse(process.argv)
     .opts();
 
@@ -22,6 +24,8 @@ import { Postgres } from '../databases/postgres';
     port: Number(options.port),
     username: options.username,
     password: options.password,
+    clean: options.clean,
+    prune: options.prune,
     logging: true
   })
 

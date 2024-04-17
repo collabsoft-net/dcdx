@@ -56,7 +56,6 @@ export class AMPS {
       const nodes = AMPS.getNodes('//*[local-name()=\'packaging\']');
       return nodes.some(item => item.textContent === 'atlassian-plugin');
     } catch (err) {
-      console.log(err);
       return false;
     }
   }
