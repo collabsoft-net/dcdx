@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { spawn } from 'child_process';
-import { downAll, execCompose, ps, upAll } from 'docker-compose/dist/v2.js';
+import { downAll, execCompose, ps, stop, upAll } from 'docker-compose/dist/v2.js';
 import EventEmitter from 'events';
 import { gracefulExit } from 'exit-hook';
 import { existsSync, mkdirSync } from 'fs';
@@ -37,7 +37,10 @@ export abstract class Base extends EventEmitter {
   // ------------------------------------------------------------------------------------------ Properties
 
   protected get baseUrl(): string {
-    const baseUrl = `http://localhost:${this.options.port}`;
+    let baseUrl = `http://localhost`;
+    if (this.options.port) {
+      baseUrl += `:${this.options.port}`;
+    }
     return this.options.contextPath ? `${baseUrl}/${this.options.contextPath}` : baseUrl;
   }
 
@@ -52,15 +55,32 @@ export abstract class Base extends EventEmitter {
   }
 
   async start() {
-    await this.stop();
+    if (this.options.clean) {
+      await this.down();
+    }
     await this.build(this.options.version);
 
-    await this.database.start(this.name, this.options.version);
+    await this.database.start(this.options.clean);
     await this.up();
   }
 
-  async stop() {
-    await this.database.stop();
+  async stop(): Promise<void> {
+    await this.database.stop(this.options.prune);
+    if (this.options.prune) {
+      await this.down();
+    } else {
+      const configAsString = dump(this.getDockerComposeConfig());
+      await stop({
+        cwd: cwd(),
+        configAsString,
+        log: true
+      });
+    }
+    this.emit(`${this.name}:stopped`);
+  }
+
+  async reset() {
+    await this.database.stop(true);
     await this.down();
   }
 
@@ -140,15 +160,12 @@ export abstract class Base extends EventEmitter {
 
   private async down() {
     const configAsString = dump(this.getDockerComposeConfig());
-
     await downAll({
       cwd: cwd(),
       configAsString,
       commandOptions: [ '-v', '--remove-orphans', '--rmi', 'local' ],
       log: true
     });
-
-    this.emit(`${this.name}:stopped`);
   }
 
   private async getServiceState() {
@@ -205,10 +222,8 @@ export abstract class Base extends EventEmitter {
       const docker = spawn(
         'docker',
         [ 'build', '-t', `dcdx/${this.name}:${version}`, '--build-arg', `${this.name.toUpperCase()}_VERSION=${version}`, '.'],
-        { cwd: checkoutPath }
+        { cwd: checkoutPath, stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
   }

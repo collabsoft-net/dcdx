@@ -5,5 +5,7 @@ export type DatabaseOptions = {
   database: string;
   username: string;
   password: string;
+  clean?: boolean;
+  prune?: boolean;
   logging?: boolean;
 }

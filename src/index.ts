@@ -10,10 +10,12 @@ program
   .version(pkg.version)
   .showHelpAfterError(true);
 
-// ------------------------------------------------------------------------------------------ Run
+// ------------------------------------------------------------------------------------------ Start
 
 program
   .command('start', 'Build & install the Atlassian Data Center plugin from the current directory', { executableFile: './commands/start.js' });
+
+// ------------------------------------------------------------------------------------------ Run
 
 program
   .command('run', 'Start the Atlassian host application (standalone)', { executableFile: './commands/run.js' });
@@ -86,6 +88,11 @@ program
     process.argv.splice(2, 1, ...[ 'database', 'mssql' ]);
     program.parse(process.argv);
   });
+
+// ------------------------------------------------------------------------------------------ Reset
+
+program
+  .command('reset', 'Remove all application data (incl. database) and start fresh!', { executableFile: './commands/reset.js' });
 
 // ------------------------------------------------------------------------------------------ Profile
 
