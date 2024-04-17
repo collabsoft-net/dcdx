@@ -3,15 +3,16 @@
 import { Option, program } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
+import { confluence as versions } from '../../assets/versions.json';
 import { AMPS } from '../applications/amps';
 import { Confluence } from '../applications/confluence';
 
-const version = AMPS.getApplicationVersion() || '8.9.0';
+const version = AMPS.getApplicationVersion() || 'latest';
 
 (async () => {
   const options = program
     .showHelpAfterError(true)
-    .addOption(new Option('-v, --version <version>', 'The version of the host application').choices([ '8.9.0' ]).default(version))
+    .addOption(new Option('-v, --version <version>', 'The version of the host application').choices(versions).default(version))
     .addOption(new Option('-d, --database <name>', 'The database engine to remove data from').choices([ 'postgresql', 'mysql', 'mssql' ]).default('postgresql'))
     .parse(process.argv)
     .opts();

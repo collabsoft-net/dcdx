@@ -2,12 +2,12 @@
 
 import { program } from 'commander';
 
-import pkg from '../package.json';
+import { version } from '../package.json';
 
 program
   .name('dcdx')
   .description('The Unofficial Atlassian Data Center Plugin Development CLI')
-  .version(pkg.version)
+  .version(version)
   .showHelpAfterError(true);
 
 // ------------------------------------------------------------------------------------------ Start

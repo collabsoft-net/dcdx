@@ -3,12 +3,13 @@
 import { Option, program } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 
+import { mysql as versions } from '../../assets/versions.json';
 import { MySQL } from '../databases/mysql';
 
 (async () => {
   const options = program
     .showHelpAfterError(true)
-    .addOption(new Option('-v, --version <version>', 'The version of Postgres').choices([ '8.0', '8.3' ]).default('8.3'))
+    .addOption(new Option('-v, --version <version>', 'The version of MySQL').choices(versions).default('latest'))
     .addOption(new Option('-d, --database <database>', 'The value passed to MYSQL_DATABASE environment variable').default('dcdx'))
     .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('3306'))
     .addOption(new Option('-U, --username <username>', 'The value passed to MYSQL_USER environment variable').default('dcdx'))

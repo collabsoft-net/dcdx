@@ -19,14 +19,15 @@
   },
   "scripts": {
     "clean": "rm -rf dist && rm -rf lib",
+    "reinstall": "yarn clean && yarn install",
     "lint": "yarn run eslint .",
     "build": "yarn clean && yarn lint && yarn build:esm && yarn build:types",
     "build:esm": "yarn run tsc && yarn run rollup -c rollup.config.js",
     "build:types": "yarn run tsc --emitDeclarationOnly --outDir lib/types/",
+    "generate:versions": "node ./generateVersionList.mjs",
     "watch": "yarn run nodemon --watch src -e '.ts' --exec 'yarn build'",
     "start": "./lib/index.js",
-    "reinstall": "yarn clean && yarn install",
-    "prepack": "yarn build"
+    "prepack": "yarn generate:versions && yarn build"
   },
   "repository": {
     "type": "git",

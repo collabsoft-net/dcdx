@@ -3,12 +3,13 @@
 import { Option, program } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 
+import { postgres as versions } from '../../assets/versions.json';
 import { Postgres } from '../databases/postgres';
 
 (async () => {
   const options = program
     .showHelpAfterError(true)
-    .addOption(new Option('-v, --version <version>', 'The version of Postgres').choices([ '12', '13', '14', '15']).default('15'))
+    .addOption(new Option('-v, --version <version>', 'The version of Postgres').choices(versions).default('latest'))
     .addOption(new Option('-d, --database <database>', 'The value passed to POSTGRES_DB environment variable').default('dcdx'))
     .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('5432'))
     .addOption(new Option('-U, --username <username>', 'The value passed to POSTGRES_USER environment variable').default('dcdx'))
