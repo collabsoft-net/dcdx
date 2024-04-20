@@ -10,6 +10,11 @@ program
   .version(version)
   .showHelpAfterError(true);
 
+// ------------------------------------------------------------------------------------------ Build
+
+program
+  .command('build', 'Build & install the Atlassian Data Center plugin from the current directory', { executableFile: './commands/build.js' });
+
 // ------------------------------------------------------------------------------------------ Start
 
 program
