@@ -50,6 +50,15 @@ RUN chown -R jira:jira /var/atlassian/application-data/jira`
     }
   }
 
+  protected getJVMArgs(): Array<string> {
+    const JVM_SUPPORT_RECOMMENDED_ARGS = super.getJVMArgs();
+    if (this.options.debug) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005');
+    }
+    return JVM_SUPPORT_RECOMMENDED_ARGS;
+  }
+
   // ------------------------------------------------------------------------------------------ Private Methods
 
   private getEnvironmentVariables() {
@@ -59,7 +68,7 @@ RUN chown -R jira:jira /var/atlassian/application-data/jira`
 
     return {
       ...this.options.contextPath ? { 'ATL_TOMCAT_CONTEXTPATH': this.options.contextPath } : '',
-      ...this.options.debug ? { 'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs() } : '',
+      'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
       'ATL_LICENSE_KEY': this.options.license || timebomb.confluence,
       'ATL_JDBC_URL': this.database.url,
       'ATL_JDBC_USER': this.database.options.username,
@@ -69,22 +78,6 @@ RUN chown -R jira:jira /var/atlassian/application-data/jira`
       'JIRA_SETUP_LICENSE': this.options.license || timebomb.jira
     }
   };
-
-  private getJVMArgs(): string {
-    const JVM_SUPPORT_RECOMMENDED_ARGS = []
-    if (this.options.debug) {
-
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005');
-    }
-
-    if (this.options.quickReload) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dquickreload.dirs=/opt/quickreload');
-    }
-
-    return JVM_SUPPORT_RECOMMENDED_ARGS.join(' ');
-  }
 
   private getVolumes() {
     return [

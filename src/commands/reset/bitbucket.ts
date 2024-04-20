@@ -3,9 +3,9 @@
 import { Option, program } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
-import { jira as versions } from '../../assets/versions.json';
-import { AMPS } from '../applications/amps';
-import { Jira } from '../applications/jira';
+import { bitbucket as versions } from '../../../assets/versions.json';
+import { Bitbucket } from '../../applications/bitbucket';
+import { AMPS } from '../../helpers/amps';
 
 const version = AMPS.getApplicationVersion() || 'latest';
 
@@ -17,9 +17,9 @@ const version = AMPS.getApplicationVersion() || 'latest';
     .parse(process.argv)
     .opts();
 
-  const instance = new Jira({
+  const instance = new Bitbucket({
     version: options.version,
-    database: options.database,
+    database: options.database
   });
 
   await instance.reset();

@@ -17,12 +17,12 @@ if (isDefaultCommand) {
 }
 
 program
-  .name('dcdx reset')
+  .name('dcdx stop')
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
-  .command('bamboo', 'Remove all data (incl. database) for Atlassian Bamboo (standalone)', { executableFile: './reset-bamboo.js'})
-  .command('bitbucket', 'Remove all data (incl. database) for Atlassian Bitbucket (standalone)', { executableFile: './reset-bitbucket.js'})
-  .command('confluence', 'Remove all data (incl. database) for Atlassian Confluence (standalone)', { executableFile: './reset-confluence.js'})
-  .command('jira', 'Remove all data (incl. database) for Atlassian Jira (standalone)', { executableFile: './reset-jira.js'})
+  .command('bamboo', 'Stop Atlassian Bamboo (standalone)', { executableFile: './stop/bamboo.js'})
+  .command('bitbucket', 'Stop Atlassian Bitbucket (standalone)', { executableFile: './stop/bitbucket.js'})
+  .command('confluence', 'Stop Atlassian Confluence (standalone)', { executableFile: './stop/confluence.js'})
+  .command('jira', 'Stop Atlassian Jira (standalone)', { executableFile: './stop/jira.js'})
   .showHelpAfterError(true);
 
 program.parse(process.argv);

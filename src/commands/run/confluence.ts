@@ -3,8 +3,8 @@
 import { Option, program } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 
-import { jira as versions } from '../../assets/versions.json';
-import { Jira } from '../applications/jira';
+import { confluence as versions } from '../../../assets/versions.json';
+import { Confluence } from '../../applications/confluence';
 
 (async () => {
   const options = program
@@ -20,7 +20,7 @@ import { Jira } from '../applications/jira';
     .parse(process.argv)
     .opts();
 
-  const instance = new Jira({
+  const instance = new Confluence({
     version: options.version,
     database: options.database,
     port: Number(options.port),

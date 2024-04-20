@@ -9,5 +9,6 @@ export type ApplicationOptions = {
   license?: string;
   clean?: boolean;
   prune?: boolean;
+  devMode?: boolean;
   debug?: boolean;
 }

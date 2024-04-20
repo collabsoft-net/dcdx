@@ -3,8 +3,8 @@
 import { Option, program } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 
-import { bitbucket as versions } from '../../assets/versions.json';
-import { Bitbucket } from '../applications/bitbucket';
+import { bitbucket as versions } from '../../../assets/versions.json';
+import { Bitbucket } from '../../applications/bitbucket';
 
 (async () => {
   const options = program

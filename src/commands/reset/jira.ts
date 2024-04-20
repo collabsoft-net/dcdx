@@ -3,9 +3,9 @@
 import { Option, program } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
-import { bamboo as versions } from '../../assets/versions.json';
-import { AMPS } from '../applications/amps';
-import { Bamboo } from '../applications/bamboo';
+import { jira as versions } from '../../../assets/versions.json';
+import { Jira } from '../../applications/jira';
+import { AMPS } from '../../helpers/amps';
 
 const version = AMPS.getApplicationVersion() || 'latest';
 
@@ -17,9 +17,9 @@ const version = AMPS.getApplicationVersion() || 'latest';
     .parse(process.argv)
     .opts();
 
-  const instance = new Bamboo({
+  const instance = new Jira({
     version: options.version,
-    database: options.database
+    database: options.database,
   });
 
   await instance.reset();

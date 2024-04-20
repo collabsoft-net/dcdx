@@ -3,9 +3,9 @@
 import { Option, program } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
-import { bitbucket as versions } from '../../assets/versions.json';
-import { AMPS } from '../applications/amps';
-import { Bitbucket } from '../applications/bitbucket';
+import { bamboo as versions } from '../../../assets/versions.json';
+import { Bamboo } from '../../applications/bamboo';
+import { AMPS } from '../../helpers/amps';
 
 const version = AMPS.getApplicationVersion() || 'latest';
 
@@ -17,7 +17,7 @@ const version = AMPS.getApplicationVersion() || 'latest';
     .parse(process.argv)
     .opts();
 
-  const instance = new Bitbucket({
+  const instance = new Bamboo({
     version: options.version,
     database: options.database
   });

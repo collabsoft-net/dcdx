@@ -18,7 +18,7 @@ program
 // ------------------------------------------------------------------------------------------ Start
 
 program
-  .command('start', 'Build & install the Atlassian Data Center plugin from the current directory', { executableFile: './commands/start.js' });
+  .command('start', 'Start the host application based on the Atlassian Maven Plugin Suite (AMPS) configuration', { executableFile: './commands/start.js' });
 
 // ------------------------------------------------------------------------------------------ Run
 
@@ -93,6 +93,11 @@ program
     process.argv.splice(2, 1, ...[ 'database', 'mssql' ]);
     program.parse(process.argv);
   });
+
+// ------------------------------------------------------------------------------------------ Stop
+
+program
+  .command('stop', 'Stop the host application and database', { executableFile: './commands/stop.js' });
 
 // ------------------------------------------------------------------------------------------ Reset
 
