@@ -4,12 +4,26 @@ import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import { readdirSync } from 'fs';
+import path from 'path';
 import executable from 'rollup-plugin-executable';
 
-const commands = readdirSync('./src/commands');
+const getCommands = (dir) => {
+  const result = [];
+  const commands = readdirSync(dir, { withFileTypes: true });
+  commands.forEach(item => {
+    if (item.isDirectory()) {
+      result.push(...getCommands(path.join(dir, item.name)));
+    } else {
+      result.push(path.join(dir, item.name));
+    }
+  });
+  return result;
+}
+
+const commands = getCommands('./src/commands');
 
 export default [
-  ...[ 'index.js', ...commands.map(item => `commands/${item.replace('ts', 'js')}`) ].map(file => ({
+  ...[ 'index.js', ...commands.map(item => item.replace('src/', '').replace('ts', 'js')) ].map(file => ({
     input: `./dist/src/${file}`,
     output: {
       file: `./lib/${file}`,

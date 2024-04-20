@@ -102,6 +102,23 @@ export abstract class Base extends EventEmitter {
 
   protected abstract getService(): Service;
 
+  protected getJVMArgs(): Array<string> {
+    const JVM_SUPPORT_RECOMMENDED_ARGS = [];
+    JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
+
+    if (this.options.devMode) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Djira.dev.mode=true');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Datlassian.dev.mode=true');
+    }
+
+    if (this.options.quickReload) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dquickreload.dirs=/opt/quickreload');
+    }
+
+    return JVM_SUPPORT_RECOMMENDED_ARGS;
+  }
+
+
   protected async isApplicationReady(): Promise<boolean> {
     try {
       const response = await axios.get<{ state: string }>(`${this.baseUrl}/status`, { validateStatus: () => true }).catch(() => null);

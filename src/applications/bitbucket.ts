@@ -54,32 +54,27 @@ RUN chown -R bitbucket:bitbucket /var/atlassian/application-data/bitbucket`
     }
   }
 
+  protected getJVMArgs(): Array<string> {
+    const JVM_SUPPORT_RECOMMENDED_ARGS = super.getJVMArgs();
+    if (this.options.debug) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005');
+    }
+    return JVM_SUPPORT_RECOMMENDED_ARGS;
+  }
+
+
   // ------------------------------------------------------------------------------------------ Private Methods
 
   private getEnvironmentVariables() {
     return {
-      ...this.options.debug ? { 'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs() } : '',
+      'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
       'JDBC_URL': this.database.url,
       'JDBC_USER': this.database.options.username,
       'JDBC_PASSWORD': this.database.options.password,
       'JDBC_DRIVER': `${this.database.driver}`,
     }
   };
-
-  private getJVMArgs(): string {
-    const JVM_SUPPORT_RECOMMENDED_ARGS = []
-    if (this.options.debug) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005');
-    }
-
-    if (this.options.quickReload) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dquickreload.dirs=/opt/quickreload');
-    }
-
-    return JVM_SUPPORT_RECOMMENDED_ARGS.join(' ');
-  }
 
   private getVolumes() {
     return [

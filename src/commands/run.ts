@@ -2,7 +2,7 @@
 
 import { Option, program } from 'commander';
 
-import { AMPS } from '../applications/amps';
+import { AMPS } from '../helpers/amps';
 import { SupportedApplications } from '../types/SupportedApplications';
 
 // Check if there is a command in the arguments
@@ -19,10 +19,10 @@ if (isDefaultCommand) {
 program
   .name('dcdx run')
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
-  .command('bamboo', 'Start Atlassian Bamboo (standalone)', { executableFile: './run-bamboo.js'})
-  .command('bitbucket', 'Start Atlassian Bitbucket (standalone)', { executableFile: './run-bitbucket.js'})
-  .command('confluence', 'Start Atlassian Confluence (standalone)', { executableFile: './run-confluence.js'})
-  .command('jira', 'Start Atlassian Jira (standalone)', { executableFile: './run-jira.js'})
+  .command('bamboo', 'Start Atlassian Bamboo (standalone)', { executableFile: './run/bamboo.js'})
+  .command('bitbucket', 'Start Atlassian Bitbucket (standalone)', { executableFile: './run/bitbucket.js'})
+  .command('confluence', 'Start Atlassian Confluence (standalone)', { executableFile: './run/confluence.js'})
+  .command('jira', 'Start Atlassian Jira (standalone)', { executableFile: './run/jira.js'})
   .showHelpAfterError(true);
 
 program.parse(process.argv);

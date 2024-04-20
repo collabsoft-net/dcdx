@@ -3,23 +3,23 @@
 import { Option, program } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 
-import { mysql as versions } from '../../assets/versions.json';
-import { MySQL } from '../databases/mysql';
+import { postgres as versions } from '../../../assets/versions.json';
+import { Postgres } from '../../databases/postgres';
 
 (async () => {
   const options = program
     .showHelpAfterError(true)
-    .addOption(new Option('-v, --version <version>', 'The version of MySQL').choices(versions).default('latest'))
-    .addOption(new Option('-d, --database <database>', 'The value passed to MYSQL_DATABASE environment variable').default('dcdx'))
-    .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('3306'))
-    .addOption(new Option('-U, --username <username>', 'The value passed to MYSQL_USER environment variable').default('dcdx'))
-    .addOption(new Option('-P, --password <password>', 'The value passed to MYSQL_PASSWORD environment variable').default('dcdx'))
+    .addOption(new Option('-v, --version <version>', 'The version of Postgres').choices(versions).default('latest'))
+    .addOption(new Option('-d, --database <database>', 'The value passed to POSTGRES_DB environment variable').default('dcdx'))
+    .addOption(new Option('-p, --port <port>', 'The port on which the database will be accessible').default('5432'))
+    .addOption(new Option('-U, --username <username>', 'The value passed to POSTGRES_USER environment variable').default('dcdx'))
+    .addOption(new Option('-P, --password <password>', 'The value passed to POSTGRES_PASSWORD environment variable').default('dcdx'))
     .addOption(new Option('--clean', 'Remove data files before starting the database').default(false))
     .addOption(new Option('--prune', 'Remove data files when stopping the database').default(false))
     .parse(process.argv)
     .opts();
 
-  const instance = new MySQL({
+  const instance = new Postgres({
     version: options.version,
     database: options.database,
     port: Number(options.port),
@@ -28,7 +28,7 @@ import { MySQL } from '../databases/mysql';
     clean: options.clean,
     prune: options.prune,
     logging: true
-  });
+  })
 
   asyncExitHook(async () => {
     console.log(`Stopping ${instance.name}... ⏳`);

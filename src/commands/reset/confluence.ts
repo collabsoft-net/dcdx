@@ -3,9 +3,9 @@
 import { Option, program } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
-import { confluence as versions } from '../../assets/versions.json';
-import { AMPS } from '../applications/amps';
-import { Confluence } from '../applications/confluence';
+import { confluence as versions } from '../../../assets/versions.json';
+import { Confluence } from '../../applications/confluence';
+import { AMPS } from '../../helpers/amps';
 
 const version = AMPS.getApplicationVersion() || 'latest';
 

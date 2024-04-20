@@ -50,24 +50,9 @@ RUN chown -R confluence:confluence /opt/atlassian/confluence`
     }
   }
 
-  // ------------------------------------------------------------------------------------------ Private Methods
-
-  private getEnvironmentVariables() {
-    return {
-      ...this.options.contextPath ? { 'ATL_TOMCAT_CONTEXTPATH': this.options.contextPath } : '',
-      ...this.options.debug ? { 'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs() } : '',
-      'ATL_LICENSE_KEY': this.options.license || timebomb.confluence,
-      'ATL_JDBC_URL': this.database.url,
-      'ATL_JDBC_USER': this.database.options.username,
-      'ATL_JDBC_PASSWORD': this.database.options.password,
-      'ATL_DB_TYPE': `${this.database.name}`,
-    }
-  };
-
-  private getJVMArgs(): string {
-    const JVM_SUPPORT_RECOMMENDED_ARGS = []
+  protected getJVMArgs(): Array<string> {
+    const JVM_SUPPORT_RECOMMENDED_ARGS = super.getJVMArgs();
     if (this.options.debug) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xrunjdwp:transport=dt_socket,address=*:5005,server=y,suspend=n');
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dcom.sun.management.jmxremote.port=9999');
@@ -75,13 +60,22 @@ RUN chown -R confluence:confluence /opt/atlassian/confluence`
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dcom.sun.management.jmxremote.authenticate=false');
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dcom.sun.management.jmxremote.ssl=false');
     }
-
-    if (this.options.quickReload) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dquickreload.dirs=/opt/quickreload');
-    }
-
-    return JVM_SUPPORT_RECOMMENDED_ARGS.join(' ');
+    return JVM_SUPPORT_RECOMMENDED_ARGS;
   }
+
+  // ------------------------------------------------------------------------------------------ Private Methods
+
+  private getEnvironmentVariables() {
+    return {
+      ...this.options.contextPath ? { 'ATL_TOMCAT_CONTEXTPATH': this.options.contextPath } : '',
+      'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
+      'ATL_LICENSE_KEY': this.options.license || timebomb.confluence,
+      'ATL_JDBC_URL': this.database.url,
+      'ATL_JDBC_USER': this.database.options.username,
+      'ATL_JDBC_PASSWORD': this.database.options.password,
+      'ATL_DB_TYPE': `${this.database.name}`,
+    }
+  };
 
   private getVolumes() {
     return [

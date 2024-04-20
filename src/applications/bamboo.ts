@@ -52,6 +52,15 @@ RUN chown -R bamboo:bamboo /var/atlassian/application-data/bamboo`
     }
   }
 
+  protected getJVMArgs(): Array<string> {
+    const JVM_SUPPORT_RECOMMENDED_ARGS = super.getJVMArgs();
+    if (this.options.debug) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005');
+    }
+    return JVM_SUPPORT_RECOMMENDED_ARGS;
+  }
+
   protected async isApplicationReady(): Promise<boolean> {
     try {
       const response = await axios.get(`${this.baseUrl}/setup/setupGeneralConfiguration.action`, { validateStatus: () => true }).catch(() => null);
@@ -66,7 +75,7 @@ RUN chown -R bamboo:bamboo /var/atlassian/application-data/bamboo`
   private getEnvironmentVariables() {
     return {
       ...this.options.contextPath ? { 'ATL_TOMCAT_CONTEXTPATH': this.options.contextPath } : '',
-      ...this.options.debug ? { 'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs() } : '',
+      'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
       'ATL_BAMBOO_ENABLE_UNATTENDED_SETUP': 'true',
       'ATL_LICENSE': this.options.license || timebomb.bamboo,
       'ATL_JDBC_URL': this.database.url,
@@ -75,21 +84,6 @@ RUN chown -R bamboo:bamboo /var/atlassian/application-data/bamboo`
       'ATL_DB_TYPE': `${this.database.name}`,
     }
   };
-
-  private getJVMArgs(): string {
-    const JVM_SUPPORT_RECOMMENDED_ARGS = []
-    if (this.options.debug) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005');
-    }
-
-    if (this.options.quickReload) {
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dquickreload.dirs=/opt/quickreload');
-    }
-
-    return JVM_SUPPORT_RECOMMENDED_ARGS.join(' ');
-  }
 
   private getVolumes() {
     return [

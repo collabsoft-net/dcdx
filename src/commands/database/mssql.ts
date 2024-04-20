@@ -3,8 +3,8 @@
 import { Option, program } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 
-import { mssql as versions } from '../../assets/versions.json';
-import { MSSQL, MSSQLOptions } from '../databases/mssql';
+import { mssql as versions } from '../../../assets/versions.json';
+import { MSSQL, MSSQLOptions } from '../../databases/mssql';
 
 (async () => {
   const options = program
