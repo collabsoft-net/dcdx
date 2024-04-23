@@ -13,7 +13,9 @@
     "README",
     "package.json"
   ],
-  "bin": "./lib/index.js",
+  "bin": {
+    "dcdx": "./lib/index.js"
+  },
   "engines": {
     "node": ">=18"
   },
