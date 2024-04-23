@@ -33,7 +33,7 @@ export class Confluence extends Base {
         dockerfile_inline: `
 FROM dcdx/${this.name}:${this.options.version}
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/confluence/confluence/WEB-INF/lib/mysql-connector-j-8.3.0.jar
-COPY ./quickreload-5.0.2.jar /opt/atlassian/confluence/confluence/WEB-INF/atlassian-bundled-plugins/quickreload-5.0.2.jar
+COPY ./quickreload-5.0.4.jar /opt/atlassian/confluence/confluence/WEB-INF/atlassian-bundled-plugins/quickreload-5.0.4.jar
 RUN echo "/opt/quickreload" > /var/atlassian/application-data/confluence/quickreload.properties; \
     mkdir -p /opt/quickreload; \
     chown -R confluence:confluence /opt/quickreload;

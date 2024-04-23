@@ -32,7 +32,7 @@ export class Bitbucket extends Base {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
 FROM dcdx/${this.name}:${this.options.version}
-COPY ./quickreload-5.0.2.jar /var/atlassian/application-data/bitbucket/plugins/installed-plugins/quickreload-5.0.2.jar
+COPY ./quickreload-5.0.4.jar /var/atlassian/application-data/bitbucket/plugins/installed-plugins/quickreload-5.0.4.jar
 COPY ./mysql-connector-j-8.3.0.jar /var/atlassian/application-data/bitbucket/lib/mysql-connector-j-8.3.0.jar
 RUN echo "/opt/quickreload" > /var/atlassian/application-data/bitbucket/quickreload.properties; \
     mkdir -p /opt/quickreload; \
