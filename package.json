@@ -13,9 +13,7 @@
     "README",
     "package.json"
   ],
-  "bin": {
-    "dcdx": "./lib/index.js"
-  },
+  "bin": "./lib/index.js",
   "engines": {
     "node": ">=18"
   },
@@ -29,7 +27,9 @@
     "generate:versions": "node ./generateVersionList.mjs",
     "watch": "yarn run nodemon --watch src -e '.ts' --exec 'yarn build'",
     "start": "./lib/index.js",
-    "prepack": "yarn generate:versions && yarn build"
+    "prepack": "yarn generate:versions && yarn build",
+    "test": "yarn run vitest --coverage --disable-console-intercept --watch=false --silent=false",
+    "test:ui": "yarn run vitest --coverage --disable-console-intercept --silent=false --ui"
   },
   "repository": {
     "type": "git",
@@ -51,9 +51,10 @@
     "@types/js-yaml": "4",
     "@types/node": "18.16.0",
     "@types/pg": "8",
-    "@types/yargs": "17.0.32",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/ui": "^1.6.0",
     "eslint": "9.0.0",
     "eslint-plugin-simple-import-sort": "12.0.0",
     "nodemon": "3.1.0",
@@ -61,7 +62,9 @@
     "rollup-plugin-executable": "1.6.3",
     "semantic-release": "23.0.8",
     "typescript": "5.4.4",
-    "typescript-eslint": "7.6.0"
+    "typescript-eslint": "7.6.0",
+    "vitest": "1.6.0",
+    "vitest-mock-process": "1.0.4"
   },
   "dependencies": {
     "@xmldom/xmldom": "0.8.10",
@@ -79,7 +82,7 @@
     "simple-git": "3.24.0",
     "tedious": "18.1.0",
     "xpath": "0.0.34",
-    "yargs": "17.7.2"
+    "zod": "3.23.6"
   },
   "release": {
     "branches": [

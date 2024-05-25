@@ -1,21 +1,20 @@
 
 import { timebomb } from '../helpers/licences';
 import { toAbsolutePath } from '../helpers/toAbsolutePath';
-import { ApplicationOptions } from '../types/ApplicationOptions';
-import { DatabaseEngine } from '../types/DatabaseEngine';
+import { SupportedApplications,TApplicationOptions } from '../types/Application';
+import { DatabaseEngine } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
-import { SupportedApplications } from '../types/SupportedApplications';
 import { Base } from './base';
 
 export class Confluence extends Base {
 
-  name = SupportedApplications.CONFLUENCE;
+  name = SupportedApplications.Values.confluence;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/confluence/logs/atlassian-confluence.log';
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(options: ApplicationOptions) {
+  constructor(options: TApplicationOptions) {
     super(options);
     this.database = this.getDatabaseEngine(options.database);
   }
@@ -24,14 +23,13 @@ export class Confluence extends Base {
 
   protected getService(): Service {
 
-    const volumes = this.getVolumes();
     const environment = this.getEnvironmentVariables();
 
     return {
       build: {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
-FROM dcdx/${this.name}:${this.options.version}
+FROM dcdx/${this.name}:${this.options.tag}
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/confluence/confluence/WEB-INF/lib/mysql-connector-j-8.3.0.jar
 COPY ./quickreload-5.0.4.jar /opt/atlassian/confluence/confluence/WEB-INF/atlassian-bundled-plugins/quickreload-5.0.4.jar
 RUN echo "/opt/quickreload" > /var/atlassian/application-data/confluence/quickreload.properties; \
@@ -44,8 +42,7 @@ RUN chown -R confluence:confluence /opt/atlassian/confluence`
         `${this.options.port || 80}:8090`,
         ...this.options.debug ? [ '5005:5005' ] : [],
       ],
-      environment: Object.keys(environment).length > 0 ? environment : undefined,
-      volumes: volumes.length > 0 ? volumes : undefined,
+      environment,
       networks: [ 'shared' ]
     }
   }
@@ -68,19 +65,15 @@ RUN chown -R confluence:confluence /opt/atlassian/confluence`
   private getEnvironmentVariables() {
     return {
       ...this.options.contextPath ? { 'ATL_TOMCAT_CONTEXTPATH': this.options.contextPath } : '',
+      ...this.options.xms ? { 'JVM_MINIMUM_MEMORY': this.options.xms } : '',
+      ...this.options.xmx ? { 'JVM_MAXIMUM_MEMORY': this.options.xmx } : '',
       'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
-      'ATL_LICENSE_KEY': this.options.license || timebomb.confluence,
+      'ATL_LICENSE_KEY': timebomb.confluence,
       'ATL_JDBC_URL': this.database.url,
       'ATL_JDBC_USER': this.database.options.username,
       'ATL_JDBC_PASSWORD': this.database.options.password,
-      'ATL_DB_TYPE': `${this.database.name}`,
+      'ATL_DB_TYPE': `${this.database.options.name}`,
     }
   };
-
-  private getVolumes() {
-    return [
-      ...this.options.quickReload ? [ `${this.options.quickReload}:/opt/quickreload` ] : ''
-    ];
-  }
 
 }

@@ -1,28 +1,8 @@
-import { DatabaseOptions } from '../types/DatabaseOptions';
+import { MSSQLOptions, TMSSQLOptions } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
-import { SupportedDatabaseDrivers } from '../types/SupportedDatabaseDrivers';
-import { SupportedDatabaseEngines } from '../types/SupportedDatabaseEngines';
 import { Base } from './base';
 
-export type MSSQLOptions = DatabaseOptions & {
-  edition: 'Developer'|'Express'|'Standard'|'Enterprise'|'EnterpriseCore';
-  version: '2017'|'2019'|'2022';
-}
-
-const defaultOptions: MSSQLOptions = {
-  port: 1433,
-  database: 'dcdx',
-  username: 'sa',
-  password: 'DataCenterDX!',
-  edition: 'Developer',
-  version: '2022'
-};
-
 export class MSSQL extends Base {
-  name: SupportedDatabaseEngines = 'mssql';
-  driver: SupportedDatabaseDrivers = 'com.microsoft.sqlserver.jdbc.SQLServerDriver';
-  options: MSSQLOptions = defaultOptions;
-  version: '2017'|'2019'|'2022' = '2022'
 
   public get url() {
     return `jdbc:sqlserver://db:${this.options.port};databaseName=${this.options.database};trustServerCertificate=true`;
@@ -30,8 +10,8 @@ export class MSSQL extends Base {
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(options: MSSQLOptions = defaultOptions) {
-    super({ ...defaultOptions, ...options });
+  constructor(public options: TMSSQLOptions = MSSQLOptions.parse({})) {
+    super(options);
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods
@@ -44,7 +24,7 @@ export class MSSQL extends Base {
 
   protected getService = (): Service => {
     return {
-      image: `mcr.microsoft.com/mssql/server:${this.version}-latest`,
+      image: `mcr.microsoft.com/mssql/server:${this.options.tag}`,
       ports: [ `${this.options.port || 1433}:1433` ],
       environment: {
         ACCEPT_EULA: 'y',

@@ -1,109 +1,98 @@
 #!/usr/bin/env node
 
-import { watch } from 'chokidar';
-import { Option, program } from 'commander';
-import { asyncExitHook, gracefulExit } from 'exit-hook';
-import { resolve } from 'path';
-import { cwd } from 'process';
+import { FSWatcher } from 'chokidar';
+import { Command as Commander, InvalidOptionArgumentError, Option } from 'commander';
+import { gracefulExit } from 'exit-hook';
 
+import versions from '../../assets/versions.json';
+import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
-import { Docker } from '../helpers/docker';
-import { getApplicationByName } from '../helpers/getApplication';
-import { isRecursiveBuild } from '../helpers/isRecursiveBuild';
-import { showRecursiveBuildWarning } from '../helpers/showRecursiveBuildWarning';
+import { FileWatcher } from '../helpers/FileWatcher';
+import { TBuildOptions } from '../types/AMPS';
 
-(async () => {
-  const options = program
-    .name('dcdx build')
-    .description('Build & install the Atlassian Data Center plugin from the current directory.\nYou can add Maven build arguments after the command options.')
-    .usage('[options] [...maven_arguments]')
-    .addOption(new Option('-w, --watch <patterns...>', 'Additional list of glob patterns used to watch for file changes'))
-    .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
-    .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where QuickReload will look for generated JAR files').default('target'))
-    .allowUnknownOption(true)
-    .parse(process.argv)
-    .opts();
+const program = new Commander();
 
-  if (!AMPS.isAtlassianPlugin()) {
-    console.log('Unable to find an Atlassian Plugin project in the current directory 🤔');
-    gracefulExit();
-  }
+const Command = () => {
+  let quickReload: FSWatcher|null = null;
 
-  const application = AMPS.getApplication();
-  if (!application) {
-    console.log('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
-    gracefulExit();
-    process.exit();
-  }
+  return {
+    action: async (options: TBuildOptions) => {
+      const amps = new AMPS({
+        cwd: options.cwd,
+        profiles: options.activateProfiles?.split(',') || []
+      });
 
-  const Application = getApplicationByName(application);
-  if (!Application) {
-    console.log('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
-    process.exit();
-  }
-
-  const mavenOpts = program.args.slice();
-  if (options.activateProfiles) {
-    mavenOpts.push(...[ '-P', options.activateProfiles ]);
-  }
-
-  console.log(`Looking for running instances of ${application}`);
-  const containerIds = await Docker.getRunningContainerIds(application);
-  if (containerIds.length > 1) {
-    console.log(`There are multple running instance of ${application}, unable to determine which one to use`);
-    gracefulExit(0);
-    return;
-  }
-
-  const containerId = containerIds[0];
-  if (!containerId) {
-    console.log(`Could not find running instance of ${application}, please make sure they are running first!`);
-    gracefulExit(0);
-    return;
-  }
-
-  console.log('Watching filesystem for changes to source files (QuickReload)');
-  let lastBuildCompleted = new Date().getTime();
-  const patterns = Array.isArray(options.watch) ? options.watch : [ options.watch ];
-  const quickReload = watch([ '**/*', ...patterns ], {
-    cwd: cwd(),
-    usePolling: true,
-    interval: 2 * 1000,
-    binaryInterval: 2 * 1000,
-    awaitWriteFinish: true,
-    persistent: true,
-    atomic: true
-  });
-
-  asyncExitHook(async () => {
-    console.log(`Stopping filesystem watcher... ⏳`);
-    await quickReload.close();
-    console.log(`Successfully stopped all running processes 💪`);
-  }, { wait: 30 * 1000 });
-
-  quickReload.on('change', async (path) => {
-    if (path.startsWith(options.outputDirectory) && path.toLowerCase().endsWith('.jar')) {
-      console.log('Found updated JAR file, uploading them to QuickReload');
-      await Docker.copy(resolve(path), `${containerId}:/opt/quickreload/`)
-        .then(() => console.log('Finished uploading JAR file to QuickReload'))
-        .catch(err => console.log('Failed to upload JAR file to QuickReload', err));
-      lastBuildCompleted = new Date().getTime();
-    } else if (!path.startsWith(options.outputDirectory)) {
-      if (isRecursiveBuild(lastBuildCompleted)) {
-        showRecursiveBuildWarning(options.outputDirectory);
-      } else {
-        console.log('Detected file change, rebuilding Atlasian Plugin for QuickReload');
-        await AMPS.build(mavenOpts).catch(() => Promise.resolve());
+      if (!amps.isAtlassianPlugin()) {
+        throw new Error('Unable to find an Atlassian Plugin project in the current directory 🤔');
       }
-    }
-  });
 
-  await AMPS.build(mavenOpts).catch(() => Promise.resolve());
-  lastBuildCompleted = new Date().getTime();
-})();
+      const name = amps.getApplication();
+      if (!name) {
+        throw new Error('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
+      }
+
+      const version = amps.getApplicationVersion();
+      if (!version) {
+        throw new Error('Failed to determine version from AMPS and no product version provided (--tag)');
+      } else if (!versions[name].includes(version)) {
+        throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[name].join(', ')}.`);
+      }
+
+      if (!options.watch && options.ext) {
+        throw new InvalidOptionArgumentError('Invalid argument "--ext"');
+      } else if (!options.watch && options.install) {
+        throw new InvalidOptionArgumentError('Invalid argument "--install"');
+      } else if (!options.install && options.outputDirectory) {
+        throw new InvalidOptionArgumentError('Invalid argument "--outputDirectory"');
+      }
+
+      const mavenOpts = program.args.slice();
+      if (options.activateProfiles) {
+        mavenOpts.push(...[ '-P', options.activateProfiles ]);
+      }
+
+      if (options.watch) {
+        quickReload = FileWatcher(name, options, mavenOpts);
+      }
+
+      console.log(`Building Atlassian Data Center plugin for ${name}... 💃`);
+      await amps.build(mavenOpts).then(() => {
+        console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
+      });
+    },
+    errorHandler: async () => {
+      if (quickReload) {
+        console.log(`Stopping filesystem watcher... ⏳`);
+        await quickReload.close().catch(() => null);
+      }
+      console.log(`Successfully stopped all running processes 💪`);
+    }
+  }
+}
+
+program
+  .name('dcdx build')
+  .description(
+`Build the Atlassian Data Center plugin using the Atlassian Maven Plugin Suite (AMPS) configuration.
+If there is a running instance, it will try to install the plugin using QuickReload.
+
+You can add Maven build arguments after the command options.`)
+  .usage('[options] [...maven_arguments]')
+  .allowUnknownOption(true)
+  .showHelpAfterError(true)
+  .addOption(new Option('-w, --watch', 'Watch for filesystem changes in the current working directory and rebuild plugin').default(false))
+  .addOption(new Option('--ext <patterns...>', 'Glob patterns to use when watching for file changes (only available with --watch, defaults to **/*)'))
+  .addOption(new Option('-i, --install', 'Install the plugin into a running instance of the host application (only available with --watch)'))
+  .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR files (only available with --install, defaults to `target`)'))
+  .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
+  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration'))
+  .action(options => ActionHandler(program, Command(), options));
+
+program.parseAsync(process.argv).catch(() => gracefulExit(1));
 
 process.on('SIGINT', () => {
   console.log(`Received term signal, trying to stop gracefully 💪`);
-  gracefulExit();
+  gracefulExit(1);
 });
+
 

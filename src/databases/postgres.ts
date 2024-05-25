@@ -1,27 +1,9 @@
 
-import { DatabaseOptions } from '../types/DatabaseOptions';
+import { PostgreSQLOptions, TPostgreSQLOptions } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
-import { SupportedDatabaseDrivers } from '../types/SupportedDatabaseDrivers';
-import { SupportedDatabaseEngines } from '../types/SupportedDatabaseEngines';
 import { Base } from './base';
 
-type PostgresOptions = DatabaseOptions & {
-  version?: '12'|'13'|'14'|'15';
-}
-
-const defaultOptions: PostgresOptions = {
-  version: '15',
-  database: 'dcdx',
-  port: 5432,
-  username: 'dcdx',
-  password: 'dcdx'
-};
-
 export class Postgres extends Base {
-  name: SupportedDatabaseEngines = 'postgresql';
-  driver: SupportedDatabaseDrivers = 'org.postgresql.Driver';
-  options: PostgresOptions = defaultOptions;
-  version: string = '15';
 
   public get url() {
     return `jdbc:postgresql://db:${this.options.port}/${this.options.database}`;
@@ -29,15 +11,15 @@ export class Postgres extends Base {
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(options: PostgresOptions = defaultOptions) {
-    super({ ...defaultOptions, ...options });
+  constructor(public options: TPostgreSQLOptions = PostgreSQLOptions.parse({})) {
+    super(options);
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods
 
   protected getService = (): Service => {
     return {
-      image: `postgres:${this.version}`,
+      image: `postgres:${this.options.tag}`,
       ports: [ `${this.options.port || 5432}:5432` ],
       environment: {
         POSTGRES_USER: this.options.username || 'dcdx',
