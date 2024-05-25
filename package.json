@@ -1,6 +1,6 @@
 {
   "name": "dcdx",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "author": "Collabsoft <info@collabsoft.net>",
   "description": "The Unofficial CLI for Atlassian Data Center Plugin Development",
   "type": "module",
@@ -19,14 +19,17 @@
   },
   "scripts": {
     "clean": "rm -rf dist && rm -rf lib",
+    "reinstall": "yarn clean && yarn install",
     "lint": "yarn run eslint .",
     "build": "yarn clean && yarn lint && yarn build:esm && yarn build:types",
     "build:esm": "yarn run tsc && yarn run rollup -c rollup.config.js",
     "build:types": "yarn run tsc --emitDeclarationOnly --outDir lib/types/",
+    "generate:versions": "node ./generateVersionList.mjs",
     "watch": "yarn run nodemon --watch src -e '.ts' --exec 'yarn build'",
     "start": "./lib/index.js",
-    "reinstall": "yarn clean && yarn install",
-    "prepack": "yarn build"
+    "prepack": "yarn generate:versions && yarn build",
+    "test": "yarn run vitest --coverage --disable-console-intercept --watch=false --silent=false",
+    "test:ui": "yarn run vitest --coverage --disable-console-intercept --silent=false --ui"
   },
   "repository": {
     "type": "git",
@@ -44,29 +47,53 @@
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "0.4.4",
+    "@types/dockerode": "3.3.28",
     "@types/js-yaml": "4",
     "@types/node": "18.16.0",
     "@types/pg": "8",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/ui": "^1.6.0",
     "eslint": "9.0.0",
     "eslint-plugin-simple-import-sort": "12.0.0",
     "nodemon": "3.1.0",
     "rollup": "4.14.1",
     "rollup-plugin-executable": "1.6.3",
+    "semantic-release": "23.0.8",
     "typescript": "5.4.4",
-    "typescript-eslint": "7.6.0"
+    "typescript-eslint": "7.6.0",
+    "vitest": "1.6.0",
+    "vitest-mock-process": "1.0.4"
   },
   "dependencies": {
+    "@xmldom/xmldom": "0.8.10",
     "axios": "1.6.8",
+    "chokidar": "3.6.0",
     "commander": "12.0.0",
     "docker-compose": "0.24.8",
+    "dockerode": "4.0.2",
     "exit-hook": "4.0.0",
+    "fast-xml-parser": "4.3.6",
     "js-yaml": "4.1.0",
     "mysql2": "3.9.4",
     "pg": "8.11.5",
     "sequelize": "6.37.2",
     "simple-git": "3.24.0",
-    "tedious": "18.1.0"
+    "tedious": "18.1.0",
+    "xpath": "0.0.34",
+    "zod": "3.23.6"
+  },
+  "release": {
+    "branches": [
+      {
+        "name": "main"
+      },
+      {
+        "name": "next",
+        "channel": "next",
+        "prerelease": true
+      }
+    ]
   }
 }

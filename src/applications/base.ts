@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { spawn } from 'child_process';
-import { downAll, ps, upAll } from 'docker-compose/dist/v2.js';
-import EventEmitter from 'events';
+import { downAll, ps, stop, upAll } from 'docker-compose/dist/v2.js';
 import { gracefulExit } from 'exit-hook';
 import { existsSync, mkdirSync } from 'fs';
 import { dump } from 'js-yaml';
@@ -10,57 +9,63 @@ import { join } from 'path';
 import { cwd } from 'process';
 import simpleGit from 'simple-git';
 
-import { MSSQL } from '../databases/mssql';
-import { MySQL } from '../databases/mysql';
-import { Postgres } from '../databases/postgres';
+import { getDatabaseEngine } from '../helpers/getDatabaseEngine';
+import { getZodDefaults } from '../helpers/getZodDefaults';
 import { network } from '../helpers/network';
-import { ApplicationOptions } from '../types/ApplicationOptions';
-import { DatabaseEngine } from '../types/DatabaseEngine';
+import { Application,TApplicationOptions,TSupportedApplications } from '../types/Application';
+import { DatabaseEngine, DatabaseOptions, MSSQLOptions, MySQLOptions, PostgreSQLOptions, SupportedDatabaseEngines, TSupportedDatabaseEngines } from '../types/Database';
 import { DockerComposeV3, Service } from '../types/DockerComposeV3';
-import { SupportedApplications } from '../types/SupportedApplications';
-import { SupportedDatabaseEngines } from '../types/SupportedDatabaseEngines';
 
 const basedir = join(homedir(),'.dcdx');
 
-export abstract class Base extends EventEmitter {
+export abstract class Base implements Application {
 
-  abstract get name(): SupportedApplications;
+  abstract get name(): TSupportedApplications;
   abstract get database(): DatabaseEngine;
   abstract get logFilePath(): string;
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(protected options: ApplicationOptions) {
-    super();
-  }
+  constructor(protected options: TApplicationOptions) {}
 
   // ------------------------------------------------------------------------------------------ Properties
 
   protected get baseUrl(): string {
-    const baseUrl = `http://localhost:${this.options.port}`;
+    let baseUrl = `http://localhost`;
+    if (this.options.port) {
+      baseUrl += `:${this.options.port}`;
+    }
     return this.options.contextPath ? `${baseUrl}/${this.options.contextPath}` : baseUrl;
   }
 
   // ------------------------------------------------------------------------------------------ Public Methods
 
-  getDatabaseEngine(name: SupportedDatabaseEngines): DatabaseEngine {
-    switch (name) {
-      case 'postgresql': return new Postgres();
-      case 'mssql': return new MSSQL();
-      case 'mysql': return new MySQL();
+  async start(): Promise<void> {
+    if (this.options.clean) {
+      await this.down();
     }
-  }
 
-  async start() {
-    await this.stop();
-    await this.build(this.options.version);
-
-    await this.database.start(this.name, this.options.version);
+    await this.build(this.options.tag);
+    await this.database.start(this.options.clean);
     await this.up();
   }
 
-  async stop() {
-    await this.database.stop();
+  async stop(): Promise<void> {
+    await this.database.stop(this.options.prune);
+    if (this.options.prune) {
+      await this.down();
+    } else {
+      const configAsString = dump(this.getDockerComposeConfig());
+      await stop({
+        cwd: this.options.cwd || cwd(),
+        configAsString,
+        log: true
+      });
+    }
+  }
+
+  async reset(): Promise<void> {
+    await this.database.stop(true);
     await this.down();
   }
 
@@ -68,14 +73,30 @@ export abstract class Base extends EventEmitter {
 
   protected abstract getService(): Service;
 
+  protected getJVMArgs(): Array<string> {
+    const JVM_SUPPORT_RECOMMENDED_ARGS = [];
+    JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
+
+    if (this.options.debug) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Djira.dev.mode=true');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Datlassian.dev.mode=true');
+    }
+
+    if (this.options.watch) {
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dquickreload.dirs=/opt/quickreload');
+    }
+
+    return JVM_SUPPORT_RECOMMENDED_ARGS;
+  }
+
+
   protected async isApplicationReady(): Promise<boolean> {
     try {
       const response = await axios.get<{ state: string }>(`${this.baseUrl}/status`, { validateStatus: () => true }).catch(() => null);
-
       if (response) {
         if (response.status === 200) {
           const { data } = response;
-          if (data.state === 'FIRST_RUN') {
+          if (data.state === 'FIRST_RUN' || data.state === 'RUNNING') {
             console.log(`The application ${this.name} is ready on ${this.baseUrl} 🎉`);
             return true;
           }
@@ -86,6 +107,14 @@ export abstract class Base extends EventEmitter {
     } catch (err) {
       return false;
     }
+  }
+
+  protected getDatabaseEngine(name: TSupportedDatabaseEngines): DatabaseEngine {
+    return getDatabaseEngine(DatabaseOptions.parse({
+      ...this.getDefaultOptions(name),
+      name,
+      cwd: this.options.cwd
+    }));
   }
 
   // ------------------------------------------------------------------------------------------ Private Methods
@@ -107,34 +136,31 @@ export abstract class Base extends EventEmitter {
     const configAsString = dump(config);
 
     await upAll({
-      cwd: cwd(),
+      cwd: this.options.cwd || cwd(),
       configAsString,
       log: true,
     });
 
-    this.emit(`${this.name}:up`);
     const isAvailable = await this.waitUntilReady();
     if (!isAvailable) {
       console.log(`Failed to start ${this.name} ⛔`);
     } else {
-      this.emit(`${this.name}:ready`);
       await this.tailApplicationLogs();
     }
 
-    gracefulExit(0);
+    // We are exiting with an error code
+    // This is to trigger a graceful shut down of the application
+    gracefulExit(1);
   }
 
   private async down() {
     const configAsString = dump(this.getDockerComposeConfig());
-
     await downAll({
-      cwd: cwd(),
+      cwd: this.options.cwd || cwd(),
       configAsString,
       commandOptions: [ '-v', '--remove-orphans', '--rmi', 'local' ],
       log: true
     });
-
-    this.emit(`${this.name}:stopped`);
   }
 
   private async getServiceState() {
@@ -191,10 +217,8 @@ export abstract class Base extends EventEmitter {
       const docker = spawn(
         'docker',
         [ 'build', '-t', `dcdx/${this.name}:${version}`, '--build-arg', `${this.name.toUpperCase()}_VERSION=${version}`, '.'],
-        { cwd: checkoutPath }
+        { cwd: checkoutPath, stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
   }
@@ -213,10 +237,8 @@ export abstract class Base extends EventEmitter {
       const docker = spawn(
         'docker',
         [ 'logs', '-f', '-n', '5000', service ],
-        { cwd: cwd() }
+        { cwd: this.options.cwd || cwd(), stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
   }
@@ -226,13 +248,21 @@ export abstract class Base extends EventEmitter {
       const docker = spawn(
         'docker',
         [ 'exec', '-i', service, `tail`, `-F`, `-n`, `5000`, this.logFilePath ],
-        { cwd: cwd() }
+        { cwd: this.options.cwd || cwd(), stdio: 'inherit' }
       );
-      docker.stdout.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.stderr.on('data', (lines: Buffer) => { console.log(lines.toString('utf-8').trim()); });
-      docker.on('SIGINT', () => resolve());
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
+  }
+
+  private getDefaultOptions(name: TSupportedDatabaseEngines) {
+    switch (name) {
+      case SupportedDatabaseEngines.Values.postgresql:
+        return getZodDefaults(PostgreSQLOptions);
+      case SupportedDatabaseEngines.Values.mysql:
+        return getZodDefaults(MySQLOptions);
+      case SupportedDatabaseEngines.Values.mssql:
+        return getZodDefaults(MSSQLOptions);
+    }
   }
 
 }

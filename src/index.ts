@@ -2,10 +2,23 @@
 
 import { program } from 'commander';
 
+import { version } from '../package.json';
+
 program
   .name('dcdx')
   .description('The Unofficial Atlassian Data Center Plugin Development CLI')
-  .version('0.0.1')
+  .version(version)
+  .showHelpAfterError(true);
+
+// ------------------------------------------------------------------------------------------ Build
+
+program
+  .command('build', 'Build the Atlassian Data Center plugin based on the Atlassian Maven Plugin Suite (AMPS) configuration', { executableFile: './commands/build.js' });
+
+// ------------------------------------------------------------------------------------------ Start
+
+program
+  .command('debug', 'Start the product in debug mode based on the Atlassian Maven Plugin Suite (AMPS) configuration with the plugin installed', { executableFile: './commands/debug.js' });
 
 // ------------------------------------------------------------------------------------------ Run
 
@@ -81,6 +94,16 @@ program
     program.parse(process.argv);
   });
 
+// ------------------------------------------------------------------------------------------ Stop
+
+program
+  .command('stop', 'Stop the host application and database', { executableFile: './commands/stop.js' });
+
+// ------------------------------------------------------------------------------------------ Reset
+
+program
+  .command('reset', 'Remove all application data (incl. database) and start fresh!', { executableFile: './commands/reset.js' });
+
 // ------------------------------------------------------------------------------------------ Profile
 
 program
@@ -91,6 +114,6 @@ program
     program.parse(process.argv);
   });
 
-program.parse(process.argv);
+program.parse();
 
 
