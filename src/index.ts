@@ -13,12 +13,12 @@ program
 // ------------------------------------------------------------------------------------------ Build
 
 program
-  .command('build', 'Build & install the Atlassian Data Center plugin from the current directory', { executableFile: './commands/build.js' });
+  .command('build', 'Build the Atlassian Data Center plugin based on the Atlassian Maven Plugin Suite (AMPS) configuration', { executableFile: './commands/build.js' });
 
 // ------------------------------------------------------------------------------------------ Start
 
 program
-  .command('start', 'Start the host application based on the Atlassian Maven Plugin Suite (AMPS) configuration', { executableFile: './commands/start.js' });
+  .command('debug', 'Start the product in debug mode based on the Atlassian Maven Plugin Suite (AMPS) configuration with the plugin installed', { executableFile: './commands/debug.js' });
 
 // ------------------------------------------------------------------------------------------ Run
 
@@ -114,6 +114,6 @@ program
     program.parse(process.argv);
   });
 
-program.parse(process.argv);
+program.parse();
 
 

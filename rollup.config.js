@@ -2,7 +2,6 @@
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
-import terser from '@rollup/plugin-terser';
 import { readdirSync } from 'fs';
 import path from 'path';
 import executable from 'rollup-plugin-executable';
@@ -13,7 +12,7 @@ const getCommands = (dir) => {
   commands.forEach(item => {
     if (item.isDirectory()) {
       result.push(...getCommands(path.join(dir, item.name)));
-    } else {
+    } else if (item.name.endsWith('ts')) {
       result.push(path.join(dir, item.name));
     }
   });
@@ -27,7 +26,8 @@ export default [
     input: `./dist/src/${file}`,
     output: {
       file: `./lib/${file}`,
-      format: 'es'
+      format: 'es',
+      sourcemap: 'inline'
     },
     external: [ /node_modules/ ],
     plugins: [
@@ -36,7 +36,6 @@ export default [
       nodeResolve({
         preferBuiltins: true
       }),
-      terser({ keep_classnames: true, keep_fnames: true }),
       executable()
     ],
     onwarn(warning, rollupWarn) {

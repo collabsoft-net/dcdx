@@ -1,27 +1,8 @@
-import { DatabaseOptions } from '../types/DatabaseOptions';
+import { MySQLOptions, TMySQLOptions } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
-import { SupportedDatabaseDrivers } from '../types/SupportedDatabaseDrivers';
-import { SupportedDatabaseEngines } from '../types/SupportedDatabaseEngines';
 import { Base } from './base';
 
-type MySQLOptions = DatabaseOptions & {
-  version: '8.0'|'8.3'
-};
-
-const defaultOptions: MySQLOptions = {
-  port: 3306,
-  database: 'dcdx',
-  username: 'dcdx',
-  password: 'dcdx',
-  version: '8.0'
-}
-
-
 export class MySQL extends Base {
-  name: SupportedDatabaseEngines = 'mysql';
-  driver: SupportedDatabaseDrivers = 'com.mysql.jdbc.Driver';
-  options: MySQLOptions = defaultOptions
-  version: '8.0'|'8.3' = '8.0';
 
   public get url() {
     return `jdbc:mysql://db:${this.options.port}/${this.options.database}?sessionVariables=transaction_isolation='READ-COMMITTED'`;
@@ -29,8 +10,8 @@ export class MySQL extends Base {
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(options: MySQLOptions = defaultOptions) {
-    super({ ...defaultOptions, ...options });
+  constructor(public options: TMySQLOptions = MySQLOptions.parse({})) {
+    super(options);
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods
@@ -41,7 +22,7 @@ export class MySQL extends Base {
 
   protected getService = (): Service => {
     return {
-      image: `mysql:${this.version}`,
+      image: `mysql:${this.options.tag}`,
       ports: [ `${this.options.port || 3306}:3306` ],
       environment: {
         MYSQL_ROOT_PASSWORD: this.options.password || 'dcdx',

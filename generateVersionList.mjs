@@ -10,7 +10,7 @@ const repositories = [
   { name: 'bamboo', repository: 'atlassian/bamboo-server' },
   { name: 'bitbucket', repository: 'atlassian/bitbucket-server' },
   { name: 'mysql', repository: 'library/mysql' },
-  { name: 'postgres', repository: 'library/postgres' },
+  { name: 'postgresql', repository: 'library/postgres' },
 ];
 
 const getListOfTagsPaginated = async (url) => {

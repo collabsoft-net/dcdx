@@ -8,6 +8,5 @@ Alternatively, Maven is using a different output directory than configured:
 '${outputDirectory}'
 
 Please make sure to check your build process and/or specify a different output directory using the '-o' option
-===============================================================================================================
-  `);
+===============================================================================================================`);
 }

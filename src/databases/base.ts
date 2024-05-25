@@ -1,71 +1,75 @@
 import { spawn } from 'child_process';
-import { upAll } from 'docker-compose';
-import { downAll, ps, stop } from 'docker-compose/dist/v2.js';
-import EventEmitter from 'events';
+import { downAll, ps, stop,upAll } from 'docker-compose/dist/v2.js';
 import { gracefulExit } from 'exit-hook';
 import { dump } from 'js-yaml';
-import { cwd } from 'process';
 import { ConnectionAcquireTimeoutError, ConnectionError, ConnectionRefusedError, ConnectionTimedOutError, Dialect, Sequelize, TimeoutError } from 'sequelize';
 
 import { network } from '../helpers/network';
-import { DatabaseEngine } from '../types/DatabaseEngine';
-import { DatabaseOptions } from '../types/DatabaseOptions';
+import { DatabaseEngine, TDatabaseOptions } from '../types/Database';
 import { DockerComposeV3, Service } from '../types/DockerComposeV3';
-import { SupportedDatabaseDrivers } from '../types/SupportedDatabaseDrivers';
-import { SupportedDatabaseEngines } from '../types/SupportedDatabaseEngines';
 
-export abstract class Base extends EventEmitter implements DatabaseEngine {
+export abstract class Base implements DatabaseEngine {
 
-  private sequelize: Sequelize|null = null;
+  private sequelize: Sequelize;
 
-  abstract get name(): SupportedDatabaseEngines;
-  abstract get driver(): SupportedDatabaseDrivers;
-  abstract get version(): string;
   abstract get url(): string;
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(public options: DatabaseOptions) {
-    super();
+  constructor(public options: TDatabaseOptions) {
+    // We need to use 'master' for mssql because it does not initialize the database on start
+    const database = this.options.name === 'mssql' ? 'master' : this.options.database;
+    this.sequelize = new Sequelize(database, this.options.username, this.options.password, {
+      host: 'localhost',
+      port: this.options.port,
+      dialect: this.options.name.replace('postgresql', 'postgres') as Dialect,
+      retry: {
+        max: 30,
+        match: [ConnectionError, TimeoutError, ConnectionTimedOutError, ConnectionRefusedError, ConnectionAcquireTimeoutError],
+        backoffBase: 1000,
+        backoffExponent: 1
+      },
+      logging: false
+    });
   }
 
   // ------------------------------------------------------------------------------------------ Public Methods
 
-  async run(sql: string | { query: string; values: unknown[] }, logging?: boolean): Promise<[unknown[], unknown]|null> {
+  async run(sql: string | { query: string; values: unknown[] }, logging?: boolean): Promise<void> {
     try {
-      if (!this.sequelize) throw new Error('Database connection does not exist');
       await this.sequelize.query(sql, { logging });
     } catch (err) {
       console.error('An error occurred while trying to run the following SQL query:', sql, err);
-      gracefulExit();
+      throw err;
     }
-    return null;
   }
 
   async start(clean = this.options.clean): Promise<void> {
-    console.log(`Starting instance of ${this.name} ⏳`);
+    console.log(`Starting instance of ${this.options.name}... 💃`);
 
     if (clean) {
       await this.down();
     }
 
     await this.up();
-    this.emit(`${this.name}:up`);
 
     const isAvailable = await this.waitUntilReady();
     if (!isAvailable) {
-      console.log(`Failed to start database ${this.name} ⛔`);
-      gracefulExit(0);
+      console.log(`Failed to verify status of ${this.options.name} ⛔`);
+      gracefulExit(1);
     } else {
       console.log(`Database is ready and accepting connections on localhost:${this.options.port} 🗄️`);
-      await this.onDatabaseReady();
-      this.emit('db:ready');
+      try {
+        await this.onDatabaseReady();
 
-      if (this.options.logging) {
-        const service = await this.getServiceState();
-        if (service) {
-          await this.showDockerLogs(service.name);
+        if (this.options.verbose) {
+          const service = await this.getServiceState();
+          if (service) {
+            await this.showDockerLogs(service.name);
+          }
         }
+      } catch (err) {
+        gracefulExit(1);
       }
     }
   }
@@ -76,12 +80,10 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
     } else {
       const configAsString = dump(this.getDockerComposeConfig());
       await stop({
-        cwd: cwd(),
         configAsString,
         log: true
-      })
+      });
     }
-    this.emit('db:stopped');
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods
@@ -107,7 +109,6 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
     const configAsString = dump(this.getDockerComposeConfig());
 
     return upAll({
-      cwd: cwd(),
       configAsString,
       log: true
     });
@@ -116,7 +117,6 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
   private async down() {
     const configAsString = dump(this.getDockerComposeConfig());
     return downAll({
-      cwd: cwd(),
       configAsString,
       commandOptions: [ '-v', '--remove-orphans', '--rmi', 'local' ],
       log: true
@@ -124,35 +124,13 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
   }
 
   private async waitUntilReady(): Promise<boolean> {
-    try {
-      // We need to use 'master' for mssql because it does not initialize the database on start
-      const database = this.name === 'mssql' ? 'master' : this.options.database;
-      this.sequelize = new Sequelize(database, this.options.username, this.options.password, {
-        host: 'localhost',
-        port: this.options.port,
-        dialect: this.name.replace('postgresql', 'postgres') as Dialect,
-        retry: {
-          max: 30,
-          match: [ConnectionError, TimeoutError, ConnectionTimedOutError, ConnectionRefusedError, ConnectionAcquireTimeoutError],
-          backoffBase: 1000,
-          backoffExponent: 1
-        },
-        logging: false
-      });
-
-      return this.sequelize.authenticate().then(() => true).catch((err) => {
-        console.log(err);
-        return false;
-      });
-    } catch (err) {
-      return false;
-    }
+    return this.sequelize.authenticate().then(() => true).catch(() => false);
   }
 
   private async getServiceState() {
     const configAsString = dump(this.getDockerComposeConfig());
     const result = await ps({ configAsString, log: false, commandOptions: [ '--all' ] });
-    return result.data.services.find(item => item.name.includes(this.name));
+    return result.data.services.find(item => item.name.includes(this.options.name));
   }
 
   private async showDockerLogs(service: string) {
@@ -160,7 +138,7 @@ export abstract class Base extends EventEmitter implements DatabaseEngine {
       const docker = spawn(
         'docker',
         [ 'logs', '-f', '-n', '5000', service ],
-        { cwd: cwd(), stdio: 'inherit' }
+        { stdio: 'inherit' }
       );
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });

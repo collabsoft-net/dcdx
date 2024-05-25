@@ -1,21 +1,20 @@
 
 import { timebomb } from '../helpers/licences';
 import { toAbsolutePath } from '../helpers/toAbsolutePath';
-import { ApplicationOptions } from '../types/ApplicationOptions';
-import { DatabaseEngine } from '../types/DatabaseEngine';
+import { SupportedApplications, TApplicationOptions } from '../types/Application';
+import { DatabaseEngine } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
-import { SupportedApplications } from '../types/SupportedApplications';
 import { Base } from './base';
 
 export class Bitbucket extends Base {
 
-  name = SupportedApplications.BITBUCKET;
+  name = SupportedApplications.Values.bitbucket;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/bitbucket/log/atlassian-bitbucket.log';
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(options: ApplicationOptions) {
+  constructor(options: TApplicationOptions) {
     super(options);
     this.database = this.getDatabaseEngine(options.database);
   }
@@ -23,15 +22,13 @@ export class Bitbucket extends Base {
   // ------------------------------------------------------------------------------------------ Protected Methods
 
   protected getService(): Service {
-
-    const volumes = this.getVolumes();
     const environment = this.getEnvironmentVariables();
 
     return {
       build: {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
-FROM dcdx/${this.name}:${this.options.version}
+FROM dcdx/${this.name}:${this.options.tag}
 COPY ./quickreload-5.0.4.jar /var/atlassian/application-data/bitbucket/plugins/installed-plugins/quickreload-5.0.4.jar
 COPY ./mysql-connector-j-8.3.0.jar /var/atlassian/application-data/bitbucket/lib/mysql-connector-j-8.3.0.jar
 RUN echo "/opt/quickreload" > /var/atlassian/application-data/bitbucket/quickreload.properties; \
@@ -40,7 +37,7 @@ RUN echo "/opt/quickreload" > /var/atlassian/application-data/bitbucket/quickrel
 
 RUN mkdir -p /var/atlassian/application-data/bitbucket/shared; \
     touch /var/atlassian/application-data/bitbucket/shared/bitbucket.properties; \
-    echo "setup.license=${this.options.license || timebomb.bitbucket}" >> /var/atlassian/application-data/bitbucket/shared/bitbucket.properties;
+    echo "setup.license=${timebomb.bitbucket}" >> /var/atlassian/application-data/bitbucket/shared/bitbucket.properties;
 
 RUN chown -R bitbucket:bitbucket /var/atlassian/application-data/bitbucket`
       },
@@ -48,8 +45,7 @@ RUN chown -R bitbucket:bitbucket /var/atlassian/application-data/bitbucket`
         `${this.options.port || 80}:7990`,
         ...this.options.debug ? [ '5005:5005' ] : [],
       ],
-      environment: Object.keys(environment).length > 0 ? environment : undefined,
-      volumes: volumes.length > 0 ? volumes : undefined,
+      environment,
       networks: [ 'shared' ]
     }
   }
@@ -68,18 +64,14 @@ RUN chown -R bitbucket:bitbucket /var/atlassian/application-data/bitbucket`
 
   private getEnvironmentVariables() {
     return {
+      ...this.options.xms ? { 'JVM_MINIMUM_MEMORY': this.options.xms } : '',
+      ...this.options.xmx ? { 'JVM_MAXIMUM_MEMORY': this.options.xmx } : '',
       'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
       'JDBC_URL': this.database.url,
       'JDBC_USER': this.database.options.username,
       'JDBC_PASSWORD': this.database.options.password,
-      'JDBC_DRIVER': `${this.database.driver}`,
+      'JDBC_DRIVER': `${this.database.options.driver}`,
     }
   };
-
-  private getVolumes() {
-    return [
-      ...this.options.quickReload ? [ `${this.options.quickReload}:/opt/quickreload` ] : ''
-    ];
-  }
 
 }

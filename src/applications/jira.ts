@@ -1,21 +1,20 @@
 
 import { timebomb } from '../helpers/licences';
 import { toAbsolutePath } from '../helpers/toAbsolutePath';
-import { ApplicationOptions } from '../types/ApplicationOptions';
-import { DatabaseEngine } from '../types/DatabaseEngine';
+import { SupportedApplications,TApplicationOptions } from '../types/Application';
+import { DatabaseEngine } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
-import { SupportedApplications } from '../types/SupportedApplications';
 import { Base } from './base';
 
 export class Jira extends Base {
 
-  name = SupportedApplications.JIRA;
+  name = SupportedApplications.Values.jira;
   database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/jira/log/atlassian-jira.log';
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(options: ApplicationOptions) {
+  constructor(options: TApplicationOptions) {
     super(options);
     this.database = this.getDatabaseEngine(options.database);
   }
@@ -23,14 +22,13 @@ export class Jira extends Base {
   // ------------------------------------------------------------------------------------------ Protected Methods
 
   protected getService(): Service {
-    const volumes = this.getVolumes();
     const environment = this.getEnvironmentVariables();
 
     return {
       build: {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
-FROM dcdx/${this.name}:${this.options.version}
+FROM dcdx/${this.name}:${this.options.tag}
 COPY ./jira-data-generator-5.0.0.jar /var/atlassian/application-data/jira/plugins/installed-plugins/jira-data-generator-5.0.0.jar
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/jira/lib/mysql-connector-j-8.3.0.jar
 COPY ./quickreload-5.0.4.jar /var/atlassian/application-data/jira/plugins/installed-plugins/quickreload-5.0.4.jar
@@ -41,11 +39,10 @@ RUN echo "/opt/quickreload" > /var/atlassian/application-data/jira/quickreload.p
 RUN chown -R jira:jira /var/atlassian/application-data/jira`
       },
       ports: [
-        `${this.options.port || 80}:8080`,
+        `${this.options.port}:8080`,
         ...this.options.debug ? [ '5005:5005' ] : [],
       ],
-      environment: Object.keys(environment).length > 0 ? environment : undefined,
-      volumes: volumes.length > 0 ? volumes : undefined,
+      environment,
       networks: [ 'shared' ]
     }
   }
@@ -64,25 +61,21 @@ RUN chown -R jira:jira /var/atlassian/application-data/jira`
   private getEnvironmentVariables() {
 
     // For some reason, Jira uses a different type for postgres
-    const dbType = this.database.name === 'postgresql' ? 'postgres72' : this.database.name;
+    const dbType = this.database.options.name === 'postgresql' ? 'postgres72' : this.database.options.name;
 
     return {
       ...this.options.contextPath ? { 'ATL_TOMCAT_CONTEXTPATH': this.options.contextPath } : '',
+      ...this.options.xms ? { 'JVM_MINIMUM_MEMORY': this.options.xms } : '',
+      ...this.options.xmx ? { 'JVM_MAXIMUM_MEMORY': this.options.xmx } : '',
       'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
-      'ATL_LICENSE_KEY': this.options.license || timebomb.confluence,
+      'ATL_LICENSE_KEY': timebomb.confluence,
       'ATL_JDBC_URL': this.database.url,
       'ATL_JDBC_USER': this.database.options.username,
       'ATL_JDBC_PASSWORD': this.database.options.password,
-      'ATL_DB_DRIVER': this.database.driver,
+      'ATL_DB_DRIVER': this.database.options.driver,
       'ATL_DB_TYPE': dbType,
-      'JIRA_SETUP_LICENSE': this.options.license || timebomb.jira
+      'JIRA_SETUP_LICENSE': timebomb.jira
     }
   };
-
-  private getVolumes() {
-    return [
-      ...this.options.quickReload ? [ `${this.options.quickReload}:/opt/quickreload` ] : ''
-    ];
-  }
 
 }
