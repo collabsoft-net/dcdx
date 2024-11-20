@@ -63,7 +63,7 @@
     "nodemon": "3.1.0",
     "rollup": "4.14.1",
     "rollup-plugin-executable": "1.6.3",
-    "semantic-release": "23.0.8",
+    "semantic-release": "24.2.0",
     "typescript": "5.4.4",
     "typescript-eslint": "7.6.0",
     "vitest": "1.6.0",
