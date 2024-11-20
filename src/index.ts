@@ -10,6 +10,11 @@ program
   .version(version)
   .showHelpAfterError(true);
 
+// ------------------------------------------------------------------------------------------ APT
+
+program
+  .command('apt', 'Run the App Performance Toolkit tests', { executableFile: './commands/apt.js' });
+
 // ------------------------------------------------------------------------------------------ Build
 
 program
