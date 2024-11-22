@@ -276,17 +276,6 @@ export abstract class Base implements Application {
     }
   }
 
-  private async showDockerLogs(service: string) {
-    return new Promise<void>((resolve, reject) => {
-      const docker = spawn(
-        'docker',
-        [ 'logs', '-f', '-n', '5000', service ],
-        { cwd: this.options.cwd || cwd(), stdio: 'inherit' }
-      );
-      docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
-    });
-  }
-
   private async showApplicationLogs(service: string) {
     return new Promise<void>((resolve, reject) => {
       const docker = spawn(
