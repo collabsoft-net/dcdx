@@ -73,7 +73,7 @@ export class AMPS {
   public getApplicationVersion(): string|undefined {
     const applications = this.getApplications();
     if (applications.size === 1) {
-      const [ , version ] = applications.entries().next().value;
+      const [ , version ] = Array.from(applications)[0];
       return version;
     } else if (applications.size > 1) {
       throw new Error('The Atlassian Plugin project contains multiple AMPS configuration, unable to decide which product to use 😰')
@@ -84,7 +84,7 @@ export class AMPS {
   public getApplication(): TSupportedApplications|null {
     const applications = this.getApplications();
     if (applications.size === 1) {
-      const [ name ] = applications.entries().next().value;
+      const [ name ] = Array.from(applications)[0];
       return name;
     } else if (applications.size > 1) {
       throw new Error('The Atlassian Plugin project contains multiple AMPS configuration, unable to decide which product to use 😰')
