@@ -20,6 +20,12 @@ program
 program
   .command('build', 'Build the Atlassian Data Center plugin based on the Atlassian Maven Plugin Suite (AMPS) configuration', { executableFile: './commands/build.js' });
 
+// ------------------------------------------------------------------------------------------ Install
+
+program
+  .command('install', 'Install the Atlassian Data Center plugin based on the Atlassian Maven Plugin Suite (AMPS) configuration', { executableFile: './commands/install.js' });
+
+
 // ------------------------------------------------------------------------------------------ Start
 
 program
