@@ -3,6 +3,7 @@ version: 2.1
 jobs:
   publish:
     executor: nodejs
+    resource_class: small
 
     steps:
       - checkout
