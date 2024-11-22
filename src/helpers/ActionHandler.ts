@@ -11,7 +11,7 @@ export const ActionHandler = async <T extends TApplicationOptions|TDatabaseOptio
   errorHandler: (options: T) => Promise<void>;
 }, options?: T) => {
   const ops: T = options || program.opts();
-  await new Promise<void>((resolve, reject) => {
+  await new Promise<void>((_, reject) => {
     let errorMessage: string|null = '';
 
     asyncExitHook(async (code) => {
@@ -23,14 +23,16 @@ export const ActionHandler = async <T extends TApplicationOptions|TDatabaseOptio
         if (errorMessage) {
           throw new Error(errorMessage.trim());
         } else {
-          resolve();
+          // We are rejecting the promise to avoid the
+          // "Calling process.exit" log message from exit-hook
+          reject(null);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : err;
         reject(message);
       }
     }, {
-      wait: 30 * 1000
+      wait: 60 * 1 * 1000
     });
 
     action(ops).catch(err => {
@@ -43,5 +45,13 @@ export const ActionHandler = async <T extends TApplicationOptions|TDatabaseOptio
       }
       gracefulExit(1);
     });
-  }).catch(message => program.error(message));
+  }).catch(message => {
+    if (message !== null) {
+      program.error(message);
+    // If there is no error message,
+    // we can assume a clean exit
+    } else {
+      process.exit(0);
+    }
+  })
 }
