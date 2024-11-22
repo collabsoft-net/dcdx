@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import { downAll, ps, stop,upAll } from 'docker-compose/dist/v2.js';
 import { gracefulExit } from 'exit-hook';
 import { dump } from 'js-yaml';
+import { cwd } from 'process';
 import { ConnectionAcquireTimeoutError, ConnectionError, ConnectionRefusedError, ConnectionTimedOutError, Dialect, Sequelize, TimeoutError } from 'sequelize';
 
 import { network } from '../helpers/network';
@@ -128,8 +129,16 @@ export abstract class Base implements DatabaseEngine {
 
   private async getServiceState() {
     const configAsString = dump(this.getDockerComposeConfig());
-    const result = await ps({ configAsString, log: false, commandOptions: [ '--all' ] });
-    return result.data.services.find(item => item.name.includes(this.options.name));
+    const result = await ps({
+      cwd: cwd(),
+      configAsString,
+      commandOptions: [ '--all' ],
+      log: false
+    });
+    return result.data.services.find(item => {
+      const [ , service ] = item.name.split('-');
+      return service === this.options.name;
+    });
   }
 
   private async showDockerLogs(service: string) {

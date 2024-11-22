@@ -180,8 +180,17 @@ export abstract class Base implements Application {
 
   private async getServiceState() {
     const configAsString = dump(this.getDockerComposeConfig());
-    const result = await ps({ configAsString, log: false, commandOptions: [ '--all' ] });
-    return result.data.services.find(item => item.name.includes(this.name));
+    const result = await ps({
+      cwd: this.options.cwd || cwd(),
+      configAsString,
+      commandOptions: [ '--all' ],
+      log: false
+    });
+
+    return result.data.services.find(item => {
+      const [ , service ] = item.name.split('-');
+      return service === this.name;
+    });
   }
 
   private async waitUntilReady(): Promise<boolean>;
