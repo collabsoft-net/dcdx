@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { spawn } from 'child_process';
-import { downAll, ps, stop, upAll } from 'docker-compose/dist/v2.js';
+import { downAll, logs, ps, stop, upAll } from 'docker-compose/dist/v2.js';
 import { gracefulExit } from 'exit-hook';
 import { existsSync, mkdirSync } from 'fs';
 import { dump } from 'js-yaml';
@@ -158,7 +158,19 @@ export abstract class Base implements Application {
 
     const isAvailable = await this.waitUntilReady();
     if (!isAvailable) {
-      console.log(`Failed to start ${this.name} ⛔`);
+      const service = await this.getServiceState();
+      const isRunning = service && service.state.toLowerCase().startsWith('up');
+      if (!isRunning) {
+        console.log(`Failed to start ${this.name} ⛔`);
+        await logs(Object.keys(config.services), {
+          cwd: this.options.cwd || cwd(),
+          configAsString,
+          log: true
+        });
+      } else {
+        console.log(`Could not confirm state of ${this.name}, but the container is running. Please consult the application logs 👇`);
+        await this.tailApplicationLogs();
+      }
     } else {
       await this.tailApplicationLogs();
     }
