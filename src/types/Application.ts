@@ -23,8 +23,8 @@ export const ApplicationOptions = z.object({
   name: SupportedApplications,
   tag: z.string().default('latest'),
   database: SupportedDatabaseEngines.default('postgresql'),
-  port: z.string().transform(Number).refine(item => !isNaN(item)),
   databaseTag: z.string().default('latest'),
+  port: z.string().transform(Number).refine(item => !isNaN(item)).default('80'),
   contextPath: z.string(),
   xms: z.string().default('1024m'),
   xmx: z.string().default('1024m'),
@@ -38,10 +38,14 @@ export const ApplicationOptions = z.object({
   debug: z.boolean().default(true),
   cwd: z.string()
 }).partial({
-  activateProfiles: true,
   contextPath: true,
+  ext: true,
+  install: true,
+  outputDirectory: true,
+  activateProfiles: true,
   cwd: true
 });
 
 export type TApplicationOptions = z.infer<typeof ApplicationOptions>;
 export type TSupportedApplications = z.infer<typeof SupportedApplications>;
+export type TTimebombLicenses = Record<TSupportedApplications & 'app', string>;

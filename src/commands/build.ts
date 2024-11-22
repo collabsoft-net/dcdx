@@ -50,11 +50,11 @@ const Command = () => {
       }
 
       if (!options.watch && options.ext) {
-        throw new InvalidOptionArgumentError('Invalid argument "--ext"');
-      } else if (!options.watch && options.install) {
-        throw new InvalidOptionArgumentError('Invalid argument "--install"');
+        throw new InvalidOptionArgumentError('Invalid argument "--ext". This option is only available in combination with "--watch"');
+      } else if (!options.install && options.obr) {
+        throw new InvalidOptionArgumentError('Invalid argument "--obr". This option is only available in combination with "--install"');
       } else if (!options.install && options.outputDirectory) {
-        throw new InvalidOptionArgumentError('Invalid argument "--outputDirectory"');
+        throw new InvalidOptionArgumentError('Invalid argument "--outputDirectory". This option is only available in combination with "--install"');
       } else if (options.exec && options.activateProfiles) {
         throw new InvalidOptionArgumentError('Invalid argument "--activate-profiles". This option is not available in combination with "--exec"');
       }
