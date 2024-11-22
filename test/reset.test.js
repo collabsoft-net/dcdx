@@ -1,3 +1,4 @@
+import { setMaxListeners } from 'node:events';
 import fs from 'node:fs';
 import { cwd } from 'node:process';
 
@@ -22,6 +23,8 @@ const mockedDownAll = vi.fn();
 beforeEach(() => {
   stdOut = '';
   stdErr = '';
+
+  setMaxListeners(300);
 
   vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
   vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });

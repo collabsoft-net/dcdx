@@ -1,3 +1,4 @@
+import { setMaxListeners } from 'node:events';
 import { cwd } from 'node:process';
 import { EventEmitter } from 'node:stream';
 
@@ -26,6 +27,8 @@ const mockedSpawn = vi.fn().mockImplementation(() => SpawnEventEmitter);
 beforeEach(() => {
   stdOut = '';
   stdErr = '';
+
+  setMaxListeners(300);
 
   mockedStop.mockResolvedValue(true);
   vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });

@@ -40,6 +40,8 @@
   > The pom file has multiple AMPS configurations (legacy)
 */
 
+import { setMaxListeners } from 'node:events';
+
 import { join } from 'path';
 import process, { cwd, stderr, stdout } from 'process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -88,6 +90,9 @@ const mockReadFileSync = vi.fn();
 const mockedDockerCompose = vi.hoisted(() => vi.fn().mockReturnValue(Promise.resolve()));
 
 beforeEach(() => {
+
+  setMaxListeners(300);
+
   vi.mock('exit-hook');
   vi.spyOn(process, 'on').mockImplementation(() => {});
   vi.spyOn(process, 'exit').mockImplementation(() => {});

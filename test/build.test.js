@@ -1,3 +1,4 @@
+import { setMaxListeners } from 'node:events';
 import { cwd } from 'node:process';
 
 import process, { stderr, stdout } from 'process'
@@ -37,6 +38,8 @@ const defaultWatchOptions = {
 beforeEach(() => {
   stdOut = '';
   stdErr = '';
+
+  setMaxListeners(300);
 
   vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
   vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
