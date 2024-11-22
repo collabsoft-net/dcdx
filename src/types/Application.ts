@@ -24,6 +24,7 @@ export const ApplicationOptions = z.object({
   tag: z.string().default('latest'),
   database: SupportedDatabaseEngines.default('postgresql'),
   port: z.string().transform(Number).refine(item => !isNaN(item)),
+  databaseTag: z.string().default('latest'),
   contextPath: z.string(),
   xms: z.string().default('1024m'),
   xmx: z.string().default('1024m'),

@@ -4,21 +4,18 @@ import axios from 'axios';
 import { timebomb } from '../helpers/licences';
 import { toAbsolutePath } from '../helpers/toAbsolutePath';
 import { SupportedApplications, TApplicationOptions } from '../types/Application';
-import { DatabaseEngine } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
 import { Base } from './base';
 
 export class Bamboo extends Base {
 
   name = SupportedApplications.Values.bamboo;
-  database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/bamboo/logs/atlassian-bamboo.log';
 
   // ------------------------------------------------------------------------------------------ Constructor
 
   constructor(options: TApplicationOptions) {
     super(options);
-    this.database = this.getDatabaseEngine(options.database);
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods

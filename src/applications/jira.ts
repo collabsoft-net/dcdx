@@ -2,21 +2,18 @@
 import { timebomb } from '../helpers/licences';
 import { toAbsolutePath } from '../helpers/toAbsolutePath';
 import { SupportedApplications,TApplicationOptions } from '../types/Application';
-import { DatabaseEngine } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
 import { Base } from './base';
 
 export class Jira extends Base {
 
   name = SupportedApplications.Values.jira;
-  database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/jira/log/atlassian-jira.log';
 
   // ------------------------------------------------------------------------------------------ Constructor
 
   constructor(options: TApplicationOptions) {
     super(options);
-    this.database = this.getDatabaseEngine(options.database);
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods

@@ -20,13 +20,15 @@ const basedir = join(homedir(),'.dcdx');
 
 export abstract class Base implements Application {
 
+  database: DatabaseEngine;
   abstract get name(): TSupportedApplications;
-  abstract get database(): DatabaseEngine;
   abstract get logFilePath(): string;
 
   // ------------------------------------------------------------------------------------------ Constructor
 
-  constructor(protected options: TApplicationOptions) {}
+  constructor(protected options: TApplicationOptions) {
+    this.database = this.getDatabaseEngine(options.database, options.databaseTag);
+  }
 
   // ------------------------------------------------------------------------------------------ Properties
 
@@ -109,12 +111,13 @@ export abstract class Base implements Application {
     }
   }
 
-  protected getDatabaseEngine(name: TSupportedDatabaseEngines): DatabaseEngine {
+  protected getDatabaseEngine(name: TSupportedDatabaseEngines, tag?: string): DatabaseEngine {
     return getDatabaseEngine(DatabaseOptions.parse({
       ...this.getDefaultOptions(name),
       name,
       cwd: this.options.cwd
-    }));
+    }), tag);
+  }
   }
 
   // ------------------------------------------------------------------------------------------ Private Methods

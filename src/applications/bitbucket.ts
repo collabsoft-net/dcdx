@@ -2,21 +2,18 @@
 import { timebomb } from '../helpers/licences';
 import { toAbsolutePath } from '../helpers/toAbsolutePath';
 import { SupportedApplications, TApplicationOptions } from '../types/Application';
-import { DatabaseEngine } from '../types/Database';
 import { Service } from '../types/DockerComposeV3';
 import { Base } from './base';
 
 export class Bitbucket extends Base {
 
   name = SupportedApplications.Values.bitbucket;
-  database: DatabaseEngine;
   logFilePath = '/var/atlassian/application-data/bitbucket/log/atlassian-bitbucket.log';
 
   // ------------------------------------------------------------------------------------------ Constructor
 
   constructor(options: TApplicationOptions) {
     super(options);
-    this.database = this.getDatabaseEngine(options.database);
   }
 
   // ------------------------------------------------------------------------------------------ Protected Methods
