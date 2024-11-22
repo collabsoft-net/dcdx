@@ -121,7 +121,6 @@ export abstract class Base implements Application {
 
   private getDockerComposeConfig(): DockerComposeV3 {
     return {
-      version: '3.8',
       services: {
         [this.name]: this.getService()
       },

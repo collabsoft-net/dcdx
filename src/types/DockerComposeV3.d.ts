@@ -2,8 +2,6 @@
 export {}
 
 export type DockerComposeV3 = {
-
-  version: string;
   services: Record<string, Service>;
   volumes?: Record<string, Volume>;
   networks?: Record<string, Network>;

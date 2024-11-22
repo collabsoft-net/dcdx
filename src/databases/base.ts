@@ -95,7 +95,6 @@ export abstract class Base implements DatabaseEngine {
 
   private getDockerComposeConfig(): DockerComposeV3 {
     return {
-      version: '3.8',
       services: {
         'db': this.getService()
       },
