@@ -380,20 +380,6 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(7);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(0);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(123);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
       let counter = '';
       [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
@@ -410,6 +396,19 @@ Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
 
+      expect(mockExistsSync).toBeCalledTimes(7);
+      expect(mockReadFileSync).toBeCalledTimes(7);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockedClone).toBeCalledTimes(0);
+      expect(mockedPull).toBeCalledTimes(0);
+
+      expect(mockedDownAll).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(123);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
+      expect(mockedQuery).toBeCalledTimes(0);
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandOptions });
     });
 
