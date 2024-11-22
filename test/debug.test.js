@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import versions from '../assets/versions.json';
 import { SupportedApplications } from '../src/types/Application';
 import { getValidLegacyPomFileFor, getValidPomFileFor } from './fixtures/pomFiles';
+import { isBuildRequired } from './helpers/isBuildRequired';
+import { mustSkip } from './helpers/mustSkip';
 
 let stdOut = '';
 let stdErr = '';
@@ -18,6 +20,7 @@ let commandExecutionOptions = '';
 let fsWatcherPaths = '';
 let fsWatcherOptions = null;
 let fsWatcher = null;
+let fsWatcherEventListener = null;
 
 const mockExistsSync = vi.fn();
 const mockReadFileSync = vi.fn();
@@ -42,7 +45,9 @@ const defaultCommandOptions = {
   debug: true,
   port: '80',
   prune: false,
-  watch: false,
+  watch: true,
+  install: true,
+  obr: false,
   xms: '1024m',
   xmx: '1024m',
 }
@@ -119,6 +124,10 @@ beforeEach(() => {
         fsWatcherPaths = paths;
         fsWatcherOptions = options;
         fsWatcher = actual.watch(paths, { ...options, useFsEvents: false });
+        fsWatcher.on = (_, listener) => {
+          fsWatcherEventListener = listener;
+          return fsWatcher;
+        }
         return fsWatcher;
       }
     }
@@ -154,6 +163,15 @@ beforeEach(() => {
       }
     }
   });
+
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
@@ -165,17 +183,18 @@ afterEach(() => {
   fsWatcher = null;
   fsWatcherPaths = '';
   fsWatcherOptions = null;
+  fsWatcherEventListener = null;
   process.argv = [ 'vitest', cwd() ];
   setMaxListeners();
 })
 
 Object.values(SupportedApplications.Values).forEach(name => {
 
-  const tag = versions[name][Math.floor(Math.random()*versions[name].length)];
+  const tag = isBuildRequired[name](false);
 
-  describe(`dcdx debug - ${name}`, async () => {
+  describe.skipIf(mustSkip.includes('debug'))(`dcdx debug - ${name}`, async () => {
 
-    it(`dcdx debug (git clone)`, async () => {
+    it(`dcdx debug (build required - git clone)`, async () => {
       mockExistsSync.mockImplementation((path) => {
         if (path.endsWith('.xml')) {
           return true;
@@ -183,13 +202,13 @@ Object.values(SupportedApplications.Values).forEach(name => {
           return false;
         }
       });
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, isBuildRequired[name](true)));
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -206,7 +225,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
 
       expect(mockExistsSync).toBeCalledTimes(8);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(1);
       expect(mockedPull).toBeCalledTimes(0);
@@ -220,11 +239,13 @@ Object.values(SupportedApplications.Values).forEach(name => {
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -232,15 +253,15 @@ Successfully stopped all running processes 💪
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandOptions });
     });
 
-    it(`dcdx debug (git pull)`, async () => {
+    it(`dcdx debug (build required - git pull)`, async () => {
       mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, isBuildRequired[name](true)));
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -257,7 +278,7 @@ Successfully stopped all running processes 💪
 
       expect(mockExistsSync).toBeCalledTimes(8);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(1);
@@ -271,11 +292,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -283,15 +306,15 @@ Successfully stopped all running processes 💪
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandOptions });
     });
 
-    it(`dcdx debug (docker quits unexpected)`, async () => {
+    it(`dcdx debug (build required - docker quits unexpected)`, async () => {
       mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, isBuildRequired[name](true)));
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -308,7 +331,7 @@ Successfully stopped all running processes 💪
 
       expect(mockExistsSync).toBeCalledTimes(8);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(1);
@@ -322,7 +345,9 @@ Successfully stopped all running processes 💪
 
       expect(stdErr.startsWith('Error: Docker exited with code 1')).toBeTruthy();
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -338,7 +363,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: name !== 'bamboo' ? 200 : 204,
         data: { status: 'FAILED' }
@@ -358,30 +383,32 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(301);
+      expect(mockedPS).toBeCalledTimes(123);
       expect(mockedStop).toBeCalledTimes(2);
       expect(mockedUpAll).toBeCalledTimes(2);
       expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
       let counter = '';
-      [...Array(301)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
+      [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
-      expect(stdErr).toBe(`A timeout occurred while waiting for ${name} to become available ⛔`.trim() + '\n');
+      expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 ${counter.trim()}
-Failed to start ${name} ⛔
+Could not confirm state of ${name}, but the container is running. Please consult the application logs 👇
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -397,7 +424,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockRejectedValue({
         status: 500
       })
@@ -416,30 +443,32 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(301);
+      expect(mockedPS).toBeCalledTimes(123);
       expect(mockedStop).toBeCalledTimes(2);
       expect(mockedUpAll).toBeCalledTimes(2);
       expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
       let counter = '';
-      [...Array(301)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
+      [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
-      expect(stdErr).toBe(`A timeout occurred while waiting for ${name} to become available ⛔`.trim() + '\n');
+      expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 ${counter.trim()}
-Failed to start ${name} ⛔
+Could not confirm state of ${name}, but the container is running. Please consult the application logs 👇
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -455,7 +484,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -471,12 +500,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(5);
+      expect(mockExistsSync).toBeCalledTimes(4);
       expect(mockReadFileSync).toBeCalledTimes(4);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -487,11 +516,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -510,7 +541,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -557,7 +588,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -573,12 +604,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -589,11 +620,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of mysql... 💃
 Database is ready and accepting connections on localhost:3306 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -612,7 +645,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -628,12 +661,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -644,11 +677,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of mssql... 💃
 Database is ready and accepting connections on localhost:1433 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -667,7 +702,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -710,7 +745,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -726,12 +761,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -742,11 +777,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:1234 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -765,7 +802,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -781,12 +818,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -797,11 +834,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80/atlassian 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -820,7 +859,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -836,12 +875,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -852,11 +891,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -875,7 +916,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -891,12 +932,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -907,11 +948,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -930,7 +973,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -946,12 +989,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(2);
       expect(mockedPS).toBeCalledTimes(2);
@@ -962,11 +1005,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -985,7 +1030,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1001,12 +1046,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(2);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1017,11 +1062,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
@@ -1032,7 +1079,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch -P active`, async () => {
+    it(`dcdx debug -P active`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag, 'active'));
       mockedClone.mockResolvedValue(true);
@@ -1040,13 +1087,13 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch', '-P', 'active' ]
+      process.argv = [ 'vitest', cwd(), '-P', 'active' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
@@ -1056,13 +1103,13 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1094,7 +1141,7 @@ Successfully stopped all running processes 💪
     });
 
 
-    it(`dcdx debug --watch (no change)`, async () => {
+    it(`dcdx debug (no change)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockedClone.mockResolvedValue(true);
@@ -1102,13 +1149,13 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
@@ -1118,13 +1165,13 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1154,7 +1201,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch (change triggerd to src/somefile.java)`, async () => {
+    it(`dcdx debug (change triggerd to src/somefile.java)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1163,33 +1210,30 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('src/somefile.java');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(1);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1219,9 +1263,10 @@ Successfully stopped all running processes 💪
         ...defaultCommandOptions,
         watch: true
       });
+
     });
 
-    it(`dcdx debug --watch (repetitive change triggerd to src/somefile.java)`, async () => {
+    it(`dcdx debug (repetitive change triggerd to src/somefile.java)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockedClone.mockResolvedValue(true);
@@ -1229,41 +1274,35 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
+      // Trigger a build based on a file change
       mockRecursiveBuild.mockReturnValue(false);
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      await fsWatcherEventListener('src/somefile.java');
 
+      // Rapidly trigger another build based on a file change
       mockRecursiveBuild.mockReturnValue(true);
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      await fsWatcherEventListener('src/somefile.java');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(1);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1304,7 +1343,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch (change triggerd in output directory)`, async () => {
+    it(`dcdx debug (change triggerd in output directory)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1313,13 +1352,13 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
@@ -1334,13 +1373,13 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1370,7 +1409,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch (change triggerd by JAR file, without -i)`, async () => {
+    it(`dcdx debug (change triggerd by JAR file)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1379,13 +1418,13 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
@@ -1400,13 +1439,13 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1436,7 +1475,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch --install (change triggerd by JAR file, with -i but without containers)`, async () => {
+    it(`dcdx debug (change triggerd by JAR file, without containers)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1446,34 +1485,30 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch', '-i' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1505,7 +1540,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch --install (change triggerd by JAR file, with -i with multiple containers)`, async () => {
+    it(`dcdx debug (change triggerd by JAR file, with multiple containers)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1515,34 +1550,30 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch', '-i' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1574,7 +1605,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch --install (change triggerd by JAR file, with -i and a running instance)`, async () => {
+    it(`dcdx debug (change triggerd by JAR file, with a running instance)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1585,34 +1616,30 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch', '-i' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1629,8 +1656,8 @@ Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
-Found updated JAR file, uploading them to QuickReload on running instances of ${name}
-Finished uploading JAR file to QuickReload
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
 Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
@@ -1645,7 +1672,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch --install --outputDirectory dist (change triggerd by JAR file, in different output directory)`, async () => {
+    it(`dcdx debug --outputDirectory dist (change triggerd by JAR file, in different output directory)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1656,34 +1683,30 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch', '-i', '--outputDirectory', 'dist' ];
+      process.argv = [ 'vitest', cwd(), '--outputDirectory', 'dist' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(1);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1717,7 +1740,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch --install --outputDirectory dist (change triggerd by JAR file, with -i and a running container)`, async () => {
+    it(`dcdx debug --outputDirectory dist (change triggerd by JAR file, with a running container)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -1728,34 +1751,30 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch', '-i', '--outputDirectory', 'dist' ];
+      process.argv = [ 'vitest', cwd(), '--outputDirectory', 'dist' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'dist/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('dist/archive.jar');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1772,8 +1791,8 @@ Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
-Found updated JAR file, uploading them to QuickReload on running instances of ${name}
-Finished uploading JAR file to QuickReload
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
 Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
@@ -1789,7 +1808,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch --ext **/*.java (no change)`, async () => {
+    it(`dcdx debug --ext **/*.java (no change)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockedClone.mockResolvedValue(true);
@@ -1797,632 +1816,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java (change triggerd to src/somefile.java)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockedBuild).toBeCalledTimes(1);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Detected file change, rebuilding Atlasian Data Center plugin
-Finished building Atlassian Data Center plugin for ${name}... 💪
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java (change triggerd to src/somefile.txt - ignored)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java (repetitive change triggerd to src/somefile.java)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      mockRecursiveBuild.mockReturnValue(false);
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-
-      mockRecursiveBuild.mockReturnValue(true);
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedBuild).toBeCalledTimes(1);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Detected file change, rebuilding Atlasian Data Center plugin
-Finished building Atlassian Data Center plugin for ${name}... 💪
-
-===============================================================================================================
-Recursive build trigger detected. The last build completed last than 5 seconds ago
-This may indicate that the build changes files outside of the output directory
-Alternatively, Maven is using a different output directory than configured:
-'target'
-
-Please make sure to check your build process and/or specify a different output directory using the '-o' option
-===============================================================================================================
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java (change triggerd in output directory)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'target/somefile.class');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java (change triggerd by JAR file, without -i)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java -i (change triggerd by JAR file, with -i but without containers)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedDockerRunningContainerIds.mockReturnValue([]);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java', '-i' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedDockerRunningContainerIds).toBeCalledTimes(1);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-There are no running instance of ${name}, unable to install plugin 🤔
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        install: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java -i (change triggerd by JAR file, with -i with multiple containers)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedDockerRunningContainerIds.mockReturnValue([ 'a', 'b' ]);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java', '-i' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedDockerRunningContainerIds).toBeCalledTimes(1);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-There are multple running instance of ${name}, unable to determine which one to use 🤔
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        install: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --watch --ext **/*.java -i (change triggerd by JAR file, with -i and a running instance)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedDockerRunningContainerIds.mockReturnValue([ 'a' ]);
-      mockedDockerCopy.mockReturnValue(Promise.resolve());
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd(), '--watch', '--ext', '**/*.java', '-i' ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      expect(mockExistsSync).toBeCalledTimes(8);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
-      expect(mockedDockerRunningContainerIds).toBeCalledTimes(1);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*.java)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Found updated JAR file, uploading them to QuickReload on running instances of ${name}
-Finished uploading JAR file to QuickReload
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true,
-        install: true,
-        ext: [ '**/*.java' ]
-      });
-    });
-
-    it(`dcdx debug --ext **/*.java`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2440,95 +1834,120 @@ Successfully stopped all running processes 💪
 
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(0);
-      expect(mockedStop).toBeCalledTimes(0);
-      expect(mockedUpAll).toBeCalledTimes(0);
-      expect(mockedAuthenticate).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
-      expect(stdErr).toContain('InvalidArgumentError: Invalid argument "--ext"');
-      expect(stdOut).toBe('Successfully stopped all running processes 💪'.trim() + '\n');
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
 
-      expect(fsWatcherPaths).toStrictEqual('');
-      expect(fsWatcherOptions).toStrictEqual(null);
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandOptions,
-        watch: false,
+        watch: true,
         ext: [ '**/*.java' ]
       });
     });
 
-    it(`dcdx debug --install`, async () => {
+    it(`dcdx debug --ext **/*.java (change triggerd to src/somefile.java)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--install' ];
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('src/somefile.java');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
-      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockedBuild).toBeCalledTimes(1);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(0);
-      expect(mockedStop).toBeCalledTimes(0);
-      expect(mockedUpAll).toBeCalledTimes(0);
-      expect(mockedAuthenticate).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
-      expect(stdErr).toContain('InvalidArgumentError: Invalid argument "--install"');
-      expect(stdOut).toBe('Successfully stopped all running processes 💪'.trim() + '\n');
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Detected file change, rebuilding Atlasian Data Center plugin
+Finished building Atlassian Data Center plugin for ${name}... 💪
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
 
-      expect(fsWatcherPaths).toStrictEqual('');
-      expect(fsWatcherOptions).toStrictEqual(null);
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandOptions,
-        watch: false,
-        install: true
+        watch: true,
+        ext: [ '**/*.java' ]
       });
     });
 
-    it(`dcdx debug --outputDirectory dist`, async () => {
+    it(`dcdx debug --ext **/*.java (change triggerd to src/somefile.txt - ignored)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--outputDirectory', 'dist' ];
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
@@ -2540,31 +1959,42 @@ Successfully stopped all running processes 💪
 
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(0);
-      expect(mockedStop).toBeCalledTimes(0);
-      expect(mockedUpAll).toBeCalledTimes(0);
-      expect(mockedAuthenticate).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
-      expect(stdErr).toContain('InvalidArgumentError: Invalid argument "--outputDirectory"');
-      expect(stdOut).toBe('Successfully stopped all running processes 💪'.trim() + '\n');
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
 
-      expect(fsWatcherPaths).toStrictEqual('');
-      expect(fsWatcherOptions).toStrictEqual(null);
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandOptions,
-        watch: false,
-        outputDirectory: 'dist'
+        watch: true,
+        ext: [ '**/*.java' ]
       });
     });
 
-    it(`dcdx debug -P active`, async () => {
+    it(`dcdx debug --ext **/*.java (repetitive change triggerd to src/somefile.java)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockedClone.mockResolvedValue(true);
@@ -2572,95 +2002,411 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '-P', 'active' ];
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      mockRecursiveBuild.mockReturnValue(false);
+      await fsWatcherEventListener('src/somefile.java');
+
+      // Trigger a build based on a file change
+      mockRecursiveBuild.mockReturnValue(true);
+      await fsWatcherEventListener('src/somefile.java');
+
+      await new Promise((resolve) => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
-      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
+      expect(mockedBuild).toBeCalledTimes(1);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(0);
-      expect(mockedStop).toBeCalledTimes(0);
-      expect(mockedUpAll).toBeCalledTimes(0);
-      expect(mockedAuthenticate).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
-      expect(stdErr).toContain('InvalidArgumentError: Invalid argument "--activate-profiles"');
-      expect(stdOut).toBe('Successfully stopped all running processes 💪'.trim() + '\n');
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Detected file change, rebuilding Atlasian Data Center plugin
+Finished building Atlassian Data Center plugin for ${name}... 💪
 
-      expect(fsWatcherPaths).toStrictEqual('');
-      expect(fsWatcherOptions).toStrictEqual(null);
+===============================================================================================================
+Recursive build trigger detected. The last build completed last than 5 seconds ago
+This may indicate that the build changes files outside of the output directory
+Alternatively, Maven is using a different output directory than configured:
+'target'
+
+Please make sure to check your build process and/or specify a different output directory using the '-o' option
+===============================================================================================================
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
+
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandOptions,
-        watch: false,
-        activateProfiles: 'active'
+        watch: true,
+        ext: [ '**/*.java' ]
       });
     });
 
-    it(`dcdx debug --cwd path/to/someDirectory`, async () => {
+    it(`dcdx debug --ext **/*.java (change triggerd in output directory)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--cwd', 'path/to/someDirectory' ];
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
+
+      fsWatcher.emit('change', 'target/somefile.class');
+      // This is important, because the async/await
+      // in the change event handler is pushed to the next tick
+      await new Promise((resolve) => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(0);
-      expect(mockedStop).toBeCalledTimes(0);
-      expect(mockedUpAll).toBeCalledTimes(0);
-      expect(mockedAuthenticate).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
-      expect(stdErr).toContain('InvalidArgumentError: Invalid argument "--cwd"');
-      expect(stdOut).toBe('Successfully stopped all running processes 💪'.trim() + '\n');
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
 
-      expect(fsWatcherPaths).toStrictEqual('');
-      expect(fsWatcherOptions).toStrictEqual(null);
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandOptions,
-        watch: false,
-        cwd: 'path/to/someDirectory'
+        watch: true,
+        ext: [ '**/*.java' ]
+      });
+    });
+
+    it(`dcdx debug --ext **/*.java (change triggerd by JAR file)`, async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
+      mockedClone.mockResolvedValue(true);
+      mockedPull.mockResolvedValue(true);
+      mockedUpAll.mockReturnValue(Promise.resolve());
+      mockedAuthenticate.mockResolvedValue(true);
+      mockedQuery.mockResolvedValue(true);
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      vi.spyOn(axios, 'get').mockResolvedValue({
+        status: 200,
+        data: { state: 'RUNNING' }
+      })
+
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
+      await import('../src/commands/debug');
+      await new Promise(resolve => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
+      // We need to stop Docker log tail
+      SpawnEventEmitter.emit('exit', 0);
+      await new Promise(resolve => process.nextTick(resolve));
+
+
+      expect(mockExistsSync).toBeCalledTimes(7);
+      expect(mockReadFileSync).toBeCalledTimes(7);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
+      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockedClone).toBeCalledTimes(0);
+      expect(mockedPull).toBeCalledTimes(0);
+
+      expect(mockedDownAll).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
+      expect(mockedQuery).toBeCalledTimes(0);
+
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
+
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
+      expect(commandExecutionOptions).toStrictEqual({
+        ...defaultCommandOptions,
+        watch: true,
+        ext: [ '**/*.java' ]
+      });
+    });
+
+    it(`dcdx debug --ext **/*.java (change triggerd by JAR file, without containers)`, async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
+      mockedDockerRunningContainerIds.mockReturnValue([]);
+      mockedClone.mockResolvedValue(true);
+      mockedPull.mockResolvedValue(true);
+      mockedUpAll.mockReturnValue(Promise.resolve());
+      mockedAuthenticate.mockResolvedValue(true);
+      mockedQuery.mockResolvedValue(true);
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      vi.spyOn(axios, 'get').mockResolvedValue({
+        status: 200,
+        data: { state: 'RUNNING' }
+      })
+
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
+      await import('../src/commands/debug');
+      await new Promise(resolve => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
+      // We need to stop Docker log tail
+      SpawnEventEmitter.emit('exit', 0);
+      await new Promise(resolve => process.nextTick(resolve));
+
+
+      expect(mockExistsSync).toBeCalledTimes(7);
+      expect(mockReadFileSync).toBeCalledTimes(7);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
+      expect(mockedDockerRunningContainerIds).toBeCalledTimes(1);
+      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockedClone).toBeCalledTimes(0);
+      expect(mockedPull).toBeCalledTimes(0);
+
+      expect(mockedDownAll).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
+      expect(mockedQuery).toBeCalledTimes(0);
+
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+There are no running instance of ${name}, unable to install plugin 🤔
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
+
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
+      expect(commandExecutionOptions).toStrictEqual({
+        ...defaultCommandOptions,
+        watch: true,
+        install: true,
+        ext: [ '**/*.java' ]
+      });
+    });
+
+    it(`dcdx debug --ext **/*.java (change triggerd by JAR file, with multiple containers)`, async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
+      mockedDockerRunningContainerIds.mockReturnValue([ 'a', 'b' ]);
+      mockedClone.mockResolvedValue(true);
+      mockedPull.mockResolvedValue(true);
+      mockedUpAll.mockReturnValue(Promise.resolve());
+      mockedAuthenticate.mockResolvedValue(true);
+      mockedQuery.mockResolvedValue(true);
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      vi.spyOn(axios, 'get').mockResolvedValue({
+        status: 200,
+        data: { state: 'RUNNING' }
+      })
+
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
+      await import('../src/commands/debug');
+      await new Promise(resolve => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
+      // We need to stop Docker log tail
+      SpawnEventEmitter.emit('exit', 0);
+      await new Promise(resolve => process.nextTick(resolve));
+
+      expect(mockExistsSync).toBeCalledTimes(7);
+      expect(mockReadFileSync).toBeCalledTimes(7);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
+      expect(mockedDockerRunningContainerIds).toBeCalledTimes(1);
+      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockedClone).toBeCalledTimes(0);
+      expect(mockedPull).toBeCalledTimes(0);
+
+      expect(mockedDownAll).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
+      expect(mockedQuery).toBeCalledTimes(0);
+
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+There are multple running instance of ${name}, unable to determine which one to use 🤔
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
+
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
+      expect(commandExecutionOptions).toStrictEqual({
+        ...defaultCommandOptions,
+        watch: true,
+        install: true,
+        ext: [ '**/*.java' ]
+      });
+    });
+
+    it(`dcdx debug --ext **/*.java (change triggerd by JAR file, with a running instance)`, async () => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockRecursiveBuild.mockReturnValue(false);
+      mockedDockerRunningContainerIds.mockReturnValue([ 'a' ]);
+      mockedDockerCopy.mockReturnValue(Promise.resolve());
+      mockedClone.mockResolvedValue(true);
+      mockedPull.mockResolvedValue(true);
+      mockedUpAll.mockReturnValue(Promise.resolve());
+      mockedAuthenticate.mockResolvedValue(true);
+      mockedQuery.mockResolvedValue(true);
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      vi.spyOn(axios, 'get').mockResolvedValue({
+        status: 200,
+        data: { state: 'RUNNING' }
+      })
+
+      process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
+      await import('../src/commands/debug');
+      await new Promise(resolve => process.nextTick(resolve));
+
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/archive.jar');
+
+      // We need to stop Docker log tail
+      SpawnEventEmitter.emit('exit', 0);
+      await new Promise(resolve => process.nextTick(resolve));
+
+      expect(mockExistsSync).toBeCalledTimes(7);
+      expect(mockReadFileSync).toBeCalledTimes(7);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
+      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*.java' ]);
+      expect(mockedDockerRunningContainerIds).toBeCalledTimes(1);
+      expect(mockedBuild).toBeCalledTimes(0);
+      expect(mockedClone).toBeCalledTimes(0);
+      expect(mockedPull).toBeCalledTimes(0);
+
+      expect(mockedDownAll).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(2);
+      expect(mockedStop).toBeCalledTimes(2);
+      expect(mockedUpAll).toBeCalledTimes(2);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
+      expect(mockedQuery).toBeCalledTimes(0);
+
+      expect(stdErr).toBe('');
+      expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*.java)
+Starting ${name}... 💃
+Starting instance of postgresql... 💃
+Database is ready and accepting connections on localhost:5432 🗄️
+Waiting for ${name} to become available... 0s
+The application ${name} is ready on http://localhost:80 🎉
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
+Stopping filesystem watcher... ⏳
+Stopping ${name}... 💔
+Successfully stopped all running processes 💪
+`.trim() + '\n');
+
+      expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
+      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
+      expect(commandExecutionOptions).toStrictEqual({
+        ...defaultCommandOptions,
+        watch: true,
+        install: true,
+        ext: [ '**/*.java' ]
       });
     });
 
@@ -2673,7 +2419,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2688,12 +2434,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -2704,22 +2450,21 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');
 
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: false
-      });
+      expect(commandExecutionOptions).toStrictEqual(defaultCommandOptions);
     });
 
-    it(`dcdx debug --watch (failed)`, async () => {
+    it(`dcdx debug (failed)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockedBuild.mockRejectedValue(null);
@@ -2728,13 +2473,13 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
@@ -2744,13 +2489,13 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -2780,7 +2525,7 @@ Successfully stopped all running processes 💪
       });
     });
 
-    it(`dcdx debug --watch (change triggerd to src/somefile.java, build failed)`, async () => {
+    it(`dcdx debug (change triggerd to src/somefile.java, build failed)`, async () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
       mockRecursiveBuild.mockReturnValue(false);
@@ -2789,35 +2534,31 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), '--watch' ];
+      process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
+      // Trigger a build based on a file change
       mockedBuild.mockRejectedValue(null);
-      fsWatcher.emit('change', 'src/somefile.java');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      await fsWatcherEventListener('src/somefile.java');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
       expect(mockedBuild).toBeCalledTimes(1);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -2857,7 +2598,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2872,12 +2613,12 @@ Successfully stopped all running processes 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
+      expect(mockFSWatcherAdd).toBeCalledTimes(1);
       expect(mockedBuild).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -2888,11 +2629,13 @@ Successfully stopped all running processes 💪
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
+Watching filesystem for changes to source files (**/*)
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 Waiting for ${name} to become available... 0s
 The application ${name} is ready on http://localhost:80 🎉
+Stopping filesystem watcher... ⏳
 Stopping ${name}... 💔
 Successfully stopped all running processes 💪
 `.trim() + '\n');

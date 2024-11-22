@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import versions from '../assets/versions.json';
 import { getZodDefaults } from '../src/helpers/getZodDefaults';
 import { MSSQLOptions, MySQLOptions, PostgreSQLOptions, SupportedDatabaseEngines } from '../src/types/Database';
+import { mustSkip } from './helpers/mustSkip';
 
 let stdOut = '';
 let stdErr = '';
@@ -69,6 +70,15 @@ beforeEach(() => {
       }
     }
   });
+
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
@@ -91,7 +101,7 @@ Object.values(SupportedDatabaseEngines.Values).forEach(name => {
         : MSSQLOptions);
   delete defaultOptions.driver;
 
-  describe(`dcdx database - ${name}`, async () => {
+  describe.skipIf(mustSkip.includes('database'))(`dcdx database - ${name}`, async () => {
 
     /**
      * Fail to start a database if no arguments are provided
@@ -540,7 +550,7 @@ Stopped ${name} 💪
      * Successfully start the database with verbose logging
      */
     it(`dcdx database ${name} --verbose`, async () => {
-      mockedPS.mockResolvedValue({ data: { services: [ { name }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}` }] }});
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
@@ -572,7 +582,7 @@ Database is ready and accepting connections on localhost:${defaultOptions.port} 
      * Successfully start the database but stop after Docker quits unexpectedly
      */
     it(`dcdx database ${name} --verbose (docker quits unexpectedly)`, async () => {
-      mockedPS.mockResolvedValue({ data: { services: [ { name }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}` }] }});
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
@@ -584,13 +594,6 @@ Database is ready and accepting connections on localhost:${defaultOptions.port} 
       SpawnEventEmitter.emit('exit', 1);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(1);
-      expect(mockedStop).toBeCalledTimes(1);
-      expect(mockedUpAll).toBeCalledTimes(1);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(name === 'postgresql' ? 0 : name === 'mysql' ? 1 : 3);
-
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
 Starting instance of ${name}... 💃
@@ -599,6 +602,21 @@ Stopping ${name}... ⏳
 Stopped ${name} 💪
 `.trim() + '\n');
 
+      expect(mockedDownAll).toBeCalledTimes(0);
+      expect(mockedPS).toBeCalledTimes(1);
+      expect(mockedStop).toBeCalledTimes(1);
+      expect(mockedUpAll).toBeCalledTimes(1);
+      expect(mockedAuthenticate).toBeCalledTimes(1);
+      expect(mockedQuery).toBeCalledTimes(name === 'postgresql' ? 0 : name === 'mysql' ? 1 : 3);
+
+//       expect(stdErr).toBe('');
+//       expect(stdOut).toBe(`
+// Starting instance of ${name}... 💃
+// Database is ready and accepting connections on localhost:${defaultOptions.port} 🗄️
+// Stopping ${name}... ⏳
+// Stopped ${name} 💪
+// `.trim() + '\n');
+
       expect(commandExecutionOptions).toStrictEqual({ ...defaultOptions, name, verbose: true });
     });
 
@@ -606,7 +624,7 @@ Stopped ${name} 💪
      * Successfully start the database and fail to stop after Docker quits unexpectedly
      */
     it(`dcdx database ${name} --verbose (docker quits unexpectedly, fails to stop ${name})`, async () => {
-      mockedPS.mockResolvedValue({ data: { services: [ { name }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}` }] }});
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedStop.mockRejectedValue(new Error());
       mockedAuthenticate.mockResolvedValue(true);

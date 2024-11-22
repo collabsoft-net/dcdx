@@ -7,8 +7,10 @@ import process, { stderr, stdout } from 'process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import versions from '../assets/versions.json';
-import { SupportedApplications } from '../src/types/Application';
+import { SupportedApplications } from '../src/types/Application.ts';
 import { getValidLegacyPomFileFor, getValidPomFileFor } from './fixtures/pomFiles';
+import { isBuildRequired } from './helpers/isBuildRequired.js';
+import { mustSkip } from './helpers/mustSkip.js';
 
 let stdOut = '';
 let stdErr = '';
@@ -101,6 +103,15 @@ beforeEach(() => {
       }
     }
   });
+
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
@@ -115,9 +126,9 @@ afterEach(() => {
 
 Object.values(SupportedApplications.Values).forEach(name => {
 
-  const tag = versions[name][Math.floor(Math.random()*versions[name].length)];
+  const tag = isBuildRequired[name](false);
 
-  describe(`dcdx run - ${name}`, async () => {
+  describe.skipIf(mustSkip.includes('run'))(`dcdx run - ${name}`, async () => {
 
     /******************************************************************************
      *
@@ -125,7 +136,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
      *
      ******************************************************************************/
 
-    it(`dcdx run (git clone)`, async () => {
+    it(`dcdx run (build required - git clone)`, async () => {
       mockExistsSync.mockImplementation((path) => {
         if (path.endsWith('.xml')) {
           return true;
@@ -133,19 +144,19 @@ Object.values(SupportedApplications.Values).forEach(name => {
           return false;
         }
       });
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, isBuildRequired[name](true)));
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -159,6 +170,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
       expect(mockedClone).toBeCalledTimes(1);
       expect(mockedPull).toBeCalledTimes(0);
 
+      expect(mockedSpawn).toBeCalled(1);
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
       expect(mockedStop).toBeCalledTimes(2);
@@ -180,21 +192,21 @@ Stopped ${name} 💪
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandOptions });
     });
 
-    it(`dcdx run (git pull)`, async () => {
+    it(`dcdx run (build required - git pull)`, async () => {
       mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, isBuildRequired[name](true)));
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -229,21 +241,21 @@ Stopped ${name} 💪
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandOptions });
     });
 
-    it(`dcdx run (docker quits unexpected)`, async () => {
+    it(`dcdx run (build required - docker quits unexpected)`, async () => {
       mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
+      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, isBuildRequired[name](true)));
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 1);
@@ -282,7 +294,7 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: name !== 'bamboo' ? 200 : 204,
         data: { status: 'FAILED' }
@@ -290,10 +302,7 @@ Stopped ${name} 💪
 
       vi.useFakeTimers();
 
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // Run all the timers
       await vi.runAllTimersAsync();
@@ -302,28 +311,28 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(301);
+      expect(mockedPS).toBeCalledTimes(123);
       expect(mockedStop).toBeCalledTimes(2);
       expect(mockedUpAll).toBeCalledTimes(2);
       expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
       let counter = '';
-      [...Array(301)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
+      [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
-      expect(stdErr).toBe(`A timeout occurred while waiting for ${name} to become available ⛔`.trim() + '\n');
+      expect(stdErr).toBe('');
       expect(stdOut).toBe(`
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 ${counter.trim()}
-Failed to start ${name} ⛔
+Could not confirm state of ${name}, but the container is running. Please consult the application logs 👇
 Stopping ${name}... 💔
 Stopped ${name} 💪
 `.trim() + '\n');
@@ -339,17 +348,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockRejectedValue({
         status: 500
       })
 
       vi.useFakeTimers();
 
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // Run all the timers
       await vi.runAllTimersAsync();
@@ -358,28 +364,28 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(301);
+      expect(mockedPS).toBeCalledTimes(123);
       expect(mockedStop).toBeCalledTimes(2);
       expect(mockedUpAll).toBeCalledTimes(2);
       expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
       let counter = '';
-      [...Array(301)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
+      [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
-      expect(stdErr).toBe(`A timeout occurred while waiting for ${name} to become available ⛔`.trim() + '\n');
+      expect(stdErr).toBe('');
       expect(stdOut).toBe(`
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 ${counter.trim()}
-Failed to start ${name} ⛔
+Could not confirm state of ${name}, but the container is running. Please consult the application logs 👇
 Stopping ${name}... 💔
 Stopped ${name} 💪
 `.trim() + '\n');
@@ -395,14 +401,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--tag', 'latest' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -411,10 +417,10 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(5);
+      expect(mockExistsSync).toBeCalledTimes(4);
       expect(mockReadFileSync).toBeCalledTimes(4);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -448,14 +454,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--tag', 'invalid' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -493,26 +499,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--database', 'mysql' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -546,26 +549,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--database', 'mssql' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -599,14 +599,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--database', 'invalid' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -640,26 +640,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--port', '1234' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -693,26 +690,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '-c', 'atlassian' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -746,26 +740,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--xms', '2gb' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -799,26 +790,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--xmx', '2gb' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -852,26 +840,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--clean' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(2);
       expect(mockedPS).toBeCalledTimes(2);
@@ -905,26 +890,23 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), '--prune' ]
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(2);
       expect(mockedPS).toBeCalledTimes(2);
@@ -958,25 +940,22 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      await import('../src/commands/run');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(8);
+      expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1005,21 +984,21 @@ Stopped ${name} 💪
      *
      ******************************************************************************/
 
-    it(`dcdx run ${name} (git clone)`, async () => {
+    it(`dcdx run ${name}`, async () => {
       mockExistsSync.mockReturnValue(false);
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name ];
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1028,9 +1007,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1058,21 +1037,21 @@ Stopped ${name} 💪
       });
     });
 
-    it(`dcdx run ${name} (git pull)`, async () => {
+    it(`dcdx run ${name}`, async () => {
       mockExistsSync.mockImplementation((path) => !path.endsWith('.xml'))
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name ];
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1081,10 +1060,10 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1111,21 +1090,21 @@ Stopped ${name} 💪
       });
     });
 
-    it(`dcdx run ${name} (docker quits unexpected)`, async () => {
+    it(`dcdx run ${name} (build required - docker quits unexpected)`, async () => {
       mockExistsSync.mockReturnValue(false);
       mockedClone.mockResolvedValue(true);
       mockedPull.mockResolvedValue(true);
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
-      process.argv = [ 'vitest', cwd(), name ];
-      await import('../src/commands/run');
+      process.argv = [ 'vitest', cwd(), name, '--tag', isBuildRequired[name](true) ];
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 1);
@@ -1156,7 +1135,7 @@ Stopped ${name} 💪
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandOptions,
         name,
-        tag: 'latest',
+        tag: isBuildRequired[name](true),
       });
     });
 
@@ -1167,7 +1146,7 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: name !== 'bamboo' ? 200 : 204,
         data: { status: 'FAILED' }
@@ -1176,7 +1155,7 @@ Stopped ${name} 💪
       vi.useFakeTimers();
 
       process.argv = [ 'vitest', cwd(), name ];
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1188,28 +1167,28 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(301);
+      expect(mockedPS).toBeCalledTimes(123);
       expect(mockedStop).toBeCalledTimes(2);
       expect(mockedUpAll).toBeCalledTimes(2);
       expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
       let counter = '';
-      [...Array(301)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
+      [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
-      expect(stdErr).toBe(`A timeout occurred while waiting for ${name} to become available ⛔`.trim() + '\n');
+      expect(stdErr).toBe('');
       expect(stdOut).toBe(`
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 ${counter.trim()}
-Failed to start ${name} ⛔
+Could not confirm state of ${name}, but the container is running. Please consult the application logs 👇
 Stopping ${name}... 💔
 Stopped ${name} 💪
 `.trim() + '\n');
@@ -1228,7 +1207,7 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockRejectedValue({
         status: 500
       })
@@ -1236,7 +1215,7 @@ Stopped ${name} 💪
       vi.useFakeTimers();
 
       process.argv = [ 'vitest', cwd(), name ];
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1248,28 +1227,28 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(301);
+      expect(mockedPS).toBeCalledTimes(123);
       expect(mockedStop).toBeCalledTimes(2);
       expect(mockedUpAll).toBeCalledTimes(2);
       expect(mockedAuthenticate).toBeCalledTimes(1);
       expect(mockedQuery).toBeCalledTimes(0);
 
       let counter = '';
-      [...Array(301)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
+      [...Array(121)].forEach((_, index) => counter += `Waiting for ${name} to become available... ${index}s\n`);
 
-      expect(stdErr).toBe(`A timeout occurred while waiting for ${name} to become available ⛔`.trim() + '\n');
+      expect(stdErr).toBe('');
       expect(stdOut).toBe(`
 Starting ${name}... 💃
 Starting instance of postgresql... 💃
 Database is ready and accepting connections on localhost:5432 🗄️
 ${counter.trim()}
-Failed to start ${name} ⛔
+Could not confirm state of ${name}, but the container is running. Please consult the application logs 👇
 Stopping ${name}... 💔
 Stopped ${name} 💪
 `.trim() + '\n');
@@ -1288,14 +1267,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--tag', 'latest' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1304,9 +1283,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1341,14 +1320,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '-t', 'invalid' ];
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1382,14 +1361,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--tag', tag, '-P', 'invalid' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1428,14 +1407,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--tag', tag, '--cwd', 'invalid' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1474,14 +1453,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--database', 'mysql' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1490,9 +1469,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1528,14 +1507,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--database', 'mssql' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1544,9 +1523,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1583,14 +1562,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--database', 'invalid' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1624,14 +1603,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--port', '1234' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1640,10 +1619,10 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
       expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(1);
+      expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
       expect(mockedPS).toBeCalledTimes(2);
@@ -1678,14 +1657,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '-c', 'atlassian' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1694,9 +1673,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1732,14 +1711,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--xms', '2gb' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1748,9 +1727,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1786,14 +1765,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--xmx', '2gb' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1802,9 +1781,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(0);
@@ -1840,14 +1819,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--clean' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1856,9 +1835,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(2);
@@ -1894,14 +1873,14 @@ Stopped ${name} 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
       })
 
       process.argv = [ 'vitest', cwd(), name, '--prune' ]
-      await import('../src/commands/run');
+      await import('../src/commands/run.ts');
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker build
       SpawnEventEmitter.emit('exit', 0);
@@ -1910,9 +1889,9 @@ Stopped ${name} 💪
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
 
-      expect(mockExistsSync).toBeCalledTimes(1);
+      expect(mockExistsSync).toBeCalledTimes(0);
       expect(mockReadFileSync).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(1);
+      expect(mockedClone).toBeCalledTimes(0);
       expect(mockedPull).toBeCalledTimes(0);
 
       expect(mockedDownAll).toBeCalledTimes(2);

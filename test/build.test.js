@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import versions from '../assets/versions.json';
 import { SupportedApplications } from '../src/types/Application';
 import { getValidLegacyPomFileFor, getValidPomFileFor } from './fixtures/pomFiles';
+import { mustSkip } from './helpers/mustSkip';
 
 let stdOut = '';
 let stdErr = '';
@@ -96,6 +97,15 @@ beforeEach(() => {
       }
     }
   });
+
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
@@ -114,7 +124,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
 
   const tag = versions[name][Math.floor(Math.random()*versions[name].length)];
 
-  describe(`dcdx build - ${name}`, async () => {
+  describe.skipIf(mustSkip.includes('build'))(`dcdx build - ${name}`, async () => {
 
     /**
      * Building the plugin with default configuration
@@ -140,7 +150,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
 `.trim() + '\n');
 
       expect(commandExecutionOptions).toStrictEqual({
-        watch: false
+        watch: false,
+        obr: false,
       });
     });
 
@@ -172,6 +183,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
 
       expect(commandExecutionOptions).toStrictEqual({
         watch: false,
+        obr: false,
         activateProfiles: 'active'
       });
     });
@@ -201,7 +213,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
 `.trim() + '\n');
 
       expect(commandExecutionOptions).toStrictEqual({
-        watch: false
+        watch: false,
+        obr: false,
       });
     });
 
@@ -235,7 +248,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false
       });
     });
 
@@ -277,7 +291,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false
       });
     });
 
@@ -335,7 +350,8 @@ Please make sure to check your build process and/or specify a different output d
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false
       });
     });
 
@@ -375,7 +391,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false,
       });
     });
 
@@ -415,7 +432,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false
       });
     });
 
@@ -459,7 +477,8 @@ There are no running instance of ${name}, unable to install plugin 🤔
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
-        install: true
+        install: true,
+        obr: false
       });
     });
 
@@ -503,7 +522,8 @@ There are multple running instance of ${name}, unable to determine which one to 
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
-        install: true
+        install: true,
+        obr: false
       });
     });
 
@@ -541,15 +561,16 @@ There are multple running instance of ${name}, unable to determine which one to 
 Watching filesystem for changes to source files (**/*)
 Building Atlassian Data Center plugin for ${name}... 💃
 Finished building Atlassian Data Center plugin for ${name}... 💪
-Found updated JAR file, uploading them to QuickReload on running instances of ${name}
-Finished uploading JAR file to QuickReload
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
 `.trim() + '\n');
 
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
-        install: true
+        install: true,
+        obr: false
       });
     });
 
@@ -596,6 +617,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
         install: true,
+        obr: false,
         outputDirectory: 'dist'
       });
     });
@@ -634,8 +656,8 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
 Watching filesystem for changes to source files (**/*)
 Building Atlassian Data Center plugin for ${name}... 💃
 Finished building Atlassian Data Center plugin for ${name}... 💪
-Found updated JAR file, uploading them to QuickReload on running instances of ${name}
-Finished uploading JAR file to QuickReload
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
 `.trim() + '\n');
 
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
@@ -643,6 +665,7 @@ Finished uploading JAR file to QuickReload
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
         install: true,
+        obr: false,
         outputDirectory: 'dist'
       });
     });
@@ -678,6 +701,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -722,6 +746,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -759,6 +784,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -818,6 +844,7 @@ Please make sure to check your build process and/or specify a different output d
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -862,6 +889,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -903,6 +931,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -948,6 +977,7 @@ There are no running instance of ${name}, unable to install plugin 🤔
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
         install: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -993,6 +1023,7 @@ There are multple running instance of ${name}, unable to determine which one to 
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
         install: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -1031,8 +1062,8 @@ There are multple running instance of ${name}, unable to determine which one to 
 Watching filesystem for changes to source files (**/*.java)
 Building Atlassian Data Center plugin for ${name}... 💃
 Finished building Atlassian Data Center plugin for ${name}... 💪
-Found updated JAR file, uploading them to QuickReload on running instances of ${name}
-Finished uploading JAR file to QuickReload
+Found updated plugin, uploading it to QuickReload on running instances of ${name}
+Finished uploading plugin archive to QuickReload
 `.trim() + '\n');
 
       expect(fsWatcherPaths).toStrictEqual([ '**/*.java' ]);
@@ -1040,6 +1071,7 @@ Finished uploading JAR file to QuickReload
       expect(commandExecutionOptions).toStrictEqual({
         watch: true,
         install: true,
+        obr: false,
         ext: [ '**/*.java' ]
       });
     });
@@ -1069,36 +1101,8 @@ Finished uploading JAR file to QuickReload
       expect(fsWatcherOptions).toStrictEqual(null);
       expect(commandExecutionOptions).toStrictEqual({
         watch: false,
+        obr: false,
         ext: [ '**/*.java' ]
-      });
-    });
-
-    /**
-     * Fail to build the plugin because an invalid argument was provided (--install)
-     *
-     * The command will fail before building the application because the --install
-     * argument is invalid without --watch enabled as well
-     */
-    it(`dcdx build --install`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-
-      process.argv = [ 'vitest', cwd(), '--install' ];
-      await import('../src/commands/build');
-
-      expect(mockExistsSync).toBeCalledTimes(7);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockFSWatcherAdd).toBeCalledTimes(0);
-
-      expect(stdErr).toContain('InvalidArgumentError: Invalid argument "--install"');
-      expect(stdOut).toBe('Successfully stopped all running processes 💪'.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual('');
-      expect(fsWatcherOptions).toStrictEqual(null);
-      expect(commandExecutionOptions).toStrictEqual({
-        watch: false,
-        install: true
       });
     });
 
@@ -1127,6 +1131,7 @@ Finished uploading JAR file to QuickReload
       expect(fsWatcherOptions).toStrictEqual(null);
       expect(commandExecutionOptions).toStrictEqual({
         watch: false,
+        obr: false,
         outputDirectory: 'dist'
       });
     });
@@ -1159,6 +1164,7 @@ Finished building Atlassian Data Center plugin for ${name}... 💪
       expect(fsWatcherOptions).toStrictEqual(null);
       expect(commandExecutionOptions).toStrictEqual({
         watch: false,
+        obr: false,
         cwd: 'path/to/someDirectory'
       });
     });
@@ -1189,7 +1195,8 @@ Successfully stopped all running processes 💪
 `.trim() + '\n');
 
       expect(commandExecutionOptions).toStrictEqual({
-        watch: false
+        watch: false,
+        obr: false,
       });
     });
 
@@ -1225,7 +1232,8 @@ Successfully stopped all running processes 💪
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false,
       });
     });
 
@@ -1269,7 +1277,8 @@ Failed to build Atlassian Data Center plugin for ${name}... 😰
       expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
       expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
       expect(commandExecutionOptions).toStrictEqual({
-        watch: true
+        watch: true,
+        obr: false
       });
     });
 

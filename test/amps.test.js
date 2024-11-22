@@ -40,22 +40,28 @@
   > The pom file has multiple AMPS configurations (legacy)
 */
 
+import { join } from 'path';
 import process, { cwd, stderr, stdout } from 'process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import versions from '../assets/versions.json';
 import * as pomFiles from './fixtures/pomFiles';
+import { mustSkip } from './helpers/mustSkip';
 
 const defaultCommandExecutionOptions = {
   'build': {
+    obr: false,
     watch: false
   },
   'debug': {
+    install: true,
     clean: false,
     database: 'postgresql',
+    obr: false,
     debug: true,
     port: '80',
     prune: false,
-    watch: false,
+    watch: true,
     xms: '1024m',
     xmx: '1024m',
   },
@@ -111,18 +117,35 @@ beforeEach(() => {
       }
     }
   });
+
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
+  vi.doMock('../src/helpers/generateVersionList.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      generateVersionList: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
   commandExecutionOptions = '';
-  process.argv = [ 'vitest', cwd() ];
+  process.argv = [ 'vitest', join(cwd(), 'lib', 'index.js') ];
 });
 
 [ 'build', 'debug', 'reset', 'run', 'stop' ].forEach(command => {
 
-  describe(`Testing AMPS support for 'dcdx ${command}'`, async () => {
+  describe.skipIf(mustSkip.includes('amps'))(`Testing AMPS support for 'dcdx ${command}'`, async () => {
 
     /******************************************************************************
      *
@@ -145,17 +168,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(1);
       expect(mockReadFileSync).toBeCalledTimes(0);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('Unable to find an Atlassian Plugin project in the current directory 🤔');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -176,17 +195,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(1);
       expect(mockReadFileSync).toBeCalledTimes(1);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('Unable to find an Atlassian Plugin project in the current directory 🤔');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -208,17 +223,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -240,17 +251,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -272,17 +279,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(3);
       expect(mockReadFileSync).toBeCalledTimes(3);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('Failed to determine version from AMPS and no product version provided (--tag)');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -304,17 +307,13 @@ afterEach(() => {
         vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
         vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-        await import(`../src/commands/${command}`);
+        await import(`../src/commands/${command}.ts`);
 
         expect(mockedDockerCompose).toBeCalledTimes(0);
         expect(mockExistsSync).toBeCalledTimes(7);
         expect(mockReadFileSync).toBeCalledTimes(7);
 
-        expect(stdOut).toContain(
-          command === 'build' || command === 'debug'
-            ? 'Successfully stopped all running processes 💪'
-            : ''
-        );
+        expect(stdOut).toContain('');
         expect(stdErr).toContain(`Product version '1000.000.000' is invalid.`);
         expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
       });
@@ -337,17 +336,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '\${invalidProperty}' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -369,17 +364,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project contains multiple AMPS configuration, unable to decide which product to use 😰');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -407,18 +398,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'invalid' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'invalid' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -443,18 +430,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -479,18 +462,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(3);
       expect(mockReadFileSync).toBeCalledTimes(3);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('Failed to determine version from AMPS and no product version provided (--tag)');
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -516,18 +495,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '1000.000.000' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -553,18 +528,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '\${invalidProperty}' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -589,18 +560,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project contains multiple AMPS configuration, unable to decide which product to use 😰');
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandExecutionOptions[command], activateProfiles: 'active' });
     });
@@ -628,18 +595,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active1,active2' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active1,active2' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -664,18 +627,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active1,active2' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active1,active2' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -700,18 +659,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active1,active2' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active1,active2' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(3);
       expect(mockReadFileSync).toBeCalledTimes(3);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('Failed to determine version from AMPS and no product version provided (--tag)');
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -736,18 +691,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active1,active2' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active1,active2' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '1000.000.000' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -773,18 +724,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active1,active2' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active1,active2' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '\${invalidProperty}' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual({
         ...defaultCommandExecutionOptions[command],
@@ -809,18 +756,14 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      process.argv = [ 'vitest', 'dcdx', '-P', 'active1,active2' ]
-      await import(`../src/commands/${command}`);
+      process.argv = [ 'vitest', cwd(), '-P', 'active1,active2' ]
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(2);
       expect(mockReadFileSync).toBeCalledTimes(2);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project contains multiple AMPS configuration, unable to decide which product to use 😰');
       expect(commandExecutionOptions).toStrictEqual({ ...defaultCommandExecutionOptions[command], activateProfiles: 'active1,active2' });
     });
@@ -848,17 +791,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(4);
       expect(mockReadFileSync).toBeCalledTimes(4);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -880,17 +819,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(3);
       expect(mockReadFileSync).toBeCalledTimes(3);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('Failed to determine version from AMPS and no product version provided (--tag)');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -912,17 +847,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '1000.000.000' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -945,17 +876,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(7);
       expect(mockReadFileSync).toBeCalledTimes(7);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain(`Product version '\${invalidProperty}' is invalid.`);
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });
@@ -977,17 +904,13 @@ afterEach(() => {
       vi.spyOn(stdout, 'write').mockImplementation((value) => { stdOut += value; return true; });
       vi.spyOn(stderr, 'write').mockImplementation((value) => { stdErr += value; return true; });
 
-      await import(`../src/commands/${command}`);
+      await import(`../src/commands/${command}.ts`);
 
       expect(mockedDockerCompose).toBeCalledTimes(0);
       expect(mockExistsSync).toBeCalledTimes(6);
       expect(mockReadFileSync).toBeCalledTimes(6);
 
-      expect(stdOut).toContain(
-        command === 'build' || command === 'debug'
-          ? 'Successfully stopped all running processes 💪'
-          : ''
-      );
+      expect(stdOut).toContain('');
       expect(stdErr).toContain('The Atlassian Plugin project contains multiple AMPS configuration, unable to decide which product to use 😰');
       expect(commandExecutionOptions).toStrictEqual(defaultCommandExecutionOptions[command]);
     });

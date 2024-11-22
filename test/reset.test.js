@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import versions from '../assets/versions.json';
 import { SupportedApplications } from '../src/types/Application';
 import { getValidLegacyPomFileFor, getValidPomFileFor } from './fixtures/pomFiles';
+import { isBuildRequired } from './helpers/isBuildRequired';
+import { mustSkip } from './helpers/mustSkip';
 
 let stdOut = '';
 let stdErr = '';
@@ -55,6 +57,14 @@ beforeEach(() => {
     }
   });
 
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
@@ -68,9 +78,9 @@ afterEach(() => {
 
 Object.values(SupportedApplications.Values).forEach(name => {
 
-  const tag = versions[name][Math.floor(Math.random()*versions[name].length)];
+  const tag = isBuildRequired[name](false);
 
-  describe(`dcdx reset - ${name}`, async () => {
+  describe.skipIf(mustSkip.includes('reset'))(`dcdx reset - ${name}`, async () => {
 
     /******************************************************************************
      *
@@ -84,6 +94,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
       vi.spyOn(fs, 'existsSync').mockImplementation(() => true);
 
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -102,6 +113,7 @@ Removed ${name} and deleted all data 💪
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
 
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -121,6 +133,7 @@ Removed ${name} and deleted all data 💪
 
       process.argv.push(...[ '--database', 'mssql' ]);
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -140,6 +153,7 @@ Removed ${name} and deleted all data 💪
 
       process.argv.push(...[ '--database', 'mssql', '--cwd', 'myDirectory' ]);
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -160,6 +174,7 @@ Removed ${name} and deleted all data 💪
 
       process.argv.push(...[ '-P', 'myProfile' ]);
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -180,6 +195,7 @@ Removed ${name} and deleted all data 💪
 
       process.argv.push(...[ '-P', 'myProfile', '--database', 'mssql' ]);
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -200,6 +216,7 @@ Removed ${name} and deleted all data 💪
 
       process.argv.push(...[ '-P', 'myProfile', '--database', 'mssql', '--cwd', 'myDirectory' ]);
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -222,8 +239,9 @@ Removed ${name} and deleted all data 💪
      ******************************************************************************/
 
     it(`dcdx reset ${name}`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name ]
+      process.argv = [ 'vitest', cwd(), name ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -240,8 +258,9 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag ${tag}`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', tag ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', tag ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -258,8 +277,9 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag latest --database mssql`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql' ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql' ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -276,8 +296,9 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --database mssql`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--database', 'mssql' ]
+      process.argv = [ 'vitest', cwd(), name, '--database', 'mssql' ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -297,8 +318,9 @@ Removed ${name} and deleted all data 💪
       const name = 'compass';
       mockExistsSync.mockReturnValue(false);
 
-      process.argv = [ 'vitest', 'dcdx', name ]
+      process.argv = [ 'vitest', cwd(), name ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith(`error: too many arguments for 'fromAMPS'. Expected 0 arguments but got 1.`)).toBeTruthy();
       expect(stdOut).toBe('');
@@ -310,8 +332,9 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag invalid`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'invalid' ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'invalid' ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith(`error: option '-t, --tag <tag>' argument 'invalid' is invalid.`)).toBeTruthy();;
       expect(stdOut).toBe('');
@@ -321,8 +344,9 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag latest --database invalid`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'invalid' ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'invalid' ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith(`error: option '-d, --database <name>' argument 'invalid' is invalid. Allowed choices are postgresql, mysql, mssql.`)).toBeTruthy();
       expect(stdOut).toBe('');
@@ -332,7 +356,7 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag latest --database mssql --activate-profiles invalid`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid' ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid' ]
       await import('../src/commands/reset');
 
       expect(stdErr.startsWith('InvalidArgumentError: Invalid argument "--activate-profiles"')).toBeTruthy();
@@ -348,8 +372,9 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag latest --database mssql --activate-profiles invalid --cwd invalidDirectory`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid', '--cwd', 'invalidDirectory' ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid', '--cwd', 'invalidDirectory' ]
       await import('../src/commands/reset');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith('InvalidArgumentError: Invalid argument "--activate-profiles"')).toBeTruthy();
       expect(stdOut).toBe('');
@@ -365,7 +390,7 @@ Removed ${name} and deleted all data 💪
     });
 
     it(`dcdx reset ${name} --tag latest --database mssql --cwd invalidDirectory`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql', '--cwd', 'invalidDirectory' ]
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql', '--cwd', 'invalidDirectory' ]
       await import('../src/commands/reset');
 
       expect(stdErr.startsWith('InvalidArgumentError: Invalid argument "--cwd"')).toBeTruthy();

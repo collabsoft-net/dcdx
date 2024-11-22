@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import versions from '../assets/versions.json';
 import { SupportedApplications } from '../src/types/Application';
 import { getValidLegacyPomFileFor, getValidPomFileFor } from './fixtures/pomFiles';
+import { mustSkip } from './helpers/mustSkip.js';
 
 let stdOut = '';
 let stdErr = '';
@@ -55,6 +56,14 @@ beforeEach(() => {
     }
   });
 
+  vi.doMock('../src/helpers/getVersions.ts', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      getVersions: () => versions
+    }
+  });
+
 });
 
 afterEach(() => {
@@ -70,7 +79,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
 
   const tag = versions[name][Math.floor(Math.random()*versions[name].length)];
 
-  describe(`dcdx stop - ${name}`, async () => {
+  describe.skipIf(mustSkip.includes('stop'))(`dcdx stop - ${name}`, async () => {
 
     /******************************************************************************
      *
@@ -83,7 +92,8 @@ Object.values(SupportedApplications.Values).forEach(name => {
       mockReadFileSync.mockReturnValue(getValidLegacyPomFileFor(name, tag));
       vi.spyOn(fs, 'existsSync').mockImplementation(() => true);
 
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -101,7 +111,8 @@ Stopped ${name} and postgresql 💪
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
 
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -120,7 +131,8 @@ Stopped ${name} and postgresql 💪
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
 
       process.argv.push(...[ '--database', 'mssql' ]);
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -139,7 +151,8 @@ Stopped ${name} and mssql 💪
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
 
       process.argv.push(...[ '--database', 'mssql', '--cwd', 'myDirectory' ]);
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -159,7 +172,8 @@ Stopped ${name} and mssql 💪
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag, 'myProfile'));
 
       process.argv.push(...[ '-P', 'myProfile' ]);
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -179,7 +193,8 @@ Stopped ${name} and postgresql 💪
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag, 'myProfile'));
 
       process.argv.push(...[ '-P', 'myProfile', '--database', 'mssql' ]);
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -199,7 +214,8 @@ Stopped ${name} and mssql 💪
       mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag, 'myProfile'));
 
       process.argv.push(...[ '-P', 'myProfile', '--database', 'mssql', '--cwd', 'myDirectory' ]);
-      await import('../src/commands/stop');
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -222,8 +238,9 @@ Stopped ${name} and mssql 💪
      ******************************************************************************/
 
     it(`dcdx stop ${name}`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -240,8 +257,9 @@ Stopped ${name} and postgresql 💪
     });
 
     it(`dcdx stop ${name} --tag ${tag}`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', tag ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', tag ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -258,8 +276,9 @@ Stopped ${name} and postgresql 💪
     });
 
     it(`dcdx stop ${name} --tag latest --database mssql`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -276,8 +295,9 @@ Stopped ${name} and mssql 💪
     });
 
     it(`dcdx stop ${name} --database mssql`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--database', 'mssql' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--database', 'mssql' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr).toBe('');
       expect(stdOut).toBe(`
@@ -297,8 +317,9 @@ Stopped ${name} and mssql 💪
       const name = 'compass';
       mockExistsSync.mockReturnValue(false);
 
-      process.argv = [ 'vitest', 'dcdx', name ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith(`error: too many arguments for 'fromAMPS'. Expected 0 arguments but got 1.`)).toBeTruthy();
       expect(stdOut).toBe('');
@@ -310,8 +331,9 @@ Stopped ${name} and mssql 💪
     });
 
     it(`dcdx stop ${name} --tag invalid`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'invalid' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'invalid' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith(`error: option '-t, --tag <tag>' argument 'invalid' is invalid.`)).toBeTruthy();;
       expect(stdOut).toBe('');
@@ -321,8 +343,9 @@ Stopped ${name} and mssql 💪
     });
 
     it(`dcdx stop ${name} --tag latest --database invalid`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'invalid' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'invalid' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith(`error: option '-d, --database <name>' argument 'invalid' is invalid. Allowed choices are postgresql, mysql, mssql.`)).toBeTruthy();
       expect(stdOut).toBe('');
@@ -332,8 +355,9 @@ Stopped ${name} and mssql 💪
     });
 
     it(`dcdx stop ${name} --tag latest --database mssql --activate-profiles invalid`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith('InvalidArgumentError: Invalid argument "--activate-profiles"')).toBeTruthy();
       expect(stdOut).toBe('');
@@ -348,8 +372,9 @@ Stopped ${name} and mssql 💪
     });
 
     it(`dcdx stop ${name} --tag latest --database mssql --activate-profiles invalid --cwd invalidDirectory`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid', '--cwd', 'invalidDirectory' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql', '--activate-profiles', 'invalid', '--cwd', 'invalidDirectory' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith('InvalidArgumentError: Invalid argument "--activate-profiles"')).toBeTruthy();
       expect(stdOut).toBe('');
@@ -365,8 +390,9 @@ Stopped ${name} and mssql 💪
     });
 
     it(`dcdx stop ${name} --tag latest --database mssql --cwd invalidDirectory`, async () => {
-      process.argv = [ 'vitest', 'dcdx', name, '--tag', 'latest', '--database', 'mssql', '--cwd', 'invalidDirectory' ]
-      await import('../src/commands/stop');
+      process.argv = [ 'vitest', cwd(), name, '--tag', 'latest', '--database', 'mssql', '--cwd', 'invalidDirectory' ]
+      await import('../src/commands/stop.ts');
+      await new Promise(resolve => process.nextTick(resolve));
 
       expect(stdErr.startsWith('InvalidArgumentError: Invalid argument "--cwd"')).toBeTruthy();
       expect(stdOut).toBe('');
