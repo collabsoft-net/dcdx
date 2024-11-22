@@ -57,7 +57,7 @@ RUN chown -R bamboo:bamboo /var/atlassian/application-data/bamboo`
 
   protected async isApplicationReady(): Promise<boolean> {
     try {
-      const response = await axios.get(`${this.baseUrl}/setup/setupGeneralConfiguration.action`, { validateStatus: () => true }).catch(() => null);
+      const response = await axios.get(`${this.baseUrl}/setup/setupGeneralConfiguration.action`, { validateStatus: () => true });
       if (response?.status === 200) {
         console.log(`The application ${this.name} is ready on ${this.baseUrl} 🎉`);
         return true;

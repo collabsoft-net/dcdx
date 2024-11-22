@@ -97,7 +97,7 @@ export abstract class Base implements Application {
 
   protected async isApplicationReady(): Promise<boolean> {
     try {
-      const response = await axios.get<{ state: string }>(`${this.baseUrl}/status`, { validateStatus: () => true }).catch(() => null);
+      const response = await axios.get<{ state: string }>(`${this.baseUrl}/status`, { validateStatus: () => true });
       if (response) {
         if (response.status === 200) {
           const { data } = response;
