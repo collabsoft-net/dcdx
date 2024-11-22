@@ -99,18 +99,43 @@ export class AMPS {
     const nodesWithActiveProfile = nodes.filter(node => this.isActivatedProfile(node));
 
     nodesWithActiveProfile.forEach(node => {
-      const version = this.getVersion(node);
       const parentNode = node.parentNode;
       if (parentNode) {
         const { plugin } = this.toObject(parentNode);
-        if (plugin?.artifactId?.includes(SupportedApplications.Values.jira)) {
-          result.set(SupportedApplications.Values.jira, version);
-        } else if (plugin?.artifactId?.includes(SupportedApplications.Values.confluence)) {
-          result.set(SupportedApplications.Values.confluence, version);
-        } else if (plugin?.artifactId?.includes(SupportedApplications.Values.bamboo)) {
-          result.set(SupportedApplications.Values.bamboo, version);
-        } else if (plugin?.artifactId?.includes(SupportedApplications.Values.bitbucket)) {
-          result.set(SupportedApplications.Values.bitbucket, version);
+
+        if ('amps-maven-plugin' === plugin?.artifactId) {
+          const { configuration } = plugin || {};
+          if (configuration?.products) {
+            if (Array.isArray(configuration?.products)) {
+              configuration.products.forEach((product: Record<string, string>) => {
+                const supportedApplication = this.getSupportedApplication(product.id) || this.getSupportedApplication(product.instanceId);
+                if (supportedApplication) {
+                  const version = this.doPropertyReplacement(product.version);
+                  if (version) {
+                    result.set(supportedApplication, version);
+                  }
+                }
+              });
+            } else {
+              const { product } = configuration?.products || {};
+              if (product) {
+                const supportedApplication = this.getSupportedApplication(product.id) || this.getSupportedApplication(product.instanceId);
+                if (supportedApplication) {
+                  const version = this.doPropertyReplacement(product.version);
+                  if (version) {
+                    result.set(supportedApplication, version);
+                  }
+                }
+              }
+            }
+          }
+
+        } else {
+          const supportedApplication = this.getSupportedApplication(plugin?.artifactId);
+          const version = this.getVersion(node);
+          if (supportedApplication) {
+            result.set(supportedApplication, version);
+          }
         }
       }
     });
@@ -119,6 +144,19 @@ export class AMPS {
   }
 
   // ------------------------------------------------------------------------------------------ Private Methods
+
+  private getSupportedApplication(value?: string): TSupportedApplications|null {
+    if (value?.includes(SupportedApplications.Values.jira)) {
+      return SupportedApplications.Values.jira;
+    } else if (value?.includes(SupportedApplications.Values.confluence)) {
+      return SupportedApplications.Values.confluence;
+    } else if (value?.includes(SupportedApplications.Values.bamboo)) {
+      return SupportedApplications.Values.bamboo;
+    } else if (value?.includes(SupportedApplications.Values.bitbucket)) {
+      return SupportedApplications.Values.bitbucket;
+    }
+    return null;
+  }
 
   private getVersion(node: Node): string|undefined {
     const parentNode = node.parentNode;
