@@ -6,7 +6,8 @@ import { existsSync, mkdirSync } from 'fs';
 import { dump } from 'js-yaml';
 import { homedir } from 'os';
 import { join } from 'path';
-import { cwd } from 'process';
+import { arch,cwd } from 'process';
+import semver from 'semver';
 import simpleGit from 'simple-git';
 
 import { getDatabaseEngine } from '../helpers/getDatabaseEngine';
