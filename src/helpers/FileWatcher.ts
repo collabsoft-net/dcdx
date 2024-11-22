@@ -1,16 +1,15 @@
 import { watch } from 'chokidar';
-import { resolve as resolvePath } from 'path';
 import { cwd } from 'process';
 
 import { isRecursiveBuild } from '../helpers/isRecursiveBuild';
 import { showRecursiveBuildWarning } from '../helpers/showRecursiveBuildWarning';
-import { TBuildOptions } from '../types/AMPS';
+import { TBuildOptions, TDebugOptions } from '../types/AMPS';
 import { TSupportedApplications } from '../types/Application';
 import { AMPS } from './amps';
-import * as Docker from './docker';
 import { CustomBuilder } from './CustomBuilder';
+import { Installer } from './Installer';
 
-export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions, mavenOpts: Array<string>) => {
+export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions|TDebugOptions, mavenOpts: Array<string>, installOnly: boolean = false) => {
   let lastBuildCompleted = new Date().getTime();
   const outputDirectory = options.outputDirectory || 'target';
   const patterns = options.ext || [ '**/*' ];
@@ -21,6 +20,8 @@ export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions
     profiles: options.activateProfiles?.split(',') || []
   });
 
+  const deliverableExtension = options.obr ? '.obr' : '.jar';
+
   return watch(patterns, {
     cwd: options.cwd || cwd(),
     usePolling: true,
@@ -30,24 +31,9 @@ export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions
     persistent: true,
     atomic: true
   }).on('change', async (path) => {
-    if (options.install && path.startsWith(outputDirectory) && path.toLowerCase().endsWith('.jar')) {
-      const containerIds = await Docker.getRunningContainerIds(name);
-      if (containerIds.length <= 0) {
-        console.log(`There are no running instance of ${name}, unable to install plugin 🤔`);
-        return;
-      } else if (containerIds.length > 1) {
-        console.log(`There are multple running instance of ${name}, unable to determine which one to use 🤔`);
-        return;
-      }
-
-      const containerId = containerIds[0];
-      if (containerId) {
-        console.log(`Found updated JAR file, uploading them to QuickReload on running instances of ${name}`);
-        await Docker.copy(resolvePath(path), `${containerId}:/opt/quickreload/`)
-          .then(() => console.log('Finished uploading JAR file to QuickReload'))
-          .catch(err => console.log('Failed to upload JAR file to QuickReload', err));
-      }
-    } else if (!path.startsWith(outputDirectory)) {
+    if (options.install && path.startsWith(outputDirectory) && path.toLowerCase().endsWith(deliverableExtension)) {
+      await Installer(name, path, options);
+    } else if (!path.startsWith(outputDirectory) && !installOnly) {
       if (isRecursiveBuild(lastBuildCompleted)) {
         showRecursiveBuildWarning(outputDirectory);
       } else {

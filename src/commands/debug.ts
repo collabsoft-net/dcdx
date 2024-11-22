@@ -62,11 +62,15 @@ const Command = () => {
           throw new InvalidOptionArgumentError('Invalid argument "--cwd"');
         }
 
-        if (options.watch) {
-          const mavenOpts = program.args.slice();
-          mavenOpts.push(...options.activateProfiles ? [ '-P', options.activateProfiles ] : []);
-          quickReload = FileWatcher(name, options, mavenOpts);
+        if (options.obr && !options.username) {
+          throw new InvalidOptionArgumentError('Missing argument "--username", required for installing OBR artifacts');
+        } else if (options.obr && !options.password) {
+          throw new InvalidOptionArgumentError('Missing argument "--password", required for installing OBR artifacts');
         }
+
+        const mavenOpts = program.args.slice();
+        mavenOpts.push(...options.activateProfiles ? [ '-P', options.activateProfiles ] : []);
+        quickReload = FileWatcher(name, options, mavenOpts);
 
         instance = getApplication({ ...options, name });
         console.log(`Starting ${instance.name}... 💃`);
@@ -110,6 +114,9 @@ You can add Maven build arguments after the command options`)
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR files (only available with --install, defaults to `target`)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate (only available with --watch)'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration (only available with --watch)'))
+  .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app').default(false))
+  .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr)'))
+  .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr)'))
   .addOption(new Option('--exec <command>', 'Build command to run instead of Maven'))
   .addOption(new Option('--clean', 'Remove data files before starting the database').default(false))
   .addOption(new Option('--prune', 'Remove data files when stopping the database').default(false))

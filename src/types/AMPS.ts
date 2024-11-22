@@ -9,6 +9,9 @@ export const BuildOptions = z.object({
   install: z.boolean(),
   outputDirectory: z.string(),
   activateProfiles: z.string(),
+  obr: z.boolean(),
+  username: z.string(),
+  password: z.string(),
   cwd: z.string()
 }).partial({
   watch: true,
@@ -16,6 +19,9 @@ export const BuildOptions = z.object({
   exec: true,
   outputDirectory: true,
   activateProfiles: true,
+  obr: true,
+  username: true,
+  password: true,
   cwd: true
 });
 

@@ -58,6 +58,11 @@ const Command = () => {
       } else if (options.exec && options.activateProfiles) {
         throw new InvalidOptionArgumentError('Invalid argument "--activate-profiles". This option is not available in combination with "--exec"');
       }
+
+      if (options.obr && !options.username) {
+        throw new InvalidOptionArgumentError('Missing argument "--username", required for installing OBR artifacts');
+      } else if (options.obr && !options.password) {
+        throw new InvalidOptionArgumentError('Missing argument "--password", required for installing OBR artifacts');
       }
 
       const mavenOpts = program.args.slice();
@@ -111,6 +116,9 @@ You can add Maven build arguments after the command options.`)
   .addOption(new Option('--ext <patterns...>', 'Glob patterns to use when watching for file changes (only available with --watch, defaults to **/*)'))
   .addOption(new Option('-i, --install', 'Install the plugin into a running instance of the host application (only available with --watch)'))
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR files (only available with --install, defaults to `target`)'))
+  .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app (only available with --install)').default(false))
+  .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr)'))
+  .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration'))
   .addOption(new Option('--exec <command>', 'Build command to run instead of Maven'))
