@@ -8,6 +8,7 @@ import { TBuildOptions } from '../types/AMPS';
 import { TSupportedApplications } from '../types/Application';
 import { AMPS } from './amps';
 import * as Docker from './docker';
+import { CustomBuilder } from './CustomBuilder';
 
 export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions, mavenOpts: Array<string>) => {
   let lastBuildCompleted = new Date().getTime();
@@ -51,11 +52,20 @@ export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions
         showRecursiveBuildWarning(outputDirectory);
       } else {
         console.log('Detected file change, rebuilding Atlasian Data Center plugin');
-        amps.build(mavenOpts).then(() => {
-          console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
-        }).catch(() => {
-          console.log(`Failed to build Atlassian Data Center plugin for ${name}... 😰`);
-        })
+        if (!options.exec) {
+          await amps.build(mavenOpts).then(() => {
+            console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
+          }).catch(() => {
+            console.log(`Failed to build Atlassian Data Center plugin for ${name}... 😰`);
+          })
+        } else {
+          const builder = new CustomBuilder({ cmd: options.exec, cwd: options.cwd || cwd() });
+          await builder.build().then(() => {
+            console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
+          }).catch(() => {
+            console.log(`Failed to build Atlassian Data Center plugin for ${name}... 😰`);
+          });
+        }
         lastBuildCompleted = new Date().getTime();
       }
     }

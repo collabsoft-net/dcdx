@@ -3,11 +3,16 @@
 import { FSWatcher } from 'chokidar';
 import { Command as Commander, InvalidOptionArgumentError, Option } from 'commander';
 import { gracefulExit } from 'exit-hook';
+import { glob } from 'glob';
+import { resolve } from 'path';
+import { cwd } from 'process';
 
 import versions from '../../assets/versions.json';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
+import { CustomBuilder } from '../helpers/CustomBuilder';
 import { FileWatcher } from '../helpers/FileWatcher';
+import { Installer } from '../helpers/Installer';
 import { TBuildOptions } from '../types/AMPS';
 
 const program = new Commander();
@@ -44,6 +49,9 @@ const Command = () => {
         throw new InvalidOptionArgumentError('Invalid argument "--install"');
       } else if (!options.install && options.outputDirectory) {
         throw new InvalidOptionArgumentError('Invalid argument "--outputDirectory"');
+      } else if (options.exec && options.activateProfiles) {
+        throw new InvalidOptionArgumentError('Invalid argument "--activate-profiles". This option is not available in combination with "--exec"');
+      }
       }
 
       const mavenOpts = program.args.slice();
@@ -56,9 +64,22 @@ const Command = () => {
       }
 
       console.log(`Building Atlassian Data Center plugin for ${name}... 💃`);
-      await amps.build(mavenOpts).then(() => {
+      if (!options.exec) {
+        await amps.build(mavenOpts).then(async () => {
+          console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
+
+          if (!options.watch && options.install) {
+            const outputDirectory = options.outputDirectory || 'target';
+            const deliverableExtension = options.obr ? 'obr' : 'jar';
+            const files = await glob(`${outputDirectory}/*.${deliverableExtension}`, { cwd: resolve(options.cwd || cwd()) });
+            await Promise.all(files.map(path => Installer(name, path, options)));
+          }
+        });
+      } else {
+        const builder = new CustomBuilder({ cmd: options.exec, cwd: options.cwd || cwd() });
+        await builder.build();
         console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
-      });
+      }
     },
     errorHandler: async () => {
       if (quickReload) {
@@ -86,6 +107,7 @@ You can add Maven build arguments after the command options.`)
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR files (only available with --install, defaults to `target`)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration'))
+  .addOption(new Option('--exec <command>', 'Build command to run instead of Maven'))
   .action(options => ActionHandler(program, Command(), options));
 
 program.parseAsync(process.argv).catch(() => gracefulExit(1));

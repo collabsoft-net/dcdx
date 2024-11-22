@@ -5,6 +5,7 @@ import { ApplicationOptions } from './Application';
 export const BuildOptions = z.object({
   watch: z.boolean(),
   ext: z.array(z.string()),
+  exec: z.string(),
   install: z.boolean(),
   outputDirectory: z.string(),
   activateProfiles: z.string(),
@@ -12,6 +13,7 @@ export const BuildOptions = z.object({
 }).partial({
   watch: true,
   ext: true,
+  exec: true,
   outputDirectory: true,
   activateProfiles: true,
   cwd: true
