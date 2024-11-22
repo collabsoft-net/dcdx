@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 import { program } from 'commander';
+import { existsSync } from 'fs';
 
 import { version } from '../package.json';
+import { toAbsolutePath } from './helpers/toAbsolutePath';
 
 program
   .name('dcdx')
@@ -124,6 +126,73 @@ program
     process.argv.splice(2, 1, ...[ 'profile', command ]);
     program.parse(process.argv);
   });
+
+// ------------------------------------------------------------------------------------------ Update
+
+program
+  .command('update', 'Update the DCDX host product version list', { executableFile: './commands/update.js' });
+
+program
+  .command('update:jira')
+  .description('Update the DCDX product version list for Atlassian Jira')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'jira' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('update:confluence')
+  .description('Update the DCDX product version list for Atlassian Confluence')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'confluence' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('update:bamboo')
+  .description('Update the DCDX product version list for Atlassian Bamboo')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'bamboo' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('update:bitbucket')
+  .description('Update the DCDX product version list for Atlassian Bitbucket')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'bitbucket' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('update:mysql')
+  .description('Update the DCDX product version list for MySQL')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'mysql' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('update:postgresql')
+  .description('Update the DCDX product version list for Postgres SQL')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'postgresql' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('update:mssql')
+  .description('Update the DCDX product version list for Microsoft SQL Server')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'update', 'mssql' ]);
+    program.parse(process.argv);
+  });
+
+
+// Check if we need to update our version list before we parse the arguments
+if (!process.argv.includes('update') && !existsSync(toAbsolutePath('../assets/versions.json'))) {
+  program.error('Unable to find host product version list, please run `dcdx update`');
+}
 
 program.parse();
 
