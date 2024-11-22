@@ -26,7 +26,7 @@ export class Confluence extends Base {
       build: {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
-FROM dcdx/${this.name}:${this.options.tag}
+FROM ${this.getDockerBaseTag()}
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/confluence/confluence/WEB-INF/lib/mysql-connector-j-8.3.0.jar
 COPY ./quickreload-5.0.4.jar /opt/atlassian/confluence/confluence/WEB-INF/atlassian-bundled-plugins/quickreload-5.0.4.jar
 RUN echo "/opt/quickreload" > /var/atlassian/application-data/confluence/quickreload.properties; \

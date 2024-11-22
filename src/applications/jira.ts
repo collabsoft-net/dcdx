@@ -25,7 +25,7 @@ export class Jira extends Base {
       build: {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
-FROM dcdx/${this.name}:${this.options.tag}
+FROM ${this.getDockerBaseTag()}
 COPY ./jira-data-generator-5.0.0.jar /var/atlassian/application-data/jira/plugins/installed-plugins/jira-data-generator-5.0.0.jar
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/jira/lib/mysql-connector-j-8.3.0.jar
 COPY ./quickreload-5.0.4.jar /var/atlassian/application-data/jira/plugins/installed-plugins/quickreload-5.0.4.jar

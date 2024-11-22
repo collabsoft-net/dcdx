@@ -47,7 +47,10 @@ export abstract class Base implements Application {
       await this.down();
     }
 
-    await this.build(this.options.tag);
+    if (this.isBuidRequired()) {
+      await this.build(this.options.tag);
+    }
+
     await this.database.start(this.options.clean);
     await this.up();
   }
@@ -118,6 +121,15 @@ export abstract class Base implements Application {
       cwd: this.options.cwd
     }), tag);
   }
+
+  protected getDockerBaseTag() {
+    if (this.isBuidRequired()) {
+      return `dcdx/${this.name}:${this.options.tag}`;
+    } else if (this.name === 'jira') {
+      return `atlassian/jira-software:${this.options.tag}`;
+    } else {
+      return `atlassian/${this.name}:${this.options.tag}`;
+    }
   }
 
   // ------------------------------------------------------------------------------------------ Private Methods
@@ -176,32 +188,53 @@ export abstract class Base implements Application {
   private async waitUntilReady(count: number = 0): Promise<boolean> {
     console.log(`Waiting for ${this.name} to become available... ${count}s`);
     const service = await this.getServiceState();
-    const isRunning = service && service.state.toLowerCase().startsWith('up');
-    const isReady = isRunning && await this.isApplicationReady();
+    if (service) {
+      const isRunning = service && service.state.toLowerCase().startsWith('up');
+      const isReady = isRunning && await this.isApplicationReady();
 
-    if (isReady) {
-      return true;
-    }
-
-    if (count >= 300) {
-      console.error(`A timeout occurred while waiting for ${this.name} to become available ⛔`);
-      if (service) {
-        await this.showDockerLogs(service.name);
+      if (isReady) {
+        return true;
+      } else if (count >= 120) {
+        return false;
       }
+
+      await new Promise<void>(resolve => setTimeout(resolve, 1000));
+      return this.waitUntilReady(count + 1);
+    } else if (count < 10) {
+      await new Promise<void>(resolve => setTimeout(resolve, 1000));
+      return this.waitUntilReady(count + 1);
+    } else {
+      return false;
+    }
+  }
+
+  private isBuidRequired() {
+    if (this.options.tag.toLowerCase() === 'latest') {
       return false;
     }
 
-    await new Promise<void>(resolve => setTimeout(resolve, 1000));
-    return this.waitUntilReady(count + 1);
-  }
+    if (arch === 'arm' || arch === 'arm64') {
+      const version = this.options.tag.includes('-')
+        ? this.options.tag.slice(0, this.options.tag.indexOf('-'))
+        : this.options.tag;
 
-  private getDockerRepositoryUrl() {
-    const suffix = this.name === 'jira'
-      ? 'atlassian-jira'
-      : this.name === 'bamboo'
-        ? `${this.name}-server`
-        : `atlassian-${this.name}-server`;
-    return `https://bitbucket.org/atlassian-docker/docker-${suffix}.git`;
+      try {
+        const semVerVersion = semver.coerce(version);
+        if (semVerVersion) {
+          if (this.name === 'jira' || this.name === 'bamboo') {
+            return semver.lt(semVerVersion, '9.0.0');
+          } else if (this.name === 'confluence') {
+            return semver.lt(semVerVersion, '8.0.0');
+          } else if (this.name === 'bitbucket') {
+            return semver.lt(semVerVersion, '8.2.0');
+          }
+        }
+      } catch (err) {
+        return true;
+      }
+    }
+
+    return true;
   }
 
   private async build(version: string) {
@@ -223,6 +256,15 @@ export abstract class Base implements Application {
       );
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
     });
+  }
+
+  private getDockerRepositoryUrl() {
+    const suffix = this.name === 'jira'
+      ? 'atlassian-jira'
+      : this.name === 'bamboo'
+        ? `${this.name}-server`
+        : `atlassian-${this.name}-server`;
+    return `https://bitbucket.org/atlassian-docker/docker-${suffix}.git`;
   }
 
   private async tailApplicationLogs() {

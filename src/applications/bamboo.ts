@@ -28,7 +28,7 @@ export class Bamboo extends Base {
       build: {
         context: toAbsolutePath('../../assets'),
         dockerfile_inline: `
-FROM dcdx/${this.name}:${this.options.tag}
+FROM ${this.getDockerBaseTag()}
 COPY ./mysql-connector-j-8.3.0.jar /opt/atlassian/bamboo/lib/mysql-connector-j-8.3.0.jar
 COPY ./quickreload-5.0.4.jar /var/atlassian/application-data/bamboo/shared/plugins/quickreload-5.0.4.jar
 RUN echo "/opt/quickreload" > /var/atlassian/application-data/bamboo/quickreload.properties; \
