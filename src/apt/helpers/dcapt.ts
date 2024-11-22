@@ -26,7 +26,7 @@ export const install = async (cwd: string) => {
         '-v', `${baseDir}/dcapt-snapshots.json:/data-center-terraform/dcapt-snapshots.json`,
         '-v', `${baseDir}/logs:/data-center-terraform/logs`,
         '-v', `${baseDir}/outputs.json:/data-center-terraform/outputs.json`,
-        'atlassianlabs/terraform:2.7.9',
+        'atlassianlabs/terraform:latest',
         './install.sh', '-c', 'conf.tfvars'
       ],
       { cwd: baseDir, stdio: 'inherit' }
@@ -51,7 +51,7 @@ export const runTest = async (cwd: string, environment: string, product: TSuppor
         '-e', `ENVIRONMENT_NAME=${environment}`,
         '-v', `${cwd}:/data-center-terraform/dc-app-performance-toolkit`,
         '-v', `${cwd}/app/util/k8s/bzt_on_pod.sh:/data-center-terraform/bzt_on_pod.sh`,
-        'atlassianlabs/terraform:2.7.9',
+        'atlassianlabs/terraform:latest',
         'bash', 'bzt_on_pod.sh', `${product}.yml`
       ],
       { cwd, stdio: 'inherit' }
