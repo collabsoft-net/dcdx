@@ -8,6 +8,7 @@ import { TSupportedApplications } from '../../types/Application';
 export const install = async (cwd: string) => {
   console.log(`
   Start provisioning AWS using the Atlassian Data Center App Performace Toolkit (DCAPT) Terraform configuration
+  Using DCAPT configuration from ${cwd}
 `);
 
   const baseDir = join(cwd, 'app/util/k8s');

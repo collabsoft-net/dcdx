@@ -5,6 +5,8 @@ import { join, resolve } from 'path';
 import { cwd as pwd } from 'process';
 import simpleGit from 'simple-git';
 
+import { emptyLine } from '../messages';
+
 export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: boolean, force?: boolean) => {
   // Translate common relative paths to absolute paths
   let result: string = cwd.startsWith('~/')
@@ -102,13 +104,19 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
 
     if (cwd.endsWith('.dcdx/dcapt')) {
       console.log('  Using default configuration of DCAPT from source (non-interactive mode)')
+      console.log(`  ${cwd}`);
+      emptyLine();
+
       return cwd;
     }
 
-    console.log('  Installing default configuration of DCAPT from source (non-interactive mode)')
-
     // Use a temporary directory to ensure a fresh non-persistent checkout
     result = join(homedir(), '.dcdx', 'dcapt');
+
+    console.log('  Installing default configuration of DCAPT from source (non-interactive mode)')
+    console.log(`  ${result}`);
+
+    // Make sure the directory is empty
     rmSync(result, { force: true, recursive: true });
 
     // Retrieve DCAPT from github
@@ -124,10 +132,12 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
 
     // If this is not a DCAPT directory, we cannot continue
     if (!isCurrentDirectoryEligable) {
-      throw new Error('Could not find App Performance Toolkit in the current directory');
+      throw new Error(`Could not find App Performance Toolkit in the current directory ${cwd}`);
     }
 
     console.log('  Using DCAPT from current directory (non-interactive mode)')
+    console.log(`  ${cwd}`);
+    emptyLine();
     result = cwd;
   }
 
