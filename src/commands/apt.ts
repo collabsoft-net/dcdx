@@ -247,6 +247,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, PerformanceTestCommand(), options));
 
 program
@@ -256,6 +257,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, ScalabilityTestCommand(), options));
 
 program
@@ -264,6 +266,7 @@ program
   .addOption(new Option('--type <type>', 'The type of report to generate').choices(Object.values(ReportTypes.Values)).makeOptionMandatory(true))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution').makeOptionMandatory(true))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()).makeOptionMandatory(true))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, ReportCommand(), options));
 
 program
@@ -273,6 +276,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run1Command(), options));
 
 program
@@ -282,6 +286,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run2Command(), options));
 
 program
@@ -291,6 +296,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run3Command(), options));
 
 program
@@ -300,6 +306,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run4Command(), options));
 
 program
@@ -309,6 +316,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run5Command(), options));
 
 program
@@ -317,6 +325,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, TeardownCommand(), options));
 
 program.parseAsync(process.argv).catch(() => gracefulExit(1));
