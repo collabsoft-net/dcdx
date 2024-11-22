@@ -28,7 +28,7 @@
     "watch": "yarn run nodemon --watch src -e '.ts' --exec 'yarn build'",
     "start": "./lib/index.js",
     "prepack": "yarn generate:versions && yarn build",
-    "test": "yarn run vitest run --coverage --coverage.include=src --disable-console-intercept --watch=false --silent=false",
+    "test": "yarn run vitest run --coverage --coverage.include=src --disable-console-intercept --watch=false --silent=false --reporter=junit --outputFile=./test/results/junit.xml",
     "test:ui": "yarn run vitest --coverage --coverage.include=src --disable-console-intercept --silent=false --ui"
   },
   "repository": {
