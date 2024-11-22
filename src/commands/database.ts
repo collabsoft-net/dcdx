@@ -3,13 +3,14 @@
 import { Command as Commander, Option } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
-import versions from '../../assets/versions.json';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { getDatabaseEngine } from '../helpers/getDatabaseEngine';
+import { getVersions } from '../helpers/getVersions';
 import { getZodDefault } from '../helpers/getZodDefaults';
 import { DatabaseEngine, MSSQLOptions, MySQLOptions, PostgreSQLOptions, SupportedDatabaseEngines, SupportedMSSQLEditions, TDatabaseOptions } from '../types/Database';
 
 const program = new Commander();
+const versions = getVersions();
 
 const Command = () => {
   let instance: DatabaseEngine|null = null;

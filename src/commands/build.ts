@@ -7,15 +7,17 @@ import { glob } from 'glob';
 import { resolve } from 'path';
 import { cwd } from 'process';
 
-import versions from '../../assets/versions.json';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
 import { CustomBuilder } from '../helpers/CustomBuilder';
 import { FileWatcher } from '../helpers/FileWatcher';
+import { generateVersionList } from '../helpers/generateVersionList';
+import { getVersions } from '../helpers/getVersions';
 import { Installer } from '../helpers/Installer';
 import { TBuildOptions } from '../types/AMPS';
 
 const program = new Commander();
+const versions = getVersions();
 
 const Command = () => {
   let quickReload: FSWatcher|null = null;
@@ -40,7 +42,11 @@ const Command = () => {
       if (!version) {
         throw new Error('Failed to determine version from AMPS and no product version provided (--tag)');
       } else if (!versions[name].includes(version)) {
-        throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[name].join(', ')}.`);
+        console.log(`Could not find specified version ${version}, updating ${name} version list`);
+        const updatedVersions = await generateVersionList(name);
+        if (!updatedVersions[name].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[name].join(', ')}.`);
+        }
       }
 
       if (!options.watch && options.ext) {

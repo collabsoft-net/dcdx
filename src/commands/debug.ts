@@ -4,16 +4,17 @@ import { FSWatcher } from 'chokidar';
 import { Command as Commander, InvalidOptionArgumentError, Option } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
-import versions from '../../assets/versions.json';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
 import { FileWatcher } from '../helpers/FileWatcher';
 import { getApplication } from '../helpers/getApplication';
+import { getVersions } from '../helpers/getVersions';
 import { TDebugOptions } from '../types/AMPS';
 import { Application } from '../types/Application';
 import { SupportedDatabaseEngines } from '../types/Database';
 
 const program = new Commander();
+const versions = getVersions();
 
 const Command = () => {
   let instance: Application|null = null;
