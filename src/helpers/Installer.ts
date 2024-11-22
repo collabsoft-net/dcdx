@@ -9,7 +9,7 @@ import { uploadToUPM } from './upm';
 
 export const Installer = async (name: TSupportedApplications, path: string, options: TBuildOptions|TDebugOptions) => {
   const containerIds = await Docker.getRunningContainerIds(name);
-  if (containerIds.length <= 0) {
+  if (!containerIds || containerIds.length <= 0) {
     console.log(`There are no running instance of ${name}, unable to install plugin 🤔`);
     return;
   } else if (containerIds.length > 1) {

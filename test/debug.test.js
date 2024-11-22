@@ -373,9 +373,6 @@ Successfully stopped all running processes 💪
 
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // Run all the timers
       await vi.runAllTimersAsync();
       await new Promise(resolve => process.nextTick(resolve));
@@ -432,9 +429,6 @@ Successfully stopped all running processes 💪
       vi.useFakeTimers();
 
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // Run all the timers
       await vi.runAllTimersAsync();
@@ -493,9 +487,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--tag', 'latest' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -550,9 +541,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--tag', 'invalid' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -596,9 +584,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd(), '--database', 'mysql' ]
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -654,9 +639,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--database', 'mssql' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -711,9 +693,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--database', 'invalid' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -753,9 +732,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd(), '--port', '1234' ]
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -811,9 +787,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '-c', 'atlassian' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -867,9 +840,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd(), '--xms', '2gb' ]
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -925,9 +895,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--xmx', '2gb' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -981,9 +948,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd(), '--clean' ]
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -1039,9 +1003,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--prune' ]
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -1095,9 +1056,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd(), '-P', 'active' ]
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -1157,9 +1115,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -1361,80 +1316,10 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'target/somefile.class');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
-      // We need to stop Docker log tail
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/somefile.class');
 
-      expect(mockExistsSync).toBeCalledTimes(7);
-      expect(mockReadFileSync).toBeCalledTimes(7);
-      expect(mockFSWatcherAdd).toBeCalledTimes(1);
-      expect(mockFSWatcherAdd).toHaveBeenCalledWith([ '**/*' ]);
-      expect(mockedBuild).toBeCalledTimes(0);
-      expect(mockedClone).toBeCalledTimes(0);
-      expect(mockedPull).toBeCalledTimes(0);
-
-      expect(mockedDownAll).toBeCalledTimes(0);
-      expect(mockedPS).toBeCalledTimes(2);
-      expect(mockedStop).toBeCalledTimes(2);
-      expect(mockedUpAll).toBeCalledTimes(2);
-      expect(mockedAuthenticate).toBeCalledTimes(1);
-      expect(mockedQuery).toBeCalledTimes(0);
-
-      expect(stdErr).toBe('');
-      expect(stdOut).toBe(`
-Watching filesystem for changes to source files (**/*)
-Starting ${name}... 💃
-Starting instance of postgresql... 💃
-Database is ready and accepting connections on localhost:5432 🗄️
-Waiting for ${name} to become available... 0s
-The application ${name} is ready on http://localhost:80 🎉
-Stopping filesystem watcher... ⏳
-Stopping ${name}... 💔
-Successfully stopped all running processes 💪
-`.trim() + '\n');
-
-      expect(fsWatcherPaths).toStrictEqual([ '**/*' ]);
-      expect(fsWatcherOptions).toStrictEqual(defaultWatchOptions);
-      expect(commandExecutionOptions).toStrictEqual({
-        ...defaultCommandOptions,
-        watch: true
-      });
-    });
-
-    it(`dcdx debug (change triggerd by JAR file)`, async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReadFileSync.mockReturnValue(getValidPomFileFor(name, tag));
-      mockRecursiveBuild.mockReturnValue(false);
-      mockedClone.mockResolvedValue(true);
-      mockedPull.mockResolvedValue(true);
-      mockedUpAll.mockReturnValue(Promise.resolve());
-      mockedAuthenticate.mockResolvedValue(true);
-      mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
-      vi.spyOn(axios, 'get').mockResolvedValue({
-        status: 200,
-        data: { state: 'RUNNING' }
-      })
-
-      process.argv = [ 'vitest', cwd() ];
-      await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
-
-      fsWatcher.emit('change', 'target/archive.jar');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -1825,9 +1710,6 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -1949,9 +1831,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -2091,14 +1970,10 @@ Successfully stopped all running processes 💪
       process.argv = [ 'vitest', cwd(), '--ext', '**/*.java' ];
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
 
-      fsWatcher.emit('change', 'target/somefile.class');
-      // This is important, because the async/await
-      // in the change event handler is pushed to the next tick
-      await new Promise((resolve) => process.nextTick(resolve));
+      // Trigger a build based on a file change
+      await fsWatcherEventListener('target/somefile.class');
+
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -2427,9 +2302,6 @@ Successfully stopped all running processes 💪
 
       await import('../src/commands/debug');
       await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
-      await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
@@ -2481,9 +2353,6 @@ Successfully stopped all running processes 💪
 
       process.argv = [ 'vitest', cwd() ];
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
@@ -2605,9 +2474,6 @@ Successfully stopped all running processes 💪
       })
 
       await import('../src/commands/debug');
-      await new Promise(resolve => process.nextTick(resolve));
-      // We need to stop Docker build
-      SpawnEventEmitter.emit('exit', 0);
       await new Promise(resolve => process.nextTick(resolve));
       // We need to stop Docker log tail
       SpawnEventEmitter.emit('exit', 0);
