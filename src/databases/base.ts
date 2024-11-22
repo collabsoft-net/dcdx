@@ -81,6 +81,7 @@ export abstract class Base implements DatabaseEngine {
     } else {
       const configAsString = dump(this.getDockerComposeConfig());
       await stop({
+        cwd: cwd(),
         configAsString,
         log: true
       });
@@ -109,6 +110,7 @@ export abstract class Base implements DatabaseEngine {
     const configAsString = dump(this.getDockerComposeConfig());
 
     return upAll({
+      cwd: cwd(),
       configAsString,
       log: true
     });
@@ -117,6 +119,7 @@ export abstract class Base implements DatabaseEngine {
   private async down() {
     const configAsString = dump(this.getDockerComposeConfig());
     return downAll({
+      cwd: cwd(),
       configAsString,
       commandOptions: [ '-v', '--remove-orphans', '--rmi', 'local' ],
       log: true
