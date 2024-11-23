@@ -1,5 +1,6 @@
 import { confirm } from '@inquirer/prompts';
-import { existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
+import { chownSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
+import { userInfo } from 'os';
 import { join } from 'path';
 
 import { TSupportedApplications } from '../../types/Application';
@@ -36,6 +37,10 @@ export const getResultsDirectory = async (cwd: string, product: TSupportedApplic
           throw new Error('The test can only be executed if all previous results have been removed');
         }
       }
+
+      // Make sure the current user owns the directory
+      const { gid, uid } = userInfo();
+      chownSync(path, uid, gid);
 
       // Remove the previous results
       rmSync(path, { recursive: true });

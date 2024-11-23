@@ -1,5 +1,6 @@
 import { confirm } from '@inquirer/prompts';
-import { cpSync, existsSync, mkdirSync, rmSync } from 'fs';
+import { chownSync, cpSync, existsSync, mkdirSync, rmSync } from 'fs';
+import { userInfo } from 'os';
 import { join } from 'path';
 
 import { TAPTPerformanceTestMessages, TAPTPerformanceTestOptions, TPerformanceTestTypes } from '../../types/DCAPT';
@@ -43,6 +44,12 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
       // If we need to overwrite the test results, we should do so
       if (overwriteExistingResults) {
         console.log('Removing existing test results');
+
+        // Make sure the current user owns the directory
+        const { gid, uid } = userInfo();
+        chownSync(runOutputDir, uid, gid);
+
+        // Remove the directory
         rmSync(runOutputDir, { force: true });
 
       // If we are not allowed to overwrite the test results, there is no point in running this test
@@ -53,6 +60,11 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
 
     // If the test run was not successful, we are going to overwrite it without asking
     } else {
+      // Make sure the current user owns the directory
+      const { gid, uid } = userInfo();
+      chownSync(runOutputDir, uid, gid);
+
+      // Remove the directory
       rmSync(runOutputDir, { force: true });
     }
   }

@@ -1,6 +1,6 @@
 import { confirm, input } from '@inquirer/prompts';
-import { existsSync, rmSync } from 'fs';
-import { homedir } from 'os';
+import { chownSync, existsSync, rmSync } from 'fs';
+import { homedir, userInfo } from 'os';
 import { join, resolve } from 'path';
 import { cwd as pwd } from 'process';
 import simpleGit from 'simple-git';
@@ -115,6 +115,10 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
 
     console.log('  Installing default configuration of DCAPT from source (non-interactive mode)')
     console.log(`  ${result}`);
+
+    // Make sure the current user owns the directory
+    const { gid, uid } = userInfo();
+    chownSync(result, uid, gid);
 
     // Make sure the directory is empty
     rmSync(result, { force: true, recursive: true });
