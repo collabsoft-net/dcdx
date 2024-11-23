@@ -107,7 +107,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   }
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  cpSync(results.path as string, runOutputDir);
+  cpSync(results.path as string, runOutputDir, { force: true, recursive: true });
 
   // Celebrate our success!
   console.log(ScalabilityTestMessages.success);

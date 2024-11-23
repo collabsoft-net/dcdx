@@ -77,6 +77,6 @@ ${output}
   const reportDir = getReport(reportBaseDir, 'performance');
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  cpSync(reportDir, join(options.outputDir, 'performance_profile'));
+  cpSync(reportDir, join(options.outputDir, 'performance_profile'), { force: true, recursive: true });
 
 }

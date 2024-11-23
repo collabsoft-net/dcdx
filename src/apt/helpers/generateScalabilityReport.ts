@@ -80,6 +80,6 @@ ${output}
   const reportDir = getReport(reportBaseDir, 'scalability');
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  cpSync(reportDir, join(options.outputDir, 'scale_profile'));
+  cpSync(reportDir, join(options.outputDir, 'scale_profile'), { force: true, recursive: true });
 
 }

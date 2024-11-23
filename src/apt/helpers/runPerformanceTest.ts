@@ -99,7 +99,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   }
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  cpSync(results.path as string, runOutputDir);
+  cpSync(results.path as string, runOutputDir, { force: true, recursive: true });
 
   // Celebrate our success!
   console.log(messages.success);
