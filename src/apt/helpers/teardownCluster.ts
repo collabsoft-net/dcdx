@@ -24,7 +24,7 @@ export const teardownCluster = async (options: TAPTTeardownOptions) => {
   emptyLine();
 
   // Terminate it!
-  await terminate(options.cwd, options.environment);
+  await terminate(directory, options.environment);
 
   // Ask the user to quit the program
   await waitForUserInput('Press a key to exit...', options.force);
