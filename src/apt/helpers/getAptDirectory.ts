@@ -116,12 +116,15 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
     console.log('  Installing default configuration of DCAPT from source (non-interactive mode)')
     console.log(`  ${result}`);
 
-    // Make sure the current user owns the directory
-    const { gid, uid } = userInfo();
-    chownSync(result, uid, gid);
+    // If the directory already exists, remove it
+    if (existsSync(result)) {
+      // Make sure the current user owns the directory
+      const { gid, uid } = userInfo();
+      chownSync(result, uid, gid);
 
-    // Make sure the directory is empty
-    rmSync(result, { force: true, recursive: true });
+      // Make sure the directory is empty
+      rmSync(result, { force: true, recursive: true });
+    }
 
     // Retrieve DCAPT from github
     await simpleGit().clone('https://github.com/atlassian/dc-app-performance-toolkit.git', result);
