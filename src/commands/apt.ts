@@ -248,7 +248,7 @@ program
 program
   .command('performance')
   .description('Run the Data Center App Performance Toolkit performance regression test')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
@@ -260,7 +260,7 @@ program
 program
   .command('scalability')
   .description('Run the Data Center App Performance Toolkit scalability test')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
@@ -282,7 +282,7 @@ program
 program
   .command('run1')
   .description('Start the Data Center App Performance Testing Performance Regression test (run 1)')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -293,7 +293,7 @@ program
 program
   .command('run2')
   .description('Continue the Data Center App Performance Testing with run 2')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -304,7 +304,7 @@ program
 program
   .command('run3')
   .description('Continue the Data Center App Performance Testing with run 3')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -315,7 +315,7 @@ program
 program
   .command('run4')
   .description('Continue the Data Center App Performance Testing with run 4')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -326,7 +326,7 @@ program
 program
   .command('run5')
   .description('Continue the Data Center App Performance Testing with run 5')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -337,7 +337,7 @@ program
 program
   .command('teardown')
   .description('Terminate the Data Center App Performance Testing cluster on AWS')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
