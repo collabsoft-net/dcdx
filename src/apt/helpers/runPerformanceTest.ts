@@ -1,6 +1,5 @@
 import { confirm } from '@inquirer/prompts';
-import { existsSync, mkdirSync, rmSync } from 'fs';
-import { move } from 'fs-extra';
+import { cpSync, existsSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 
 import { TAPTPerformanceTestMessages, TAPTPerformanceTestOptions, TPerformanceTestTypes } from '../../types/DCAPT';
@@ -100,7 +99,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   }
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  await move(results.path as string, runOutputDir, { overwrite: true });
+  cpSync(results.path as string, runOutputDir);
 
   // Celebrate our success!
   console.log(messages.success);

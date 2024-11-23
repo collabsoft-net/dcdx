@@ -1,5 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs'
-import { move } from 'fs-extra';
+import { cpSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { parse, stringify } from 'yaml';
 
@@ -78,6 +77,6 @@ ${output}
   const reportDir = getReport(reportBaseDir, 'performance');
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  await move(reportDir, join(options.outputDir, 'performance_profile'), { overwrite: true });
+  cpSync(reportDir, join(options.outputDir, 'performance_profile'));
 
 }
