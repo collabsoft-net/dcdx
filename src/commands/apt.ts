@@ -43,6 +43,7 @@ const DefaultCommand = () => ({
     await Performance({
       product: product,
       cwd: options.cwd,
+      outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
@@ -54,6 +55,7 @@ const DefaultCommand = () => ({
     await Scalability({
       product,
       cwd: options.cwd,
+      outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
@@ -79,12 +81,12 @@ const ReportCommand = () => ({
     if (options.type === 'performance') {
       await generatePerformanceReport({
         ...options,
-        outputDir: getOutputDirectory(options.timestamp)
+        outputDir: getOutputDirectory(options.outputDir, options.timestamp)
       });
     } else {
       await generateScalabilityReport({
         ...options,
-        outputDir: getOutputDirectory(options.timestamp)
+        outputDir: getOutputDirectory(options.outputDir, options.timestamp)
       });
     }
   },
@@ -100,6 +102,7 @@ const PerformanceTestCommand = () => ({
     await Performance({
       product: options.product,
       cwd: options.cwd,
+      outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
@@ -125,7 +128,7 @@ const Run1Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
     await runPerformanceTest('baseline', {
       ...options,
-      outputDir: getOutputDirectory(options.timestamp)
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp)
     }, Run1);
   },
   errorHandler: async () => {
@@ -137,7 +140,7 @@ const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
     await runPerformanceTest('baseline', {
       ...options,
-      outputDir: getOutputDirectory(options.timestamp)
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp)
     }, Run2);
   },
   errorHandler: async () => {
@@ -151,6 +154,7 @@ const ScalabilityTestCommand = () => ({
     await Scalability({
       product: options.product,
       cwd: options.cwd,
+      outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
@@ -176,7 +180,7 @@ const Run3Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
     await runScalabilityTest('one-node', {
       ...options,
-      outputDir: getOutputDirectory(options.timestamp),
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product],
     });
   },
@@ -189,7 +193,7 @@ const Run4Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
     await runScalabilityTest('two-node', {
       ...options,
-      outputDir: getOutputDirectory(options.timestamp),
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product],
     });
   },
@@ -202,7 +206,7 @@ const Run5Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
     await runScalabilityTest('four-node', {
       ...options,
-      outputDir: getOutputDirectory(options.timestamp),
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product],
     });
   },
@@ -236,6 +240,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, DefaultCommand(), options));
@@ -247,6 +252,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, PerformanceTestCommand(), options));
@@ -258,6 +264,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, ScalabilityTestCommand(), options));
@@ -267,6 +274,7 @@ program
   .description('Generate a Data Center App Performance Testing report')
   .addOption(new Option('--type <type>', 'The type of report to generate').choices(Object.values(ReportTypes.Values)).makeOptionMandatory(true))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution').makeOptionMandatory(true))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()).makeOptionMandatory(true))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, ReportCommand(), options));
@@ -277,6 +285,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run1Command(), options));
@@ -287,6 +296,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run2Command(), options));
@@ -297,6 +307,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run3Command(), options));
@@ -307,6 +318,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run4Command(), options));
@@ -317,6 +329,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run5Command(), options));
@@ -326,6 +339,7 @@ program
   .description('Terminate the Data Center App Performance Testing cluster on AWS')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, TeardownCommand(), options));

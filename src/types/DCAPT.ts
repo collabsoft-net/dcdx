@@ -31,7 +31,10 @@ export const ReportTypes = z.enum([
 export const APTReportArgs = z.object({
   type: ReportTypes,
   timestamp: z.string(),
+  outputDir: z.string(),
   cwd: z.string()
+}).partial({
+  outputDir: true
 });
 
 export const APTProvisionOptions = z.object({
@@ -49,12 +52,14 @@ export const APTProvisionOptions = z.object({
 export const APTPerformanceTestArgs = z.object({
   product: SupportedApplications,
   cwd: z.string(),
+  outputDir: z.string(),
   environment: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
+  outputDir: true,
   timestamp: true,
   force: true
 });
@@ -94,12 +99,14 @@ export const APTPerformanceReportOptions = z.object({
 export const APTScalabilityTestArgs = z.object({
   product: SupportedApplications,
   cwd: z.string(),
+  outputDir: z.string(),
   environment: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
+  outputDir: true,
   appLicense: true,
   timestamp: true,
   force: true

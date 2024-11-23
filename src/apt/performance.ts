@@ -9,7 +9,7 @@ import { Run1, Run2 } from './messages'
 export const Performance = async (options: TAPTPerformanceTestArgs) => {
 
   // Get the output directory for the test results
-  const outputDir = getOutputDirectory(options.timestamp);
+  const outputDir = getOutputDirectory(options.outputDir, options.timestamp);
 
   // Provision the cluster
   const {

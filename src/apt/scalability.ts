@@ -8,7 +8,7 @@ import { runScalabilityTest } from './helpers/runScalabilityTest';
 export const Scalability = async (options: TAPTScalabilityTestArgs) => {
 
   // Get the output directory for the test results
-  const outputDir = getOutputDirectory(options.timestamp);
+  const outputDir = getOutputDirectory(options.outputDir, options.timestamp);
 
   // Provision the cluster
   const {
