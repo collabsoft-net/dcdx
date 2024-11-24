@@ -14,7 +14,9 @@ import { installApp } from '../helpers/installApp';
 import { persistTestConfiguration } from '../helpers/persistTestConfiguration';
 import { reindex } from '../helpers/reindex';
 import { waitForUserInput } from '../helpers/waitForUserInput';
+import { getAWSCredentials } from './getAWSCredentials';
 import { getRunForStage } from './getRunForStage';
+import { persistAWSCredentials } from './persistsAWSCredentials';
 
 export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: TAPTPerformanceTestOptions, messages: TAPTPerformanceTestMessages) => {
 
@@ -80,6 +82,12 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
 
   // Allow users to set a different test duration (for validation purposes)
   const duration = await getDuration(options.force);
+
+  // Ask for the AWS credentials
+  const [ aws_access_key_id, aws_secret_access_key ] = await getAWSCredentials(options.product, options.force);
+
+  // Write AWS credentials to disk
+  persistAWSCredentials(cwd, aws_access_key_id, aws_secret_access_key);
 
   // Write test configuration to disk
   await persistTestConfiguration(cwd, options.product, baseUrl, duration, false, options.force);
