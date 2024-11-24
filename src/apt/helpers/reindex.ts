@@ -136,6 +136,10 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
 
         // Now throw a hissy fit anyway
         throw new Error('Lucence Index Timing test failed');
+      } else {
+        console.log(`
+  ✔ Lucence re-index of Jira has completed
+`);
       }
 
       // Update the loop variable

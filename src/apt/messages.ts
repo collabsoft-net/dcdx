@@ -3,7 +3,6 @@ import { join } from 'path'
 import { capitalize } from '../helpers/capitalize'
 import { TSupportedApplications } from '../types/Application'
 import { TAPTPerformanceTestMessages, TAPTScalabilityTestMessages, TScalabilityTestTypes, TTestResults } from '../types/DCAPT'
-import { getNodeNumberForStage } from './helpers/getNodeNumberForStage'
 import { getRunForStage } from './helpers/getRunForStage'
 
 const toNumber = (stage: TScalabilityTestTypes) => {
@@ -302,7 +301,7 @@ ${stage === 'one-node' ? `
   |__|__|_____|_|___|  |___|                          
 `}
 
-  We will now start the scalability benchmark for ${stage} ${capitalize(product)} DC cluster with app-specific actions: (run ${getNodeNumberForStage(stage)})
+  We will now start the scalability benchmark for ${stage} ${capitalize(product)} DC cluster with app-specific actions: (run ${getRunForStage(stage)})
 
   The ${toNumber(stage)} run consists of the following steps:
   1. Adjust the environment to a ${stage} cluster
