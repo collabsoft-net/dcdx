@@ -1,6 +1,6 @@
 import { confirm } from '@inquirer/prompts';
-import { chownSync, cpSync, existsSync, mkdirSync, rmSync } from 'fs';
-import { userInfo } from 'os';
+import { existsSync, mkdirSync, rmSync } from 'fs';
+import { move } from 'fs-extra';
 import { join } from 'path';
 
 import { TAPTPerformanceTestMessages, TAPTPerformanceTestOptions, TPerformanceTestTypes } from '../../types/DCAPT';
@@ -45,10 +45,6 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
       if (overwriteExistingResults) {
         console.log('Removing existing test results');
 
-        // Make sure the current user owns the directory
-        const { gid, uid } = userInfo();
-        chownSync(runOutputDir, uid, gid);
-
         // Remove the directory
         rmSync(runOutputDir, { force: true });
 
@@ -60,10 +56,6 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
 
     // If the test run was not successful, we are going to overwrite it without asking
     } else {
-      // Make sure the current user owns the directory
-      const { gid, uid } = userInfo();
-      chownSync(runOutputDir, uid, gid);
-
       // Remove the directory
       rmSync(runOutputDir, { force: true });
     }
@@ -111,7 +103,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   }
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
-  cpSync(results.path as string, runOutputDir, { force: true, recursive: true });
+  await move(results.path as string, runOutputDir, { overwrite: true });
 
   // Celebrate our success!
   console.log(messages.success);

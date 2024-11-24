@@ -1,6 +1,5 @@
 import { confirm } from '@inquirer/prompts';
-import { chownSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
-import { userInfo } from 'os';
+import { existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
 import { join } from 'path';
 
 export const getReportDirectory = async (cwd: string, force?: boolean) => {
@@ -35,10 +34,6 @@ export const getReportDirectory = async (cwd: string, force?: boolean) => {
           throw new Error('The report can only be generated if all previous reports have been removed');
         }
       }
-
-      // Make sure the current user owns the directory
-      const { gid, uid } = userInfo();
-      chownSync(path, uid, gid);
 
       // Remove the previous reports
       rmSync(path, { recursive: true });
