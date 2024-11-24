@@ -7,6 +7,7 @@ import { TAPTScalabilityTestOptions, TScalabilityTestTypes } from '../../types/D
 import { emptyLine, ScalabilityTestMessages } from '../messages';
 import { install, runTest } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
+import { getAWSCredentials } from './getAWSCredentials';
 import { getClusterURL } from './getClusterURL';
 import { getDuration } from './getDuration';
 import { getNodeNumberForStage } from './getNodeNumberForStage';
@@ -15,6 +16,7 @@ import { getResultsDirectory } from './getResultsDirectory';
 import { getRunForStage } from './getRunForStage';
 import { installApp } from './installApp';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
+import { persistAWSCredentials } from './persistsAWSCredentials';
 import { persistTestConfiguration } from './persistTestConfiguration';
 import { waitForUserInput } from './waitForUserInput';
 
@@ -66,10 +68,16 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   // Make sure the output directory exists
   mkdirSync(options.outputDir, { recursive: true });
 
+  // Ask for the AWS credentials
+  const [ aws_access_key_id, aws_secret_access_key ] = await getAWSCredentials(options.product, options.force);
+
   // Inform the user that we will now start the scalability benchmark
   console.log(ScalabilityTestMessages.readyForProvisioning);
   await waitForUserInput('Press a key to prepare the AWS environment for scalability benchmark testing...', options.force);
   emptyLine();
+
+  // Write AWS credentials to disk
+  persistAWSCredentials(cwd, aws_access_key_id, aws_secret_access_key);
 
   // Write Terraform variables to disk (one-node cluster)
   persistClusterConfiguration(cwd, options.environment, options.product, options.license, nodes);
