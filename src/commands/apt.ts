@@ -8,6 +8,7 @@ import { generatePerformanceReport } from '../apt/helpers/generatePerformanceRep
 import { generateScalabilityReport } from '../apt/helpers/generateScalabilityReport';
 import { getOutputDirectory } from '../apt/helpers/getOutputDirectory';
 import { getProduct } from '../apt/helpers/getProduct';
+import { provisionCluster } from '../apt/helpers/provisionCluster';
 import { runPerformanceTest } from '../apt/helpers/runPerformanceTest';
 import { runScalabilityTest } from '../apt/helpers/runScalabilityTest';
 import { teardownCluster } from '../apt/helpers/teardownCluster';
@@ -215,6 +216,20 @@ const Run5Command = () => ({
   }
 })
 
+const ProvisionCommand = () => ({
+  action: async (options: TAPTTeardownArgs) => {
+    await provisionCluster({
+      product: options.product,
+      cwd: options.cwd,
+      environment: options.environment,
+      force: options.force
+    }, true);
+  },
+  errorHandler: async () => {
+
+  }
+})
+
 const TeardownCommand = () => ({
   action: async (options: TAPTTeardownArgs) => {
     await teardownCluster({
@@ -335,11 +350,19 @@ program
   .action(options => ActionHandler(program, Run5Command(), options));
 
 program
+  .command('provision')
+  .description('Provision the Data Center App Performance Testing cluster on AWS')
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
+  .action(options => ActionHandler(program, ProvisionCommand(), options));
+
+program
   .command('teardown')
   .description('Terminate the Data Center App Performance Testing cluster on AWS')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
-  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, TeardownCommand(), options));
