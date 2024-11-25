@@ -3,7 +3,7 @@ import { join } from 'path';
 
 import { TSupportedApplications } from '../../types/Application';
 
-export const getClusterURL = async (cwd: string, product: TSupportedApplications) => {
+export const getClusterURL = async (cwd: string, product: TSupportedApplications): Promise<string> => {
 
   // Change the working directory to the Kubernetes utils directory
   const baseDir = join(cwd, 'app/util/k8s');

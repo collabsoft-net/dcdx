@@ -15,6 +15,10 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
   const {
     cwd,
     environment,
+    baseUrl,
+    aws_access_key_id,
+    aws_secret_access_key,
+    license
   } = await provisionCluster({
     product: options.product,
     cwd: options.cwd,
@@ -29,6 +33,10 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     cwd,
     outputDir,
     environment,
+    baseUrl,
+    aws_access_key_id,
+    aws_secret_access_key,
+    license,
     appKey: options.appKey,
     force: options.force
   }, Run1);
@@ -39,6 +47,10 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     cwd,
     outputDir,
     environment,
+    baseUrl,
+    aws_access_key_id,
+    aws_secret_access_key,
+    license,
     appKey: options.appKey,
     force: options.force
   }, Run2);

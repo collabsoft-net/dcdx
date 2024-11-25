@@ -3,8 +3,8 @@ import { existsSync, mkdirSync, rmSync } from 'fs';
 import { move } from 'fs-extra';
 import { join } from 'path';
 
-import { TAPTScalabilityTestOptions, TScalabilityTestTypes } from '../../types/DCAPT';
-import { emptyLine, ScalabilityTestMessages } from '../messages';
+import { TAPTScalabilityTestMessages, TAPTScalabilityTestOptions, TScalabilityTestTypes } from '../../types/DCAPT';
+import { emptyLine } from '../messages';
 import { install, runTest } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
@@ -20,13 +20,13 @@ import { persistAWSCredentials } from './persistsAWSCredentials';
 import { persistTestConfiguration } from './persistTestConfiguration';
 import { waitForUserInput } from './waitForUserInput';
 
-export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: TAPTScalabilityTestOptions) => {
+export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: TAPTScalabilityTestOptions, messages: TAPTScalabilityTestMessages) => {
 
   // Get the correct amount of nodes for the specified stage
   const nodes = getNodeNumberForStage(stage);
 
   // Show the welcome message
-  console.log(ScalabilityTestMessages.header(options.product, stage));
+  console.log(messages.header(options.product, stage));
 
   // We are going to reconfirm that we are running on the default configuration (and fetch it if required)
   const cwd = await getAptDictory(options.cwd, false, options.force);
@@ -49,7 +49,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
       if (overwriteExistingResults) {
         console.log('Removing existing test results');
 
-        // Remove the directry
+        // Remove the directory
         rmSync(runOutputDir, { force: true });
 
       // If we are not allowed to overwrite the test results, there is no point in running this test
@@ -72,7 +72,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   const [ aws_access_key_id, aws_secret_access_key ] = await getAWSCredentials(options.product, options.force);
 
   // Inform the user that we will now start the scalability benchmark
-  console.log(ScalabilityTestMessages.readyForProvisioning);
+  console.log(messages.readyForProvisioning);
   await waitForUserInput('Press a key to prepare the AWS environment for scalability benchmark testing...', options.force);
   emptyLine();
 
@@ -86,7 +86,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   await install(cwd);
 
   // Inform the user that we will now start the scalability benchmark
-  console.log(ScalabilityTestMessages.startScalabilityTest);
+  console.log(messages.startScalabilityTest);
 
   // Get the load balancer URL for the cluster
   const baseUrl = await getClusterURL(cwd, options.product);
@@ -113,7 +113,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   if (results['Summary run status'] !== 'OK') {
 
     // If not, let the people know and terminate
-    console.log(ScalabilityTestMessages.failure(stage, cwd, options.product, options.environment, resultsBaseDir, results));
+    console.log(messages.failure(stage, cwd, options.product, options.environment, resultsBaseDir, results));
     throw new Error('Scalability benchmark test failed');
 
   }
@@ -123,7 +123,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   await move(results.path as string, runOutputDir, { overwrite: true });
 
   // Celebrate our success!
-  console.log(ScalabilityTestMessages.success);
+  console.log(messages.success);
 
   // Ask permission to continue with the next step
   await waitForUserInput('Press a key to continue with the next step...', options.force);

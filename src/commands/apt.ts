@@ -13,7 +13,7 @@ import { runPerformanceTest } from '../apt/helpers/runPerformanceTest';
 import { runScalabilityTest } from '../apt/helpers/runScalabilityTest';
 import { teardownCluster } from '../apt/helpers/teardownCluster';
 import { waitForUserInput } from '../apt/helpers/waitForUserInput';
-import { emptyLine, generic, init, Run1, Run2 } from '../apt/messages';
+import { emptyLine, generic, init, Run1, Run2, ScalabilityTestMessages } from '../apt/messages';
 import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
@@ -129,7 +129,8 @@ const Run1Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
     await runPerformanceTest('baseline', {
       ...options,
-      outputDir: getOutputDirectory(options.outputDir, options.timestamp)
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
+      license: timebomb[options.product]
     }, Run1);
   },
   errorHandler: async () => {
@@ -141,7 +142,8 @@ const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
     await runPerformanceTest('baseline', {
       ...options,
-      outputDir: getOutputDirectory(options.outputDir, options.timestamp)
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
+      license: timebomb[options.product]
     }, Run2);
   },
   errorHandler: async () => {
@@ -183,7 +185,7 @@ const Run3Command = () => ({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product],
-    });
+    }, ScalabilityTestMessages);
   },
   errorHandler: async () => {
 
@@ -196,7 +198,7 @@ const Run4Command = () => ({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product],
-    });
+    }, ScalabilityTestMessages);
   },
   errorHandler: async () => {
 
@@ -209,7 +211,7 @@ const Run5Command = () => ({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product],
-    });
+    }, ScalabilityTestMessages);
   },
   errorHandler: async () => {
 

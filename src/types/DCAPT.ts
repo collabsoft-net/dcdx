@@ -69,10 +69,17 @@ export const APTPerformanceTestOptions = z.object({
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
+  baseUrl: z.string(),
+  aws_access_key_id: z.string(),
+  aws_secret_access_key: z.string(),
+  license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
   force: z.boolean()
 }).partial({
+  baseUrl: true,
+  aws_access_key_id: true,
+  aws_secret_access_key: true,
   appKey: true,
   appLicense: true,
   force: true
@@ -80,6 +87,7 @@ export const APTPerformanceTestOptions = z.object({
 
 export const APTPerformanceTestMessages = z.object({
   header: z.function().args(SupportedApplications).returns(z.string()),
+  readyForProvisioning: z.string(),
   startPerformanceTest: z.string(),
   startLuceneIndexing: z.string(),
   success: z.string(),

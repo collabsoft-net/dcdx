@@ -4,6 +4,7 @@ import { generateScalabilityReport } from './helpers/generateScalabilityReport';
 import { getOutputDirectory } from './helpers/getOutputDirectory';
 import { provisionCluster } from './helpers/provisionCluster';
 import { runScalabilityTest } from './helpers/runScalabilityTest';
+import { ScalabilityTestMessages } from './messages';
 
 export const Scalability = async (options: TAPTScalabilityTestArgs) => {
 
@@ -33,7 +34,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     appKey: options.appKey,
     appLicense: options.appLicense,
     force: options.force
-  });
+  }, ScalabilityTestMessages);
 
   // Run the scalability test with a two-node cluster
   await runScalabilityTest('two-node', {
@@ -45,7 +46,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     appKey: options.appKey,
     appLicense: options.appLicense,
     force: options.force
-  });
+  }, ScalabilityTestMessages);
 
   // Run the scalability test with a one-node cluster
   await runScalabilityTest('four-node', {
@@ -57,7 +58,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     appKey: options.appKey,
     appLicense: options.appLicense,
     force: options.force
-  });
+  }, ScalabilityTestMessages);
 
   // Generate the scalability report
   await generateScalabilityReport({

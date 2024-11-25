@@ -8,6 +8,7 @@ import { persistClusterConfiguration } from '../helpers/persistClusterConfigurat
 import { persistAWSCredentials } from '../helpers/persistsAWSCredentials';
 import { waitForUserInput } from '../helpers/waitForUserInput';
 import { emptyLine, provisioning } from '../messages';
+import { getClusterURL } from './getClusterURL';
 
 export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDefaultConfiguration: boolean) => {
   // Show the provisioning welcome message
@@ -39,6 +40,9 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
   // Run the DCAPT install script
   await install(directory);
 
+  // Get the cluster URL from the outputs.json
+  const baseUrl = await getClusterURL(directory, options.product);
+
   // Ask permission to continue with the next step
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
@@ -48,6 +52,7 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
     environment,
     aws_access_key_id,
     aws_secret_access_key,
+    baseUrl,
     license
   }
 }

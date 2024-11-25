@@ -4,19 +4,21 @@ import { move } from 'fs-extra';
 import { join } from 'path';
 
 import { TAPTPerformanceTestMessages, TAPTPerformanceTestOptions, TPerformanceTestTypes } from '../../types/DCAPT';
-import { runTest } from '../helpers/dcapt';
-import { getAptDictory } from '../helpers/getAptDirectory';
-import { getClusterURL } from '../helpers/getClusterURL';
-import { getDuration } from '../helpers/getDuration';
-import { getResults } from '../helpers/getResults';
-import { getResultsDirectory } from '../helpers/getResultsDirectory';
-import { installApp } from '../helpers/installApp';
-import { persistTestConfiguration } from '../helpers/persistTestConfiguration';
-import { reindex } from '../helpers/reindex';
-import { waitForUserInput } from '../helpers/waitForUserInput';
+import { emptyLine } from '../messages';
+import { install, runTest } from './dcapt';
+import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
+import { getClusterURL } from './getClusterURL';
+import { getDuration } from './getDuration';
+import { getResults } from './getResults';
+import { getResultsDirectory } from './getResultsDirectory';
 import { getRunForStage } from './getRunForStage';
+import { installApp } from './installApp';
+import { persistClusterConfiguration } from './persistClusterConfiguration';
 import { persistAWSCredentials } from './persistsAWSCredentials';
+import { persistTestConfiguration } from './persistTestConfiguration';
+import { reindex } from './reindex';
+import { waitForUserInput } from './waitForUserInput';
 
 export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: TAPTPerformanceTestOptions, messages: TAPTPerformanceTestMessages) => {
 
@@ -26,10 +28,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   // We are going to reconfirm that we are running on the default configuration (and fetch it if required)
   const cwd = await getAptDictory(options.cwd, true, options.force);
 
-  // Get the load balancer URL for the cluster
-  const baseUrl = await getClusterURL(cwd, options.product);
-
-  // Get the path to the 'private' subdirectory of APT in which we store the test results for this specific run
+  // Get the path to the 'private' subdirectory of APT in which we store the test results
   const runOutputDir = join(options.outputDir, `run${getRunForStage(stage)}`);
 
   // Check if there are existing test results for the current run
@@ -66,6 +65,37 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   // Make sure the output directory exists
   mkdirSync(options.outputDir, { recursive: true });
 
+  // Ask for the AWS credentials
+  const [ aws_access_key_id, aws_secret_access_key ] = (options.aws_access_key_id && options.aws_secret_access_key)
+    ? [ options.aws_access_key_id, options.aws_secret_access_key ]
+    : await getAWSCredentials(options.product, options.force);
+
+  // Write AWS credentials to disk
+  persistAWSCredentials(cwd, aws_access_key_id, aws_secret_access_key);
+
+  // Check if we already have a provisioned cluster available
+  // If not, we should provision it as part of the test run
+  if (!options.baseUrl) {
+
+    // Inform the user that we will now start the scalability benchmark
+    console.log(messages.readyForProvisioning);
+    await waitForUserInput('Press a key to prepare the AWS environment for performance benchmark testing...', options.force);
+    emptyLine();
+
+    // Write Terraform variables to disk (one-node cluster)
+    persistClusterConfiguration(cwd, options.environment, options.product, options.license, 1);
+
+    // Run the DCAPT install script
+    await install(cwd);
+
+  }
+
+  // Inform the user that we will now start the scalability benchmark
+  console.log(messages.startPerformanceTest);
+
+  // Get the load balancer URL for the cluster
+  const baseUrl = options.baseUrl || await getClusterURL(cwd, options.product);
+
   // If we are running regression tests, we need to install the app (& run indexing tests for Jira)
   if (stage === 'regression') {
     // Install the app into the cluster
@@ -77,17 +107,8 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
     }
   }
 
-  // Inform the user that we will now start the regression testing
-  console.log(messages.startPerformanceTest);
-
   // Allow users to set a different test duration (for validation purposes)
   const duration = await getDuration(options.force);
-
-  // Ask for the AWS credentials
-  const [ aws_access_key_id, aws_secret_access_key ] = await getAWSCredentials(options.product, options.force);
-
-  // Write AWS credentials to disk
-  persistAWSCredentials(cwd, aws_access_key_id, aws_secret_access_key);
 
   // Write test configuration to disk
   await persistTestConfiguration(cwd, options.product, baseUrl, duration, false, options.force);

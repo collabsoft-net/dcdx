@@ -35,7 +35,9 @@ export const install = async (cwd: string) => {
   });
 
   console.log(`
-✔ Finished provisioning AWS using the Atlassian Data Center App Performace Toolkit (DCAPT) Terraform configuration`);
+✔ Finished provisioning AWS using the Atlassian Data Center App Performace Toolkit (DCAPT) Terraform configuration
+  Cluster details can be found in ${baseDir}/outputs.json
+`);
 }
 
 export const runTest = async (cwd: string, environment: string, product: TSupportedApplications) => {

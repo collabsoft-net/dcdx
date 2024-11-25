@@ -102,14 +102,6 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
   // If we are in non-interactive mode and we need to use the default configuration, we will clone it from Github
   } else if (mustUseDefaultConfiguration) {
 
-    if (result.endsWith('.dcdx/dcapt')) {
-      console.log('  Using default configuration of DCAPT from source (non-interactive mode)')
-      console.log(`  ${result}`);
-      emptyLine();
-
-      return result;
-    }
-
     // If the provided directory does not exists we can use it
     // Otherwise use a temporary directory to ensure a fresh non-persistent checkout
     result = !existsSync(result)

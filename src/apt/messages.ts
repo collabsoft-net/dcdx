@@ -154,6 +154,15 @@ export const Run1: TAPTPerformanceTestMessages = {
   https://github.com/atlassian/dc-app-performance-toolkit
 `,
 
+  readyForProvisioning: `
+In order to be able to start the performance regression test, we will now configure the DC cluster on AWS
+
+!! IMPORTANT !!
+
+We will be writing the configuration to disk. This will overwrite existing configuration.
+Please note that provisioning the environment will incur AWS usage costs.
+`,
+
   startPerformanceTest: `
 We will now start the Performance Regression test
 `,
@@ -210,6 +219,15 @@ ${ product === 'jira' ? `
   You can get the default configuration from the APT sources:
 
   https://github.com/atlassian/dc-app-performance-toolkit
+`,
+
+  readyForProvisioning: `
+In order to be able to start the performance regression test, we will now configure the DC cluster on AWS
+
+!! IMPORTANT !!
+
+We will be writing the configuration to disk. This will overwrite existing configuration.
+Please note that provisioning the environment will incur AWS usage costs.
 `,
 
   startLuceneIndexing: `
