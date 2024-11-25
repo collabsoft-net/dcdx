@@ -21,7 +21,7 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
   if (!force) {
 
     // Check if we are currently in the APT directory
-    const isCurrentDirectoryEligable = existsSync(join(cwd, 'app/util/k8s/dcapt.tfvars'));
+    const isCurrentDirectoryEligable = existsSync(join(result, 'app/util/k8s/dcapt.tfvars'));
 
     // If this is the APT directory, we will be using the current directory...
     let useCurrentDirectory: boolean = isCurrentDirectoryEligable;
@@ -29,7 +29,7 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
     // ...unless told otherwise
     if (isCurrentDirectoryEligable) {
       console.log(`  We've found the App Performance Toolkit in the specified directory:
-  ${cwd}
+  ${result}
 `)
       useCurrentDirectory = await confirm({
         message: `Do you wish to use this directory?`,
@@ -38,11 +38,11 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
     }
 
     // If we are not going to use the current directory, ask for the alternative
-    let directory = cwd;
+    let directory = result;
     if (!useCurrentDirectory) {
       directory = await input({
         message: 'Please specify the location where the App Peformance Toolkit is located',
-        default: cwd,
+        default: result,
         required: true
       });
     }
@@ -102,18 +102,18 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
   // If we are in non-interactive mode and we need to use the default configuration, we will clone it from Github
   } else if (mustUseDefaultConfiguration) {
 
-    if (cwd.endsWith('.dcdx/dcapt')) {
+    if (result.endsWith('.dcdx/dcapt')) {
       console.log('  Using default configuration of DCAPT from source (non-interactive mode)')
-      console.log(`  ${cwd}`);
+      console.log(`  ${result}`);
       emptyLine();
 
-      return cwd;
+      return result;
     }
 
     // If the provided directory does not exists we can use it
     // Otherwise use a temporary directory to ensure a fresh non-persistent checkout
-    result = !existsSync(cwd)
-      ? cwd
+    result = !existsSync(result)
+      ? result
       : join(homedir(), '.dcdx', 'dcapt');
 
     // Inform the user of the chosen directory
@@ -132,17 +132,16 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
   } else {
 
     // Check if we are currently in the APT directory
-    const isCurrentDirectoryEligable = existsSync(join(cwd, 'app/util/k8s/dcapt.tfvars'));
+    const isCurrentDirectoryEligable = existsSync(join(result, 'app/util/k8s/dcapt.tfvars'));
 
     // If this is not a DCAPT directory, we cannot continue
     if (!isCurrentDirectoryEligable) {
-      throw new Error(`Could not find App Performance Toolkit in the current directory ${cwd}`);
+      throw new Error(`Could not find App Performance Toolkit in the current directory ${result}`);
     }
 
     console.log('  Using DCAPT from current directory (non-interactive mode)')
-    console.log(`  ${cwd}`);
+    console.log(`  ${result}`);
     emptyLine();
-    result = cwd;
 
   }
 
