@@ -119,6 +119,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   }
 
   // We have a successful test, so we should store the results in a 'private' subdirectory of APT
+  console.log(`  Copying test results to ${runOutputDir}`);
   await move(results.path as string, runOutputDir, { overwrite: true });
 
   // Celebrate our success!
