@@ -140,7 +140,7 @@ const Run1Command = () => ({
 
 const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest('baseline', {
+    await runPerformanceTest('regression', {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product]
