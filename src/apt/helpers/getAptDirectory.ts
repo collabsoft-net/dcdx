@@ -110,9 +110,13 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
       return cwd;
     }
 
-    // Use a temporary directory to ensure a fresh non-persistent checkout
-    result = join(homedir(), '.dcdx', 'dcapt');
+    // If the provided directory does not exists we can use it
+    // Otherwise use a temporary directory to ensure a fresh non-persistent checkout
+    result = !existsSync(cwd)
+      ? cwd
+      : join(homedir(), '.dcdx', 'dcapt');
 
+    // Inform the user of the chosen directory
     console.log('  Installing default configuration of DCAPT from source (non-interactive mode)')
     console.log(`  ${result}`);
 
@@ -139,6 +143,7 @@ export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: bo
     console.log(`  ${cwd}`);
     emptyLine();
     result = cwd;
+
   }
 
   // This should not occur, because either we have established the current directory has DCAPT
