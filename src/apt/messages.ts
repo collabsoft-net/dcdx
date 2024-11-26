@@ -300,8 +300,8 @@ Please note that provisioning the environment will incur AWS usage costs.
 `,
 
   startTest: `
-  Now that the app is installed, we can start the Lucene Index timing test
-  Once the test is finished, a browser window is opened to capture the test results. 
+  We are ready to start the Lucene Index timing test
+  Once the test is finished, a browser window is opened to capture the test results.
 
   !! IMPORTANT !!
 
