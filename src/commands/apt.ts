@@ -9,17 +9,18 @@ import { generateScalabilityReport } from '../apt/helpers/generateScalabilityRep
 import { getOutputDirectory } from '../apt/helpers/getOutputDirectory';
 import { getProduct } from '../apt/helpers/getProduct';
 import { provisionCluster } from '../apt/helpers/provisionCluster';
+import { runLuceneTimingTest } from '../apt/helpers/runLuceneTimingTest';
 import { runPerformanceTest } from '../apt/helpers/runPerformanceTest';
 import { runScalabilityTest } from '../apt/helpers/runScalabilityTest';
 import { teardownCluster } from '../apt/helpers/teardownCluster';
 import { waitForUserInput } from '../apt/helpers/waitForUserInput';
-import { emptyLine, generic, init, Run1, Run2, ScalabilityTestMessages } from '../apt/messages';
+import { emptyLine, generic, init, LuceneTimingTest, Run1, Run2, ScalabilityTestMessages } from '../apt/messages';
 import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { timebomb } from '../helpers/licences';
 import { SupportedApplications } from '../types/Application';
-import { ReportTypes, TAPTArgs, TAPTPerformanceTestArgs, TAPTReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceTestArgs, TAPTReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -127,7 +128,7 @@ const PerformanceTestCommand = () => ({
 
 const Run1Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest('baseline', {
+    await runPerformanceTest(PerformanceTestTypes.Values.baseline, {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product]
@@ -140,11 +141,24 @@ const Run1Command = () => ({
 
 const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest('regression', {
+    await runPerformanceTest(PerformanceTestTypes.Values.regression, {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: timebomb[options.product]
     }, Run2);
+  },
+  errorHandler: async () => {
+
+  }
+})
+
+const ReindexCommand = () => ({
+  action: async (options: TAPTPerformanceTestArgs) => {
+    await runLuceneTimingTest(PerformanceTestTypes.Values.regression, {
+      ...options,
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
+      license: timebomb[options.product]
+    }, LuceneTimingTest);
   },
   errorHandler: async () => {
 
@@ -287,6 +301,18 @@ program
   .action(options => ActionHandler(program, ScalabilityTestCommand(), options));
 
 program
+  .command('reindex')
+  .description('Run the Data Center App Performance Toolkit Lucene Index Timing test')
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
+  .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
+  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
+  .action(options => ActionHandler(program, ReindexCommand(), options));
+
+program
   .command('report')
   .description('Generate a Data Center App Performance Testing report')
   .addOption(new Option('--type <type>', 'The type of report to generate').choices(Object.values(ReportTypes.Values)).makeOptionMandatory(true))
@@ -298,7 +324,7 @@ program
 
 program
   .command('run1')
-  .description('Start the Data Center App Performance Testing Performance Regression test (run 1)')
+  .description('Start the Data Center App Performance Testing Performance baseline test (run 1)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -309,7 +335,7 @@ program
 
 program
   .command('run2')
-  .description('Continue the Data Center App Performance Testing with run 2')
+  .description('Start the Data Center App Performance Testing Performance regression test (run 2)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -320,7 +346,7 @@ program
 
 program
   .command('run3')
-  .description('Continue the Data Center App Performance Testing with run 3')
+  .description('Start the Data Center App Performance Testing Scalability test on a one-node DC cluster (run 3)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -331,7 +357,7 @@ program
 
 program
   .command('run4')
-  .description('Continue the Data Center App Performance Testing with run 4')
+  .description('Start the Data Center App Performance Testing Scalability test on a two-node DC cluster (run 4)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -342,7 +368,7 @@ program
 
 program
   .command('run5')
-  .description('Continue the Data Center App Performance Testing with run 5')
+  .description('Start the Data Center App Performance Testing Scalability test on a four-node DC cluster (run 5)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))

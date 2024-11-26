@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmSync } from 'fs';
 import { move } from 'fs-extra';
 import { join } from 'path';
 
-import { TAPTPerformanceTestMessages, TAPTPerformanceTestOptions, TPerformanceTestTypes } from '../../types/DCAPT';
+import { TAPTPerformanceTestOptions, TAPTTestMessages, TPerformanceTestTypes } from '../../types/DCAPT';
 import { emptyLine } from '../messages';
 import { install, runTest } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
@@ -13,17 +13,15 @@ import { getDuration } from './getDuration';
 import { getResults } from './getResults';
 import { getResultsDirectory } from './getResultsDirectory';
 import { getRunForStage } from './getRunForStage';
-import { installApp } from './installApp';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
 import { persistAWSCredentials } from './persistsAWSCredentials';
 import { persistTestConfiguration } from './persistTestConfiguration';
-import { reindex } from './reindex';
 import { waitForUserInput } from './waitForUserInput';
 
-export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: TAPTPerformanceTestOptions, messages: TAPTPerformanceTestMessages) => {
+export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: TAPTPerformanceTestOptions, messages: TAPTTestMessages) => {
 
   // Show the welcome message
-  console.log(messages.header(options.product));
+  console.log(messages.header(options.product, stage));
 
   // We are going to reconfirm that we are running on the default configuration (and fetch it if required)
   const cwd = await getAptDictory(options.cwd, true, options.force);
@@ -91,21 +89,10 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   }
 
   // Inform the user that we will now start the scalability benchmark
-  console.log(messages.startPerformanceTest);
+  console.log(messages.startTest);
 
   // Get the load balancer URL for the cluster
   const baseUrl = options.baseUrl || await getClusterURL(cwd, options.product);
-
-  // If we are running regression tests, we need to install the app (& run indexing tests for Jira)
-  if (stage === 'regression') {
-    // Install the app into the cluster
-    await installApp(baseUrl, options.appKey, options.appLicense, options.force);
-
-    // If we are doing this thing for Jira, we need to do the Lucene Index Testing
-    if (options.product === 'jira') {
-      await reindex(baseUrl, options.outputDir, options.force);
-    }
-  }
 
   // Allow users to set a different test duration (for validation purposes)
   const duration = await getDuration(options.force);
@@ -126,7 +113,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   if (results['Summary run status'] !== 'OK') {
 
     // If not, let the people know and terminate
-    console.log(messages.failure(cwd, options.product, options.environment, resultsBaseDir, results));
+    console.log(messages.failure(stage, cwd, options.product, options.environment, resultsBaseDir, results));
     throw new Error('Performance regression test failed');
 
   }

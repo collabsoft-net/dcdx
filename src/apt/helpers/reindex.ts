@@ -5,7 +5,6 @@ import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import puppeteer from 'puppeteer';
 
-import { Run2 } from '../messages';
 import { getReindexProgress } from './getReindexProgress';
 import { waitForUserInput } from './waitForUserInput';
 
@@ -16,9 +15,6 @@ const progressBar = new SingleBar({
 
 
 export const reindex = async (baseUrl: string, outputDir: string, force?: boolean) => {
-
-  // Tell them that we are planning to run the Lucene Indexing Test
-  console.log(Run2.startLuceneIndexing);
 
   // Check if the reindex screenshot already exists
   if (existsSync(join(outputDir, 'lucene-reindex.png'))) {
@@ -224,7 +220,8 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
 
         // Make sure that we have captured the screen shot in the output directory
         screenshotCreated = existsSync(join(outputDir, 'lucene-reindex.png'));
-      } catch (_ignored) {
+      } catch (err) {
+        console.log(err);
         console.log(`  Could not get a screen shot of the lucene indexing result, retrying...`);
       } finally {
         retryCount++;

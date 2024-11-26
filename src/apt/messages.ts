@@ -2,10 +2,10 @@ import { join } from 'path'
 
 import { capitalize } from '../helpers/capitalize'
 import { TSupportedApplications } from '../types/Application'
-import { TAPTPerformanceTestMessages, TAPTScalabilityTestMessages, TScalabilityTestTypes, TTestResults } from '../types/DCAPT'
+import { TAPTTestMessages, TPerformanceTestTypes, TScalabilityTestTypes, TTestResults } from '../types/DCAPT'
 import { getRunForStage } from './helpers/getRunForStage'
 
-const toNumber = (stage: TScalabilityTestTypes) => {
+const toNumber = (stage: TPerformanceTestTypes|TScalabilityTestTypes) => {
   switch (stage) {
     case 'one-node': return 'third';
     case 'two-node': return 'fourth';
@@ -137,7 +137,7 @@ export const provisioning = {
 
 }
 
-export const Run1: TAPTPerformanceTestMessages = {
+export const Run1: TAPTTestMessages = {
 
   header: () => `
   _____ _____ _____    ___   
@@ -163,7 +163,7 @@ We will be writing the configuration to disk. This will overwrite existing confi
 Please note that provisioning the environment will incur AWS usage costs.
 `,
 
-  startPerformanceTest: `
+  startTest: `
 We will now start the Performance Regression test
 `,
 
@@ -171,9 +171,9 @@ We will now start the Performance Regression test
 ✔ Finished the performance regression testing without app installed (run 1)
 `,
 
-  failure: (cwd: string, product: TSupportedApplications, environment: string, resultsBaseDir: string, results: Partial<Record<TTestResults, string|undefined>>) => {
+  failure: (stage: TPerformanceTestTypes|TScalabilityTestTypes, cwd: string, product: TSupportedApplications, environment: string, resultsBaseDir: string, results: Partial<Record<TTestResults, string|undefined>>) => {
     let output = `
-  ✔ Finished the performance regression testing without app installed (run 1)
+  ✔ Finished the performance ${stage} testing without app installed (run 1)
 
   Unfortunately, the test run was finished unsuccesful. 
   Please review the test results and adjust the configuration if required.
@@ -194,7 +194,7 @@ We will now start the Performance Regression test
   }
 }
 
-export const Run2: TAPTPerformanceTestMessages = {
+export const Run2: TAPTTestMessages = {
 
   header: (product: TSupportedApplications) => `
   _____ _____ _____    ___ 
@@ -230,17 +230,7 @@ We will be writing the configuration to disk. This will overwrite existing confi
 Please note that provisioning the environment will incur AWS usage costs.
 `,
 
-  startLuceneIndexing: `
-  Now that the app is installed, we can start the Lucene Index timing test
-  Once the test is finished, a browser window is opened to capture the test results. 
-
-  !! IMPORTANT !!
-
-  This may take ~50 minutes. Please do not terminate the program
-  Do not close the browser window, or else the test will fail
-`,
-
-  startPerformanceTest: `
+  startTest: `
   We will now start the Performance Regression test
 `,
 
@@ -248,9 +238,9 @@ success: `
 ✔ Finished the performance regression testing with app installed (run 2)
 `,
 
-  failure: (cwd: string, product: TSupportedApplications, environment: string, resultsBaseDir: string, results: Partial<Record<TTestResults, string|undefined>>) => {
+  failure: (stage: TPerformanceTestTypes|TScalabilityTestTypes, cwd: string, product: TSupportedApplications, environment: string, resultsBaseDir: string, results: Partial<Record<TTestResults, string|undefined>>) => {
     let output = `
-  ✔ Finished the performance regression testing with app installed (run 2)
+  ✔ Finished the performance ${stage} testing with app installed (run 2)
 
   Unfortunately, the test run was finished unsuccesful. 
   Please review the test results and adjust the configuration if required.
@@ -270,6 +260,69 @@ success: `
     return output
   }
 
+
+}
+
+export const LuceneTimingTest: TAPTTestMessages = {
+
+  header: (_product: TSupportedApplications, stage: TPerformanceTestTypes|TScalabilityTestTypes) => `
+  __    _____ _____ _____ _____ _____ 
+  |  |  |  |  |     |   __|   | |   __|
+  |  |__|  |  |   --|   __| | | |   __|
+  |_____|_____|_____|_____|_|___|_____|
+  _____ _____ _____ _____ _____ _____ 
+  |_   _|     |     |     |   | |   __|
+    | | |-   -| | | |-   -| | | |  |  |
+    |_| |_____|_|_|_|_____|_|___|_____|
+      _____ _____ _____ _____         
+      |_   _|   __|   __|_   _|        
+        | | |   __|__   | | |          
+        |_| |_____|_____| |_|          
+                                                               
+  We will now start the Lucene Index Timing test with app installed
+  This is part of the Performance ${stage} test (run 2)
+
+  After the re-index is completed a screenshot is created which is part of the required test results
+
+  It is important that you are running the Lucene index timing test on the default configuration.
+  You can get the default configuration from the APT sources:
+
+  https://github.com/atlassian/dc-app-performance-toolkit
+`,
+
+  readyForProvisioning: `
+In order to be able to start the Lucene index timing test, we will now configure the DC cluster on AWS
+
+!! IMPORTANT !!
+
+We will be writing the configuration to disk. This will overwrite existing configuration.
+Please note that provisioning the environment will incur AWS usage costs.
+`,
+
+  startTest: `
+  Now that the app is installed, we can start the Lucene Index timing test
+  Once the test is finished, a browser window is opened to capture the test results. 
+
+  !! IMPORTANT !!
+
+  This may take ~50 minutes. Please do not terminate the program
+  Do not close the browser window, or else the test will fail
+`,
+
+success: `
+✔ Finished the Lucene Index Timinig test with app installed (run 2)
+`,
+
+  failure: (_stage: TPerformanceTestTypes|TScalabilityTestTypes, cwd: string, product: TSupportedApplications, environment: string) => `
+  ✔ Finished the Lucene Index Timing test with app installed (run 2)
+
+  Unfortunately, the test run was finished unsuccesful. 
+  Please review the test results and adjust the configuration if required.
+
+  You can restart the Lucene Index Timing test using the following command:
+  
+  $ dcdx apt reindex --product ${product} --cwd ${cwd} --environment ${environment}
+`
 
 }
 
@@ -299,9 +352,9 @@ export const PerformanceReportMessages = {
 
 }
 
-export const ScalabilityTestMessages: TAPTScalabilityTestMessages = {
+export const ScalabilityTestMessages: TAPTTestMessages = {
 
-  header: (product: TSupportedApplications, stage: TScalabilityTestTypes) => `
+  header: (product: TSupportedApplications, stage: TPerformanceTestTypes|TScalabilityTestTypes) => `
 ${stage === 'one-node' ? `
   _____ _____ _____    ___ 
   | __  |  |  |   | |  |_  |
@@ -349,7 +402,7 @@ ${ product === 'jira' ?
   Please note that provisioning the environment will incur AWS usage costs.
 `,
 
-  startScalabilityTest: `
+  startTest: `
   Ready to start the scalability benchmark test with app-specific actions
 `,
 
@@ -357,7 +410,7 @@ success: `
 ✔ Finished the scalability benchmark test with app-specific actions
 `,
 
-  failure: (stage: TScalabilityTestTypes, cwd: string, product: TSupportedApplications, environment: string, resultsBaseDir: string, results: Partial<Record<TTestResults, string|undefined>>) => {
+  failure: (stage: TPerformanceTestTypes|TScalabilityTestTypes, cwd: string, product: TSupportedApplications, environment: string, resultsBaseDir: string, results: Partial<Record<TTestResults, string|undefined>>) => {
     let output = `
 ✔ Finished the scalability benchmark test with app-specific actions
 

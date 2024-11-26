@@ -37,6 +37,14 @@ export const APTReportArgs = z.object({
   outputDir: true
 });
 
+export const APTTestMessages = z.object({
+  header: z.function().args(SupportedApplications, PerformanceTestTypes.or(ScalabilityTestTypes)).returns(z.string()),
+  readyForProvisioning: z.string(),
+  startTest: z.string(),
+  success: z.string(),
+  failure: z.function().args(PerformanceTestTypes.or(ScalabilityTestTypes), z.string(), SupportedApplications, z.string(), z.string(), z.record(TestResults, z.string().or(z.undefined())))
+});
+
 export const APTProvisionOptions = z.object({
   product: SupportedApplications,
   cwd: z.string(),
@@ -85,17 +93,6 @@ export const APTPerformanceTestOptions = z.object({
   force: true
 });
 
-export const APTPerformanceTestMessages = z.object({
-  header: z.function().args(SupportedApplications).returns(z.string()),
-  readyForProvisioning: z.string(),
-  startPerformanceTest: z.string(),
-  startLuceneIndexing: z.string(),
-  success: z.string(),
-  failure: z.function().args(z.string(), SupportedApplications, z.string(), z.string(), z.record(TestResults, z.string().or(z.undefined())))
-}).partial({
-  startLuceneIndexing: true
-});
-
 export const APTPerformanceReportOptions = z.object({
   cwd: z.string(),
   outputDir: z.string(),
@@ -135,14 +132,6 @@ export const APTScalabilityTestOptions = z.object({
   force: true
 });
 
-export const APTScalabilityTestMessages = z.object({
-  header: z.function().args(SupportedApplications, ScalabilityTestTypes).returns(z.string()),
-  readyForProvisioning: z.string(),
-  startScalabilityTest: z.string(),
-  success: z.string(),
-  failure: z.function().args(ScalabilityTestTypes, z.string(), SupportedApplications, z.string(), z.string(), z.record(TestResults, z.string().or(z.undefined())))
-});
-
 export const APTScalabilityReportOptions = z.object({
   cwd: z.string(),
   outputDir: z.string(),
@@ -180,6 +169,7 @@ export const APTArgs = z.intersection(
 );
 
 export type TAPTArgs = z.infer<typeof APTArgs>;
+export type TAPTTestMessages = z.infer<typeof APTTestMessages>;
 export type TAPTProvisionOptions = z.infer<typeof APTProvisionOptions>;
 
 export type TAPTReportArgs = z.infer<typeof APTReportArgs>;
@@ -187,13 +177,11 @@ export type TAPTReportArgs = z.infer<typeof APTReportArgs>;
 export type TPerformanceTestTypes = z.infer<typeof PerformanceTestTypes>;
 export type TAPTPerformanceTestArgs = z.infer<typeof APTPerformanceTestArgs>;
 export type TAPTPerformanceTestOptions = z.infer<typeof APTPerformanceTestOptions>;
-export type TAPTPerformanceTestMessages = z.infer<typeof APTPerformanceTestMessages>;
 export type TAPTPerformanceReportOptions = z.infer<typeof APTPerformanceReportOptions>;
 
 export type TScalabilityTestTypes = z.infer<typeof ScalabilityTestTypes>;
 export type TAPTScalabilityTestArgs = z.infer<typeof APTScalabilityTestArgs>;
 export type TAPTScalabilityTestOptions = z.infer<typeof APTScalabilityTestOptions>;
-export type TAPTScalabilityTestMessages = z.infer<typeof APTScalabilityTestMessages>;
 export type TAPTScalabilityReportOptions = z.infer<typeof APTScalabilityReportOptions>;
 
 export type TAPTTeardownArgs = z.infer<typeof APTTeardownArgs>;
