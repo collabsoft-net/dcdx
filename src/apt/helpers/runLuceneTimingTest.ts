@@ -1,5 +1,4 @@
-import { confirm } from '@inquirer/prompts';
-import { existsSync, mkdirSync, rmSync } from 'fs';
+import { mkdirSync } from 'fs';
 import { join } from 'path';
 
 import { TAPTPerformanceTestOptions, TAPTTestMessages, TPerformanceTestTypes } from '../../types/DCAPT';
@@ -8,7 +7,6 @@ import { install } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
 import { getClusterURL } from './getClusterURL';
-import { getResults } from './getResults';
 import { getRunForStage } from './getRunForStage';
 import { installApp } from './installApp';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
@@ -26,37 +24,6 @@ export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options:
 
   // Get the path to the 'private' subdirectory of APT in which we store the test results
   const runOutputDir = join(options.outputDir, `run${getRunForStage(stage)}`);
-
-  // Check if there are existing test results for the current run
-  if (existsSync(runOutputDir)) {
-    // If there are existing test results, check if they were successful
-    const existingResults = getResults(runOutputDir);
-    if (existingResults['Summary run status'] === 'OK') {
-
-      // Ask nicely if we need to remove the existing test results
-      const overwriteExistingResults = options.force || await confirm({
-        message: 'There are existing successful test results, do you want to overwrite these results?'
-      });
-
-      // If we need to overwrite the test results, we should do so
-      if (overwriteExistingResults) {
-        console.log('Removing existing test results');
-
-        // Remove the directory
-        rmSync(runOutputDir, { force: true });
-
-      // If we are not allowed to overwrite the test results, there is no point in running this test
-      } else {
-        console.log(`Skipping performance ${stage} test execution, a successful test run was already completed`);
-        return;
-      }
-
-    // If the test run was not successful, we are going to overwrite it without asking
-    } else {
-      // Remove the directory
-      rmSync(runOutputDir, { force: true });
-    }
-  }
 
   // Make sure the output directory exists
   mkdirSync(options.outputDir, { recursive: true });
