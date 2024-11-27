@@ -43,9 +43,6 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
   // Get the cluster URL from the outputs.json
   const baseUrl = await getClusterURL(directory, options.product);
 
-  // Ask permission to continue with the next step
-  await waitForUserInput('Press a key to continue with the next step...', options.force);
-
   // Return all the questions we asked the user for use in other steps
   return {
     cwd: directory,

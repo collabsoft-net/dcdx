@@ -125,7 +125,4 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   // Celebrate our success!
   console.log(messages.success);
 
-  // Ask permission to continue with the next step
-  await waitForUserInput('Press a key to continue with the next step...', options.force);
-
 }

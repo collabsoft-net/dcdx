@@ -5,6 +5,7 @@ import { getOutputDirectory } from './helpers/getOutputDirectory';
 import { provisionCluster } from './helpers/provisionCluster'
 import { runLuceneTimingTest } from './helpers/runLuceneTimingTest';
 import { runPerformanceTest } from './helpers/runPerformanceTest';
+import { waitForUserInput } from './helpers/waitForUserInput';
 import { LuceneTimingTest, Run1, Run2 } from './messages'
 
 export const Performance = async (options: TAPTPerformanceTestArgs) => {
@@ -28,6 +29,9 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     force: options.force
   }, true);
 
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
+
   // Run the baseline performance test (run 1)
   await runPerformanceTest(PerformanceTestTypes.Values.baseline, {
     product: options.product,
@@ -41,6 +45,9 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     appKey: options.appKey,
     force: options.force
   }, Run1);
+
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the lucene timing test (part of run 2)
   await runLuceneTimingTest(PerformanceTestTypes.Values.regression, {
@@ -56,6 +63,9 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     force: options.force
   }, LuceneTimingTest)
 
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
+
   // Run the performance regression test (run 2)
   await runPerformanceTest(PerformanceTestTypes.Values.regression, {
     product: options.product,
@@ -69,6 +79,9 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     appKey: options.appKey,
     force: options.force
   }, Run2);
+
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Generate the performance report
   await generatePerformanceReport({

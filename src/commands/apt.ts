@@ -53,6 +53,9 @@ const DefaultCommand = () => ({
       force: options.force
     });
 
+    // Ask permission to continue with the next step
+    await waitForUserInput('Press a key to continue with the next step...', options.force);
+
     // Start the scalability testing
     await Scalability({
       product,
@@ -64,6 +67,9 @@ const DefaultCommand = () => ({
       timestamp: options.timestamp,
       force: options.force
     });
+
+    // Ask permission to continue with the next step
+    await waitForUserInput('Press a key to continue with the next step...', options.force);
 
     // Teardown the cluster
     await teardownCluster({
@@ -93,8 +99,6 @@ const ReportCommand = () => ({
     }
   },
   errorHandler: async () => {
-    // TODO improve error handling
-    console.log('Something went wrong');
   }
 })
 
@@ -112,6 +116,9 @@ const PerformanceTestCommand = () => ({
       force: options.force
     });
 
+    // Ask permission to continue with the next step
+    await waitForUserInput('Press a key to continue with the next step...', options.force);
+
     // Teardown the cluster
     await teardownCluster({
       product: options.product,
@@ -121,8 +128,6 @@ const PerformanceTestCommand = () => ({
     });
   },
   errorHandler: async () => {
-    // TODO improve error handling
-    console.log('Something went wrong');
   }
 })
 
@@ -179,6 +184,9 @@ const ScalabilityTestCommand = () => ({
       force: options.force
     });
 
+    // Ask permission to continue with the next step
+    await waitForUserInput('Press a key to continue with the next step...', options.force);
+
     // Teardown the cluster
     await teardownCluster({
       product: options.product,
@@ -188,8 +196,6 @@ const ScalabilityTestCommand = () => ({
     });
   },
   errorHandler: async () => {
-    // TODO improve error handling
-    console.log('Something went wrong');
   }
 })
 

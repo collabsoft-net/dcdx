@@ -4,6 +4,7 @@ import { generateScalabilityReport } from './helpers/generateScalabilityReport';
 import { getOutputDirectory } from './helpers/getOutputDirectory';
 import { provisionCluster } from './helpers/provisionCluster';
 import { runScalabilityTest } from './helpers/runScalabilityTest';
+import { waitForUserInput } from './helpers/waitForUserInput';
 import { ScalabilityTestMessages } from './messages';
 
 export const Scalability = async (options: TAPTScalabilityTestArgs) => {
@@ -24,6 +25,9 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     force: options.force
   }, false);
 
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
+
   // Run the scalability test with a one-node cluster
   await runScalabilityTest('one-node', {
     product: options.product,
@@ -35,6 +39,9 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     appLicense: options.appLicense,
     force: options.force
   }, ScalabilityTestMessages);
+
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the scalability test with a two-node cluster
   await runScalabilityTest('two-node', {
@@ -48,6 +55,9 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     force: options.force
   }, ScalabilityTestMessages);
 
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
+
   // Run the scalability test with a one-node cluster
   await runScalabilityTest('four-node', {
     product: options.product,
@@ -59,6 +69,9 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     appLicense: options.appLicense,
     force: options.force
   }, ScalabilityTestMessages);
+
+  // Ask permission to continue with the next step
+  await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Generate the scalability report
   await generateScalabilityReport({
