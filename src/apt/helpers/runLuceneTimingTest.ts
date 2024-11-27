@@ -7,7 +7,6 @@ import { install } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
 import { getClusterURL } from './getClusterURL';
-import { getRunForStage } from './getRunForStage';
 import { installApp } from './installApp';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
 import { persistAWSCredentials } from './persistsAWSCredentials';
@@ -23,10 +22,10 @@ export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options:
   const cwd = await getAptDictory(options.cwd, true, options.force);
 
   // Get the path to the 'private' subdirectory of APT in which we store the test results
-  const runOutputDir = join(options.outputDir, `run${getRunForStage(stage)}`);
+  const runOutputDir = join(options.outputDir, `reindex`);
 
   // Make sure the output directory exists
-  mkdirSync(options.outputDir, { recursive: true });
+  mkdirSync(runOutputDir, { recursive: true });
 
   // Ask for the AWS credentials
   const [ aws_access_key_id, aws_secret_access_key ] = (options.aws_access_key_id && options.aws_secret_access_key)
