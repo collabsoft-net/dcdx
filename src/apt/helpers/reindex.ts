@@ -1,6 +1,7 @@
 import { confirm } from '@inquirer/prompts';
 import axios from 'axios';
 import { Presets, SingleBar } from 'cli-progress';
+import fkill from 'fkill';
 import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import puppeteer from 'puppeteer';
@@ -184,38 +185,46 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
       }
 
       // Start the browser session
-      const browser = await puppeteer.launch({ headless: retryCount < 4 });
-      const page = await browser.newPage();
-      await page.setViewport({width: 1080, height: 1024});
+      const browser = await puppeteer.launch({ headless: (!force && retryCount < 4) });
+      try {
+        const page = await browser.newPage();
+        await page.setViewport({width: 1080, height: 1024});
 
-      // Open the reindex progress page
-      await page.goto(`${baseUrl}${progressUrl}`);
+        // Open the reindex progress page
+        await page.goto(`${baseUrl}${progressUrl}`);
 
-      // Log in
-      await page.locator('#login-form-username').fill('admin');
-      await page.locator('#login-form-password').fill('admin');
-      await page.locator('#login-form-submit').click();
+        // Log in
+        await page.locator('#login-form-username').fill('admin');
+        await page.locator('#login-form-password').fill('admin');
+        await page.locator('#login-form-submit').click();
 
-      // Websudo
-      await page.locator('#login-form-authenticatePassword').fill('admin');
-      await page.locator('#login-form-submit').click();
+        // Websudo
+        await page.locator('#login-form-authenticatePassword').fill('admin');
+        await page.locator('#login-form-submit').click();
 
-      // XSRF token expiration snafu
-      await page.locator('#atl_token_retry_button').click().catch(() => null);
+        // XSRF token expiration snafu
+        await page.locator('#atl_token_retry_button').click().catch(() => null);
 
-      // Make sure that we are on the reindex page and that it is loaded
-      await page.waitForSelector('#acknowledge_submit');
+        // Make sure that we are on the reindex page and that it is loaded
+        await page.waitForSelector('#acknowledge_submit');
 
-      // Make the screen shot
-      await page.screenshot({
-        path: join(outputDir, 'lucene-reindex.png')
-      });
+        // Make the screen shot
+        await page.screenshot({
+          path: join(outputDir, 'lucene-reindex.png')
+        });
 
-      // Close the browser window
-      await browser.close();
+        // Make sure that we have captured the screen shot in the output directory
+        screenshotCreated = existsSync(join(outputDir, 'lucene-reindex.png'));
+      } catch (err) {
+        console.log(err);
+        console.log(`  Could not get a screen shot of the lucene indexing result, retrying...`);
+      } finally {
+        // Close the browser window
+        await browser.close();
+        // No I mean, really close it
+        await fkill('Chrome');
+      }
 
-      // Make sure that we have captured the screen shot in the output directory
-      screenshotCreated = existsSync(join(outputDir, 'lucene-reindex.png'));
     } catch (err) {
       console.log(err);
       console.log(`  Could not get a screen shot of the lucene indexing result, retrying...`);
