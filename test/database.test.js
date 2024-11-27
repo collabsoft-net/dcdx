@@ -553,7 +553,7 @@ Stopped ${name} 💪
      * Successfully start the database with verbose logging
      */
     it(`dcdx database ${name} --verbose`, async () => {
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}` }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1` }] }});
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
@@ -585,7 +585,7 @@ Database is ready and accepting connections on localhost:${defaultOptions.port} 
      * Successfully start the database but stop after Docker quits unexpectedly
      */
     it(`dcdx database ${name} --verbose (docker quits unexpectedly)`, async () => {
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}` }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1` }] }});
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
@@ -627,7 +627,7 @@ Stopped ${name} 💪
      * Successfully start the database and fail to stop after Docker quits unexpectedly
      */
     it(`dcdx database ${name} --verbose (docker quits unexpectedly, fails to stop ${name})`, async () => {
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}` }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1` }] }});
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedStop.mockRejectedValue(new Error());
       mockedAuthenticate.mockResolvedValue(true);

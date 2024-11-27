@@ -208,7 +208,7 @@ Object.values(SupportedApplications.Values).forEach(name => {
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -261,7 +261,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -314,7 +314,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -363,7 +363,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: name !== 'bamboo' ? 200 : 204,
         data: { status: 'FAILED' }
@@ -420,7 +420,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockRejectedValue({
         status: 500
       })
@@ -476,7 +476,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -530,7 +530,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -574,7 +574,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -628,7 +628,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -682,7 +682,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -722,7 +722,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -776,7 +776,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -830,7 +830,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -884,7 +884,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -938,7 +938,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -992,7 +992,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1046,7 +1046,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1105,7 +1105,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1163,7 +1163,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1227,7 +1227,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1305,7 +1305,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1368,7 +1368,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1433,7 +1433,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1499,7 +1499,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1566,7 +1566,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1634,7 +1634,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1699,7 +1699,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1757,7 +1757,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1821,7 +1821,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1879,7 +1879,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -1959,7 +1959,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2022,7 +2022,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2089,7 +2089,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2157,7 +2157,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2225,7 +2225,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2292,7 +2292,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2343,7 +2343,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2401,7 +2401,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
@@ -2465,7 +2465,7 @@ Successfully stopped all running processes 💪
       mockedUpAll.mockReturnValue(Promise.resolve());
       mockedAuthenticate.mockResolvedValue(true);
       mockedQuery.mockResolvedValue(true);
-      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-${name}`, state: 'up' }] }});
+      mockedPS.mockResolvedValue({ data: { services: [ { name: `test-with-dashes-in-${name}-1`, state: 'up' }] }});
       vi.spyOn(axios, 'get').mockResolvedValue({
         status: 200,
         data: { state: 'RUNNING' }
