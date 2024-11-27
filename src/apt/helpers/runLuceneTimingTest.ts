@@ -61,10 +61,8 @@ export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options:
   // Inform the user that we will now start the Lucene index test
   console.log(messages.startTest);
 
-  // If we are doing this thing for Jira, we need to do the Lucene Index Testing
-  if (options.product === 'jira') {
-    await reindex(baseUrl, runOutputDir, options.force);
-  }
+  // Ok, we're ready to run the Lucene Index Timing test
+  await reindex(baseUrl, runOutputDir, options.force);
 
   // Celebrate our success!
   console.log(messages.success);
