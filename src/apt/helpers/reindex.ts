@@ -230,6 +230,7 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
   }
 
   // Otherwise we should show a happy message
-  console.log(`  ✔ Lucence Index Timing test foreground indexing of Jira has completed`);
+  console.log(`
+  ✔ Lucence Index Timing test foreground indexing of Jira has completed`);
 
 }
