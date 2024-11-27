@@ -200,7 +200,8 @@ export abstract class Base implements Application {
     });
 
     return result.data.services.find(item => {
-      const [ , service ] = item.name.split('-');
+      const parts = item.name.split('-');
+      const service = parts[parts.length - 2];
       return service === this.name;
     });
   }

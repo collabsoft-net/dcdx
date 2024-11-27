@@ -139,7 +139,8 @@ export abstract class Base implements DatabaseEngine {
       log: false
     });
     return result.data.services.find(item => {
-      const [ , service ] = item.name.split('-');
+      const parts = item.name.split('-');
+      const service = parts[parts.length - 2];
       return service === this.options.name;
     });
   }
