@@ -35,7 +35,9 @@ export const ActionHandler = async <T extends TApplicationOptions|TDatabaseOptio
       wait: 60 * 1 * 1000
     });
 
-    action(ops).catch(err => {
+    action(ops).then(() => {
+      gracefulExit(0);
+    }).catch(err => {
       if (err instanceof z.ZodError) {
         err.issues.forEach(issue => {
           errorMessage += `Unable to parse option ${issue.path.join(',')}: ${issue.message}\n`
