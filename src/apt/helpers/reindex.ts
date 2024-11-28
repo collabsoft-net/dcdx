@@ -222,7 +222,10 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
         // Close the browser window
         await browser.close();
         // No I mean, really close it
-        await fkill('Chrome');
+        await fkill('Chrome').catch(() => null);
+        await fkill('chrome').catch(() => null);
+        await fkill('Chromium').catch(() => null);
+        await fkill('chromium').catch(() => null);
       }
 
     } catch (err) {
