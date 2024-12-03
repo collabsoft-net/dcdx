@@ -1,13 +1,12 @@
 import { resolve as resolvePath } from 'path';
 import { cwd } from 'process';
 
-import { TBuildOptions, TDebugOptions } from '../types/AMPS';
 import { TSupportedApplications } from '../types/Application';
+import { TInstallerOptions } from '../types/Installer';
 import * as Docker from './docker';
-import { isOfType } from './isOfType';
 import { uploadToUPM } from './upm';
 
-export const Installer = async (name: TSupportedApplications, path: string, options: TBuildOptions|TDebugOptions) => {
+export const Installer = async (name: TSupportedApplications, path: string, options: TInstallerOptions) => {
   const containerIds = await Docker.getRunningContainerIds(name);
   if (!containerIds || containerIds.length <= 0) {
     console.log(`There are no running instance of ${name}, unable to install plugin 🤔`);
@@ -21,7 +20,7 @@ export const Installer = async (name: TSupportedApplications, path: string, opti
   if (containerId) {
     if (options.obr) {
       console.log(`Found updated plugin, uploading it to UPM on running instances of ${name}`);
-      const hostUrl = isOfType<TDebugOptions>(options, 'port') ? `localhost:${options.port}` : `localhost`;
+      const hostUrl = options.port ? `localhost:${options.port}` : `localhost`;
       const baseUrl = options.username && options.password ? `http://${options.username}:${options.password}@${hostUrl}` : `http://${hostUrl}`;
       uploadToUPM(resolvePath(options.cwd || cwd(), path), baseUrl);
     } else {

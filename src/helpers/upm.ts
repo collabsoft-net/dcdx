@@ -34,7 +34,8 @@ export const waitForPluginToBeEnabled = async (appKey: string, baseUrl: string, 
   verbose && console.log('Waiting for plugin to become enabled')
   let isEnabled = false;
   let count = 0;
-  while (!isEnabled && count < 120) {
+  while (!isEnabled && count < 300) {
+    await new Promise<void>(resolve => setTimeout(resolve, 1000));
     verbose && console.log(`Waiting for plugin to become enabled... ${count}s`);
     const { data } = await axios.get(`${baseUrl}/rest/plugins/1.0/${appKey}-key`, credentials ? {
         headers: { 'Authorization': `Basic ${credentials}` }

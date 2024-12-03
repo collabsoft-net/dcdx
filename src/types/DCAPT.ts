@@ -45,14 +45,26 @@ export const APTTestMessages = z.object({
   failure: z.function().args(PerformanceTestTypes.or(ScalabilityTestTypes), z.string(), SupportedApplications, z.string(), z.string(), z.record(TestResults, z.string().or(z.undefined())))
 });
 
+export const APTProvisionArgs = z.object({
+  product: SupportedApplications,
+  cwd: z.string(),
+  environment: z.string(),
+  nodes: z.number(),
+  force: z.boolean()
+}).partial({
+  force: true
+});
+
 export const APTProvisionOptions = z.object({
   product: SupportedApplications,
   cwd: z.string(),
   environment: z.string(),
+  nodes: z.number(),
   appKey: z.string(),
   force: z.boolean()
 }).partial({
   environment: true,
+  nodes: true,
   appKey: true,
   force: true
 });
@@ -170,6 +182,8 @@ export const APTArgs = z.intersection(
 
 export type TAPTArgs = z.infer<typeof APTArgs>;
 export type TAPTTestMessages = z.infer<typeof APTTestMessages>;
+
+export type TAPTProvisionArgs = z.infer<typeof APTProvisionArgs>;
 export type TAPTProvisionOptions = z.infer<typeof APTProvisionOptions>;
 
 export type TAPTReportArgs = z.infer<typeof APTReportArgs>;

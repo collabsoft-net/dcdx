@@ -20,7 +20,7 @@ import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { timebomb } from '../helpers/licences';
 import { SupportedApplications } from '../types/Application';
-import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceTestArgs, TAPTReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -239,11 +239,12 @@ const Run5Command = () => ({
 })
 
 const ProvisionCommand = () => ({
-  action: async (options: TAPTTeardownArgs) => {
+  action: async (options: TAPTProvisionArgs) => {
     await provisionCluster({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
+      nodes: options.nodes,
       force: options.force
     }, true);
   },
@@ -281,6 +282,16 @@ program
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, DefaultCommand(), options));
+
+program
+  .command('provision')
+  .description('Provision the Data Center App Performance Testing cluster on AWS')
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--nodes <number>', 'The number of nodes for the cluster').default(1))
+  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
+  .action(options => ActionHandler(program, ProvisionCommand(), options));
 
 program
   .command('performance')
@@ -387,15 +398,6 @@ program
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run5Command(), options));
-
-program
-  .command('provision')
-  .description('Provision the Data Center App Performance Testing cluster on AWS')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
-  .addOption(new Option('--environment <name>', 'The environment name'))
-  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
-  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
-  .action(options => ActionHandler(program, ProvisionCommand(), options));
 
 program
   .command('teardown')

@@ -1,6 +1,7 @@
 import { confirm, input, select } from '@inquirer/prompts';
 import axios from 'axios';
 import { Presets, SingleBar } from 'cli-progress';
+import { parse } from 'content-disposition';
 import { createWriteStream, mkdirSync, rmSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
@@ -21,14 +22,20 @@ const round = (value: number, step: number) => {
 
 const download = async (addonKey: string) => {
   const tmpDir = join(homedir(), '.dcdx', 'tmp');
-  const tmpFile = join(tmpDir, addonKey);
+  let tmpFile = join(tmpDir, addonKey);
   mkdirSync(tmpDir, { recursive: true });
 
   await axios({
     method: 'get',
     url: `https://marketplace.atlassian.com/download/plugins/${addonKey}`,
     responseType: 'stream'
-  }).then(response => response.data.pipe(createWriteStream(tmpFile))).catch(() => null);
+  }).then(response => {
+    const disposition = parse(response.headers['content-disposition']);
+    const filename = disposition?.parameters?.filename || addonKey;
+    tmpFile = filename;
+
+    response.data.pipe(createWriteStream(tmpFile));
+  }).catch(() => null);
 
   return tmpFile;
 }
@@ -47,7 +54,7 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
   Installing the app (${appKey}) into the cluster using the Universal Plugin Manager REST API`);
 
     // Show a progress bar
-    progressBar.start(300, 0, { remaining: '5m' })
+    progressBar.start(300, 0, { remaining: 5 })
     const timerId = setInterval(() => {
       if (progressBar.getProgress() >= 300) {
         throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
@@ -118,7 +125,7 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
   Installing the app (${addonKey}) into the cluster using the Universal Plugin Manager REST API`);
 
       // Show a progress bar
-      progressBar.start(300, 0, { remaining: '5m' })
+      progressBar.start(300, 0, { remaining: 5 })
       const timerId = setInterval(() => {
         if (progressBar.getProgress() >= 300) {
           throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');

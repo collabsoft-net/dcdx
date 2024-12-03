@@ -3,13 +3,13 @@ import { cwd } from 'process';
 
 import { isRecursiveBuild } from '../helpers/isRecursiveBuild';
 import { showRecursiveBuildWarning } from '../helpers/showRecursiveBuildWarning';
-import { TBuildOptions, TDebugOptions } from '../types/AMPS';
 import { TSupportedApplications } from '../types/Application';
+import { TFileWatcherOptions } from '../types/FileWatcher';
 import { AMPS } from './amps';
 import { CustomBuilder } from './CustomBuilder';
 import { Installer } from './Installer';
 
-export const FileWatcher = (name: TSupportedApplications, options: TBuildOptions|TDebugOptions, mavenOpts: Array<string>, installOnly: boolean = false) => {
+export const FileWatcher = (name: TSupportedApplications, options: TFileWatcherOptions, mavenOpts: Array<string>, installOnly: boolean = false) => {
   let lastBuildCompleted = new Date().getTime();
   const outputDirectory = options.outputDirectory || 'target';
   const patterns = options.ext || [ '**/*' ];

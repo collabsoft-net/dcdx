@@ -26,6 +26,9 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
   // Ask for the license
   const license = await getHostLicense(options.product, options.force);
 
+  // Get the number of nodes (or default to one)
+  const nodes = options.nodes || 1;
+
   // Let's do this
   console.log(provisioning.ready);
   await waitForUserInput('Press a key to start provisiong the AWS environment...', options.force);
@@ -35,7 +38,7 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
   persistAWSCredentials(directory, aws_access_key_id, aws_secret_access_key);
 
   // Write Terraform variables to disk
-  persistClusterConfiguration(directory, environment, options.product, license);
+  persistClusterConfiguration(directory, environment, options.product, license, nodes);
 
   // Run the DCAPT install script
   await install(directory);
