@@ -19,13 +19,9 @@ export const uploadToUPM = async (baseUrl: string, path: string, username?: stri
       return axios.post(`${baseUrl}/rest/plugins/1.0/?token=${token}`, formData, { headers: {
         ...formData.getHeaders(),
         ...credentials ? { 'Authorization': `Basic ${credentials}`} : {}
-      }})
-      .then(() => {
+      }}).then(() => {
         verbose && console.log('Finished uploading plugin archive to UPM')
         return true;
-      }).catch(err => {
-        verbose && console.log('Failed to upload plugin archive file to UPM', err)
-        return false;
       });
     } else {
       verbose && console.log('Failed to upload plugin archive file to UPM, unable to retrieve token from headers:', JSON.stringify(response.headers, null, 2));

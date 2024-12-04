@@ -22,7 +22,9 @@ export const Installer = async (name: TSupportedApplications, path: string, opti
       console.log(`Found updated plugin, uploading it to UPM on running instances of ${name}`);
       const hostUrl = options.port ? `localhost:${options.port}` : `localhost`;
       const baseUrl = options.username && options.password ? `http://${options.username}:${options.password}@${hostUrl}` : `http://${hostUrl}`;
-      uploadToUPM(resolvePath(options.cwd || cwd(), path), baseUrl);
+      await uploadToUPM(resolvePath(options.cwd || cwd(), path), baseUrl).catch(err => {
+        console.log('Failed to upload plugin archive file to UPM', err);
+      });
     } else {
       console.log(`Found updated plugin, uploading it to QuickReload on running instances of ${name}`);
       await Docker.copy(resolvePath(options.cwd || cwd(), path), `${containerId}:/opt/quickreload/`)
