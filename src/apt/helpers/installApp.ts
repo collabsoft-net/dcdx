@@ -10,14 +10,18 @@ import { app3hour } from '../../helpers/licences';
 import { registerLicense, uploadToUPM, waitForPluginToBeEnabled } from '../../helpers/upm';
 
 const progressBar = new SingleBar({
-  format: '  [{bar}] {percentage}% | ETA: {remaining}m',
+  format: '  [{bar}] {percentage}% | ETA: {eta_formatted}m',
+  formatTime: (value) => {
+    const total: number = progressBar.getTotal() / 60;
+    const timePassed = round((progressBar.getTotal() - value) / 60, 0.5);
+    return timePassed === total ? `${total}` : `${total - timePassed}`;
+  },
   hideCursor: true
 }, Presets.legacy);
 
-const round = (value: number, step: number) => {
-  step || (step = 1.0);
+const round = (value: number, step: number = 1.0) => {
   const inv = 1.0 / step;
-  return Math.round(value * inv) / inv;
+  return Math.floor(value * inv) / inv;
 }
 
 const download = async (addonKey: string) => {
@@ -50,36 +54,67 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
       throw new Error('Failed to automatically install app into cluster, `appKey` was not provided');
     }
 
-    console.log(`
-  Installing the app (${appKey}) into the cluster using the Universal Plugin Manager REST API`);
-
-    // Show a progress bar
-    progressBar.start(300, 0, { remaining: 5 })
-    const timerId = setInterval(() => {
-      if (progressBar.getProgress() >= 300) {
-        throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
-      }
-      progressBar.increment(1, { remaining: round((progressBar.getTotal() - progressBar.getProgress()) / 60, 0.5) });
-    }, 1000);
-
     // Download the file from MPAC
     const file = await download(appKey);
 
-    // Upload it into the cluster using the UPM REST API
-    await uploadToUPM(baseUrl, file, 'admin', 'admin', false);
+    let count = 0;
+    let timerId = null;
+    let isInstalledSuccesfully = false;
 
-    // Wait for the plugin to be enabled
-    await waitForPluginToBeEnabled(appKey, baseUrl, 'admin', 'admin', false);
+    while (!isInstalledSuccesfully && count <= 4) {
+      try {
 
-    // Register the license (use the 3 hour timebomb in non-interactive mode)
-    await registerLicense(appKey, license, baseUrl, 'admin', 'admin', false);
+        if (count === 0) {
+          console.log(`
+  Installing the app (${appKey}) into the cluster using the Universal Plugin Manager REST API`);
+        } else {
+          console.log(`
+  Retrying installation of the app (${appKey}) into the cluster using the Universal Plugin Manager REST API (attempt ${count + 1})`);
+        }
+
+        // Show a progress bar
+        progressBar.start(180, 0)
+        timerId = setInterval(() => progressBar.increment(), 1000);
+
+        // Upload it into the cluster using the UPM REST API
+        const isInstalled = await uploadToUPM(baseUrl, file, 'admin', 'admin', false);
+        if (!isInstalled) {
+          throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
+        }
+
+        // Wait for the plugin to be enabled
+        const isEnabled = await waitForPluginToBeEnabled(appKey, baseUrl, 'admin', 'admin', false);
+        if (!isEnabled) {
+          throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
+        }
+
+        // Register the license (use the 3 hour timebomb in non-interactive mode)
+        const isLicensed = await registerLicense(appKey, license, baseUrl, 'admin', 'admin', false);
+        if (!isLicensed) {
+          throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
+        }
+
+        isInstalledSuccesfully = isInstalled && isEnabled && isLicensed;
+      } catch (err) {
+        if (count <= 3) {
+          // Wait a minute (cooldown period) before retrying
+          await new Promise<void>(resolve => setTimeout(resolve, 1000));
+        } else {
+          throw err;
+        }
+      } finally {
+        count++;
+
+        // Stop the progress bar
+        progressBar.stop();
+        if (timerId) {
+          clearInterval(timerId);
+        }
+      }
+    }
 
     // Remove the temporary file
     rmSync(file, { force: true });
-
-    // Stop the progress bar
-    progressBar.stop();
-    clearInterval(timerId);
 
     // Tell them we succeeded
     console.log(`✔ Finished installing the app (${appKey})`);
@@ -125,25 +160,29 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
   Installing the app (${addonKey}) into the cluster using the Universal Plugin Manager REST API`);
 
       // Show a progress bar
-      progressBar.start(300, 0, { remaining: 5 })
-      const timerId = setInterval(() => {
-        if (progressBar.getProgress() >= 300) {
-          throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
-        }
-        progressBar.increment(1, { remaining: round((progressBar.getTotal() - progressBar.getProgress()) / 60, 0.5) });
-      }, 1000);
+      progressBar.start(180, 0)
+      const timerId = setInterval(() => progressBar.increment(), 1000);
 
       // Download the file from MPAC
       const file = await download(addonKey);
 
       // Upload it into the cluster using the UPM REST API
-      await uploadToUPM(baseUrl, file, 'admin', 'admin', false);
+      const isInstalled = await uploadToUPM(baseUrl, file, 'admin', 'admin', false);
+      if (!isInstalled) {
+        throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
+      }
 
       // Wait for the plugin to be enabled
-      await waitForPluginToBeEnabled(addonKey, baseUrl, 'admin', 'admin', false);
+      const isEnabled = await waitForPluginToBeEnabled(addonKey, baseUrl, 'admin', 'admin', false);
+      if (!isEnabled) {
+        throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
+      }
 
       // Register the provided license
-      await registerLicense(addonKey, appLicense, baseUrl, 'admin', 'admin', false);
+      const isLicensed = await registerLicense(addonKey, appLicense, baseUrl, 'admin', 'admin', false);
+      if (!isLicensed) {
+        throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
+      }
 
       // Remove the temporary file
       rmSync(file, { force: true });
