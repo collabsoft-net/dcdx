@@ -247,7 +247,7 @@ const ProvisionCommand = () => ({
       license: options.license,
       nodes: options.nodes,
       force: options.force
-    }, true);
+    }, options.cwd === undefined);
   },
   errorHandler: async () => {
 
@@ -292,7 +292,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--nodes <number>', 'The number of nodes for the cluster').default(1))
-  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit'))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, ProvisionCommand(), options));
 
