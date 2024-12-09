@@ -113,6 +113,7 @@ You can add Maven build arguments after the command options`)
   .addOption(new Option('--clean', 'Remove data files before starting the database').default(false))
   .addOption(new Option('--prune', 'Remove data files when stopping the database').default(false))
   .action(options => ActionHandler(program, Command(), { ...options, debug: true, watch: true, install: true }))
+  .allowUnknownOption(true)
   .showHelpAfterError(true);
 
 program.parseAsync(process.argv).catch(() => gracefulExit(1));

@@ -6,6 +6,7 @@ import { cwd } from 'process';
 
 import { generatePerformanceReport } from '../apt/helpers/generatePerformanceReport';
 import { generateScalabilityReport } from '../apt/helpers/generateScalabilityReport';
+import { getHostLicense } from '../apt/helpers/getHostLicense';
 import { getOutputDirectory } from '../apt/helpers/getOutputDirectory';
 import { getProduct } from '../apt/helpers/getProduct';
 import { provisionCluster } from '../apt/helpers/provisionCluster';
@@ -18,7 +19,6 @@ import { emptyLine, generic, init, LuceneTimingTest, Run1, Run2, ScalabilityTest
 import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
-import { timebomb } from '../helpers/licences';
 import { SupportedApplications } from '../types/Application';
 import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
@@ -136,7 +136,7 @@ const Run1Command = () => ({
     await runPerformanceTest(PerformanceTestTypes.Values.baseline, {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
-      license: timebomb[options.product]
+      license: await getHostLicense(options.product, options.license, options.force)
     }, Run1);
   },
   errorHandler: async () => {
@@ -149,7 +149,7 @@ const Run2Command = () => ({
     await runPerformanceTest(PerformanceTestTypes.Values.regression, {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
-      license: timebomb[options.product]
+      license: await getHostLicense(options.product, options.license, options.force)
     }, Run2);
   },
   errorHandler: async () => {
@@ -162,7 +162,7 @@ const ReindexCommand = () => ({
     await runLuceneTimingTest(PerformanceTestTypes.Values.regression, {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
-      license: timebomb[options.product]
+      license: await getHostLicense(options.product, options.license, options.force)
     }, LuceneTimingTest);
   },
   errorHandler: async () => {
@@ -204,7 +204,7 @@ const Run3Command = () => ({
     await runScalabilityTest('one-node', {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
-      license: timebomb[options.product],
+      license: await getHostLicense(options.product, options.license, options.force)
     }, ScalabilityTestMessages);
   },
   errorHandler: async () => {
@@ -217,7 +217,7 @@ const Run4Command = () => ({
     await runScalabilityTest('two-node', {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
-      license: timebomb[options.product],
+      license: await getHostLicense(options.product, options.license, options.force)
     }, ScalabilityTestMessages);
   },
   errorHandler: async () => {
@@ -230,7 +230,7 @@ const Run5Command = () => ({
     await runScalabilityTest('four-node', {
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
-      license: timebomb[options.product],
+      license: await getHostLicense(options.product, options.license, options.force)
     }, ScalabilityTestMessages);
   },
   errorHandler: async () => {
@@ -244,6 +244,7 @@ const ProvisionCommand = () => ({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
+      license: options.license,
       nodes: options.nodes,
       force: options.force
     }, true);
@@ -276,6 +277,7 @@ program
   .command('default', { isDefault: true, hidden: true })
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -288,6 +290,7 @@ program
   .description('Provision the Data Center App Performance Testing cluster on AWS')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--nodes <number>', 'The number of nodes for the cluster').default(1))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
@@ -298,6 +301,7 @@ program
   .description('Run the Data Center App Performance Toolkit performance regression test')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -310,6 +314,7 @@ program
   .description('Run the Data Center App Performance Toolkit scalability test')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -322,6 +327,7 @@ program
   .description('Run the Data Center App Performance Toolkit Lucene Index Timing test')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -344,6 +350,7 @@ program
   .description('Start the Data Center App Performance Testing Performance baseline test (run 1)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -356,6 +363,7 @@ program
   .description('Start the Data Center App Performance Testing Performance regression test (run 2)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -368,6 +376,7 @@ program
   .description('Start the Data Center App Performance Testing Scalability test on a one-node DC cluster (run 3)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -380,6 +389,7 @@ program
   .description('Start the Data Center App Performance Testing Scalability test on a two-node DC cluster (run 4)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -392,6 +402,7 @@ program
   .description('Start the Data Center App Performance Testing Scalability test on a four-node DC cluster (run 5)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))

@@ -21,6 +21,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     product: options.product,
     cwd: options.cwd,
     environment: options.environment,
+    license: options.license,
     appKey: options.appKey,
     force: options.force
   }, false);

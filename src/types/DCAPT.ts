@@ -49,9 +49,11 @@ export const APTProvisionArgs = z.object({
   product: SupportedApplications,
   cwd: z.string(),
   environment: z.string(),
+  license: z.string(),
   nodes: z.number(),
   force: z.boolean()
 }).partial({
+  license: true,
   force: true
 });
 
@@ -59,11 +61,13 @@ export const APTProvisionOptions = z.object({
   product: SupportedApplications,
   cwd: z.string(),
   environment: z.string(),
+  license: z.string(),
   nodes: z.number(),
   appKey: z.string(),
   force: z.boolean()
 }).partial({
   environment: true,
+  license: true,
   nodes: true,
   appKey: true,
   force: true
@@ -74,12 +78,14 @@ export const APTPerformanceTestArgs = z.object({
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
+  license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
   outputDir: true,
+  license: true,
   timestamp: true,
   force: true
 });
@@ -118,12 +124,14 @@ export const APTScalabilityTestArgs = z.object({
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
+  license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
   outputDir: true,
+  license: true,
   appLicense: true,
   timestamp: true,
   force: true

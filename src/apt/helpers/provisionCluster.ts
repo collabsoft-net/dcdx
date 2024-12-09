@@ -24,7 +24,7 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
   const environment = options.environment || await getEnvironmentName();
 
   // Ask for the license
-  const license = await getHostLicense(options.product, options.force);
+  const license = await getHostLicense(options.product, options.license, options.force);
 
   // Get the number of nodes (or default to one)
   const nodes = options.nodes || 1;
