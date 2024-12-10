@@ -101,6 +101,7 @@ const ReportCommand = () => ({
     } else {
       await generateScalabilityReport({
         ...options,
+        product: options.product,
         outputDir: getOutputDirectory(options.outputDir, options.timestamp)
       });
     }
@@ -346,6 +347,7 @@ program
   .command('report')
   .description('Generate a Data Center App Performance Testing report')
   .addOption(new Option('--type <type>', 'The type of report to generate').choices(Object.values(ReportTypes.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--resultsDir1 <directory>', 'Specify the directory where to find the results of the 1st run used to generate the report'))
   .addOption(new Option('--resultsDir2 <directory>', 'Specify the directory where to find the results of run 2nd run used to generate the report'))
   .addOption(new Option('--resultsDir3 <directory>', 'Specify the directory where to find the results of run 3rd run used to generate the report (only for Scalability report)'))

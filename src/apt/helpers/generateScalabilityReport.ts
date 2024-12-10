@@ -32,6 +32,23 @@ export const generateScalabilityReport = async (options: TAPTScalabilityReportOp
     if (configuration) {
 
       // Add the scalability test output directories to the report generator configuration
+      if (options.product === 'bamboo') {
+        configuration.title = 'DCAPT Performance Testing for Bamboo'
+        configuration.check_actions_count = false;
+        configuration.runs = [{
+          runName: 'without app',
+          runType: 'baseline',
+          relativePath: '/results/run1'
+        },{
+          runName: 'with app',
+          runType: 'experiment',
+          relativePath: '/results/run2'
+        }, {
+          runName: 'with app and app-specific actions',
+          runType: 'experiment',
+          relativePath: '/results/run3'
+        }]
+      } else {
         configuration.runs = [{
           runName: '1 Node',
           runType: 'baseline',
@@ -45,6 +62,7 @@ export const generateScalabilityReport = async (options: TAPTScalabilityReportOp
           runType: 'experiment',
           relativePath: '/results/run3'
         }]
+      }
 
       // Turn the configuration back into YAML
       const output = stringify(configuration);

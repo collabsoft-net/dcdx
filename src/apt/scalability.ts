@@ -77,6 +77,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
   // Generate the scalability report
   await generateScalabilityReport({
     cwd,
+    product: options.product,
     outputDir,
     force: options.force
   });

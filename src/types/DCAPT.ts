@@ -160,9 +160,11 @@ export const APTScalabilityTestOptions = z.object({
 export const APTScalabilityReportArgs = APTPerformanceReportArgs.extend({
   type: ReportTypes.refine(item => item === 'scalability'),
   resultsDir3: z.string(),
+  product: SupportedApplications
 });
 
 export const APTScalabilityReportOptions = APTPerformanceReportOptions.extend({
+  product: SupportedApplications,
   resultsDir3: z.string(),
 });
 
