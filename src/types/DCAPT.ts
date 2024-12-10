@@ -28,14 +28,6 @@ export const ReportTypes = z.enum([
   'scalability'
 ]);
 
-export const APTReportArgs = z.object({
-  type: ReportTypes,
-  timestamp: z.string(),
-  outputDir: z.string(),
-  cwd: z.string()
-}).partial({
-  outputDir: true
-});
 
 export const APTTestMessages = z.object({
   header: z.function().args(SupportedApplications, PerformanceTestTypes.or(ScalabilityTestTypes)).returns(z.string()),
@@ -111,8 +103,21 @@ export const APTPerformanceTestOptions = z.object({
   force: true
 });
 
+export const APTPerformanceReportArgs = z.object({
+  type: ReportTypes.refine(item => item === 'performance'),
+  timestamp: z.string(),
+  resultsDir1: z.string(),
+  resultsDir2: z.string(),
+  outputDir: z.string(),
+  cwd: z.string()
+}).partial({
+  outputDir: true
+});
+
 export const APTPerformanceReportOptions = z.object({
   cwd: z.string(),
+  resultsDir1: z.string(),
+  resultsDir2: z.string(),
   outputDir: z.string(),
   force: z.boolean(),
 }).partial({
@@ -152,12 +157,13 @@ export const APTScalabilityTestOptions = z.object({
   force: true
 });
 
-export const APTScalabilityReportOptions = z.object({
-  cwd: z.string(),
-  outputDir: z.string(),
-  force: z.boolean(),
-}).partial({
-  force: true
+export const APTScalabilityReportArgs = APTPerformanceReportArgs.extend({
+  type: ReportTypes.refine(item => item === 'scalability'),
+  resultsDir3: z.string(),
+});
+
+export const APTScalabilityReportOptions = APTPerformanceReportOptions.extend({
+  resultsDir3: z.string(),
 });
 
 export const APTTeardownArgs = z.object({
@@ -194,7 +200,8 @@ export type TAPTTestMessages = z.infer<typeof APTTestMessages>;
 export type TAPTProvisionArgs = z.infer<typeof APTProvisionArgs>;
 export type TAPTProvisionOptions = z.infer<typeof APTProvisionOptions>;
 
-export type TAPTReportArgs = z.infer<typeof APTReportArgs>;
+export type TAPTPerformanceReportArgs = z.infer<typeof APTPerformanceReportArgs>;
+export type TAPTScalabilityReportArgs = z.infer<typeof APTScalabilityReportArgs>;
 
 export type TPerformanceTestTypes = z.infer<typeof PerformanceTestTypes>;
 export type TAPTPerformanceTestArgs = z.infer<typeof APTPerformanceTestArgs>;

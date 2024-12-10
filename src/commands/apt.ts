@@ -20,7 +20,7 @@ import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { SupportedApplications } from '../types/Application';
-import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -85,8 +85,15 @@ const DefaultCommand = () => ({
 });
 
 const ReportCommand = () => ({
-  action: async (options: TAPTReportArgs) => {
+  action: async (options: TAPTPerformanceReportArgs|TAPTScalabilityReportArgs) => {
     if (options.type === 'performance') {
+
+      if (!options.resultsDir1) {
+        throw new Error('The option `--resultsDir1` is required');
+      } else if (!options.resultsDir2) {
+        throw new Error('The option `--resultsDir2` is required');
+      }
+
       await generatePerformanceReport({
         ...options,
         outputDir: getOutputDirectory(options.outputDir, options.timestamp)
@@ -339,6 +346,9 @@ program
   .command('report')
   .description('Generate a Data Center App Performance Testing report')
   .addOption(new Option('--type <type>', 'The type of report to generate').choices(Object.values(ReportTypes.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--resultsDir1 <directory>', 'Specify the directory where to find the results of the 1st run used to generate the report'))
+  .addOption(new Option('--resultsDir2 <directory>', 'Specify the directory where to find the results of run 2nd run used to generate the report'))
+  .addOption(new Option('--resultsDir3 <directory>', 'Specify the directory where to find the results of run 3rd run used to generate the report (only for Scalability report)'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution').makeOptionMandatory(true))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()).makeOptionMandatory(true))

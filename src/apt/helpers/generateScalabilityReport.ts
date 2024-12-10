@@ -32,28 +32,35 @@ export const generateScalabilityReport = async (options: TAPTScalabilityReportOp
     if (configuration) {
 
       // Add the scalability test output directories to the report generator configuration
-      configuration.runs = [{
-        runName: '1 Node',
-        runType: 'baseline',
-        relativePath: '/results/run3'
-      },{
-        runName: '2 Nodes',
-        runType: 'experiment',
-        relativePath: '/results/run4'
-      }, {
-        runName: '4 Nodes',
-        runType: 'experiment',
-        relativePath: '/results/run5'
-      }]
+        configuration.runs = [{
+          runName: '1 Node',
+          runType: 'baseline',
+          relativePath: '/results/run1'
+        },{
+          runName: '2 Nodes',
+          runType: 'experiment',
+          relativePath: '/results/run2'
+        }, {
+          runName: '4 Nodes',
+          runType: 'experiment',
+          relativePath: '/results/run3'
+        }]
 
       // Turn the configuration back into YAML
       const output = stringify(configuration);
+
+      // Replace the docker placeholders with the actual directories provided by the user
+      // This will give the user a better understanding of what will happen
+      const humanReadableOutput = output
+        .replace('/results/run1', options.resultsDir1)
+        .replace('/results/run2', options.resultsDir2)
+        .replace('/results/run3', options.resultsDir3);
 
       // Tell the user that we are going to overwrite the existing configuration
       console.log(`
   The scale_profile.yml file will be updated with the following configuration:
 
-${output}
+${humanReadableOutput}
 
   The configuration will be written to disk and overwrite existing configuration:
   ${ymlFilePath}
@@ -75,7 +82,7 @@ ${output}
   const reportBaseDir = await getReportDirectory(cwd, options.force);
 
   // Generate the actual report
-  await scalabilityReport(cwd, join(options.outputDir, 'run3'), join(options.outputDir, 'run4'), join(options.outputDir, 'run5'));
+  await scalabilityReport(cwd, join(options.outputDir, options.resultsDir1), join(options.outputDir, options.resultsDir2), join(options.outputDir, options.resultsDir3));
 
   // Get the report directory
   const reportDir = getReport(reportBaseDir, 'scalability');

@@ -86,7 +86,7 @@ export const regressionReport = async (cwd: string, run1Dir: string, run2Dir: st
   console.log(`✔ Finished generating the Performance Regression Report`);
 }
 
-export const scalabilityReport = async (cwd: string, run3Dir: string, run4Dir: string, run5Dir: string) => {
+export const scalabilityReport = async (cwd: string, resultsDir1: string, resultsDir2: string, resultsDir3: string) => {
   await new Promise<void>((resolve, reject) => {
     const docker = spawn(
       'docker',
@@ -97,9 +97,9 @@ export const scalabilityReport = async (cwd: string, run3Dir: string, run4Dir: s
         '--workdir', '//dc-app-performance-toolkit/app/reports_generation',
         '--entrypoint', 'python',
         '-v', `${cwd}:/dc-app-performance-toolkit`,
-        '-v', `${run3Dir}:/results/run3`,
-        '-v', `${run4Dir}:/results/run4`,
-        '-v', `${run5Dir}:/results/run5`,
+        '-v', `${resultsDir1}:/results/run1`,
+        '-v', `${resultsDir2}:/results/run2`,
+        '-v', `${resultsDir3}:/results/run3`,
         'atlassian/dcapt',
         'csv_chart_generator.py', 'scale_profile.yml'
       ],

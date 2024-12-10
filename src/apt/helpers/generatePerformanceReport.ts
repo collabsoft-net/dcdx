@@ -46,11 +46,17 @@ export const generatePerformanceReport = async (options: TAPTPerformanceReportOp
       // Turn the configuration back into YAML
       const output = stringify(configuration);
 
+      // Replace the docker placeholders with the actual directories provided by the user
+      // This will give the user a better understanding of what will happen
+      const humanReadableOutput = output
+        .replace('/results/run1', options.resultsDir1)
+        .replace('/results/run2', options.resultsDir2);
+
       // Tell the user that we are going to overwrite the existing configuration
       console.log(`
   The performance_profile.yml file will be updated with the following configuration:
 
-${output}
+${humanReadableOutput}
 
   The configuration will be written to disk and overwrite existing configuration:
   ${ymlFilePath}
@@ -72,7 +78,7 @@ ${output}
   const reportBaseDir = await getReportDirectory(cwd, options.force);
 
   // Generate the actual report
-  await regressionReport(cwd, join(options.outputDir, 'run1'), join(options.outputDir, 'run2'));
+  await regressionReport(cwd, options.resultsDir1, options.resultsDir2);
 
   // Get the report directory
   const reportDir = getReport(reportBaseDir, 'performance');
