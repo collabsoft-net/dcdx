@@ -97,9 +97,9 @@ export const scalabilityReport = async (cwd: string, resultsDir1: string, result
         '--workdir', '//dc-app-performance-toolkit/app/reports_generation',
         '--entrypoint', 'python',
         '-v', `${cwd}:/dc-app-performance-toolkit`,
-        '-v', `${resultsDir1}:/results/run1`,
-        '-v', `${resultsDir2}:/results/run2`,
-        '-v', `${resultsDir3}:/results/run3`,
+        '-v', `${resultsDir1}:/dcapt/scale_results_1`,
+        '-v', `${resultsDir2}:/dcapt/scale_results_2`,
+        '-v', `${resultsDir3}:/dcapt/scale_results_3`,
         'atlassian/dcapt',
         'csv_chart_generator.py', 'scale_profile.yml'
       ],

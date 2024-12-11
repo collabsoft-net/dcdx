@@ -38,29 +38,29 @@ export const generateScalabilityReport = async (options: TAPTScalabilityReportOp
         configuration.runs = [{
           runName: 'without app',
           runType: 'baseline',
-          relativePath: '/results/run1'
+          relativePath: '/dcapt/scale_results_1'
         },{
           runName: 'with app',
           runType: 'experiment',
-          relativePath: '/results/run2'
+          relativePath: '/dcapt/scale_results_2'
         }, {
           runName: 'with app and app-specific actions',
           runType: 'experiment',
-          relativePath: '/results/run3'
+          relativePath: '/dcapt/scale_results_3'
         }]
       } else {
         configuration.runs = [{
           runName: '1 Node',
           runType: 'baseline',
-          relativePath: '/results/run1'
+          relativePath: '/dcapt/scale_results_1'
         },{
           runName: '2 Nodes',
           runType: 'experiment',
-          relativePath: '/results/run2'
+          relativePath: '/dcapt/scale_results_2'
         }, {
           runName: '4 Nodes',
           runType: 'experiment',
-          relativePath: '/results/run3'
+          relativePath: '/dcapt/scale_results_3'
         }]
       }
 
@@ -70,9 +70,9 @@ export const generateScalabilityReport = async (options: TAPTScalabilityReportOp
       // Replace the docker placeholders with the actual directories provided by the user
       // This will give the user a better understanding of what will happen
       const humanReadableOutput = output
-        .replace('/results/run1', options.resultsDir1)
-        .replace('/results/run2', options.resultsDir2)
-        .replace('/results/run3', options.resultsDir3);
+        .replace('/dcapt/scale_results_1', options.resultsDir1)
+        .replace('/dcapt/scale_results_2', options.resultsDir2)
+        .replace('/dcapt/scale_results_3', options.resultsDir3);
 
       // Tell the user that we are going to overwrite the existing configuration
       console.log(`
