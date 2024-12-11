@@ -9,13 +9,15 @@ import { emptyLine } from '../messages';
 
 export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: boolean, force?: boolean) => {
   // Translate common relative paths to absolute paths
-  let result: string = cwd.startsWith('~/')
-    ? cwd.replace('~/', homedir())
-    : cwd.startsWith('./')
-      ? cwd.replace('./', pwd() + '/')
-      : cwd === '.'
-        ? pwd()
-        : cwd;
+  let result: string = cwd ?
+    cwd.startsWith('~/')
+      ? cwd.replace('~/', homedir())
+      : cwd.startsWith('./')
+        ? cwd.replace('./', pwd() + '/')
+        : cwd === '.'
+          ? pwd()
+          : cwd
+    : pwd();
 
   // If we are in interactive mode, we should ask questions first
   if (!force) {
