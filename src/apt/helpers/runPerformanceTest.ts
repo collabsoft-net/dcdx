@@ -13,6 +13,7 @@ import { getDuration } from './getDuration';
 import { getResults } from './getResults';
 import { getResultsDirectory } from './getResultsDirectory';
 import { getRunForStage } from './getRunForStage';
+import { installApp } from './installApp';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
 import { persistAWSCredentials } from './persistsAWSCredentials';
 import { persistTestConfiguration } from './persistTestConfiguration';
@@ -75,7 +76,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   // If not, we should provision it as part of the test run
   if (!options.baseUrl) {
 
-    // Inform the user that we will now start the scalability benchmark
+    // Inform the user that we will now start the performance test
     console.log(messages.readyForProvisioning);
     await waitForUserInput('Press a key to prepare the AWS environment for performance benchmark testing...', options.force);
     emptyLine();
@@ -88,7 +89,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
 
   }
 
-  // Inform the user that we will now start the scalability benchmark
+  // Inform the user that we will now start the performance benchmark
   console.log(messages.startTest);
 
   // Get the load balancer URL for the cluster
@@ -102,6 +103,14 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
 
   // Get the results directory (and make sure it is empty)
   const resultsBaseDir = await getResultsDirectory(cwd, options.product, options.force);
+
+  // Regression tests require the app to be installed
+  if (stage === 'regression') {
+
+    // Install the app into the cluster
+    await installApp(baseUrl, options.appKey, options.appLicense, options.force);
+
+  }
 
   // Run the damn test
   await runTest(cwd, options.environment, options.product);
