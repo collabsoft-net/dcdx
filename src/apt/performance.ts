@@ -1,7 +1,10 @@
 
+import { join } from 'path';
+
 import { PerformanceTestTypes, TAPTPerformanceTestArgs } from '../types/DCAPT';
 import { generatePerformanceReport } from './helpers/generatePerformanceReport';
 import { getOutputDirectory } from './helpers/getOutputDirectory';
+import { getRunForStage } from './helpers/getRunForStage';
 import { provisionCluster } from './helpers/provisionCluster'
 import { runLuceneTimingTest } from './helpers/runLuceneTimingTest';
 import { runPerformanceTest } from './helpers/runPerformanceTest';
@@ -88,6 +91,8 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
   await generatePerformanceReport({
     cwd,
     outputDir,
+    resultsDir1: join(outputDir, `run${getRunForStage('baseline')}`),
+    resultsDir2: join(outputDir, `run${getRunForStage('regression')}`),
     force: options.force
   });
 

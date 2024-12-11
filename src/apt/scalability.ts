@@ -1,7 +1,10 @@
 
+import { join } from 'path';
+
 import { TAPTScalabilityTestArgs } from '../types/DCAPT';
 import { generateScalabilityReport } from './helpers/generateScalabilityReport';
 import { getOutputDirectory } from './helpers/getOutputDirectory';
+import { getRunForStage } from './helpers/getRunForStage';
 import { provisionCluster } from './helpers/provisionCluster';
 import { runScalabilityTest } from './helpers/runScalabilityTest';
 import { waitForUserInput } from './helpers/waitForUserInput';
@@ -78,6 +81,9 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
   await generateScalabilityReport({
     cwd,
     product: options.product,
+    resultsDir1: join(outputDir, `run${getRunForStage('one-node')}`),
+    resultsDir2: join(outputDir, `run${getRunForStage('two-node')}`),
+    resultsDir3: join(outputDir, `run${getRunForStage('four-node')}`),
     outputDir,
     force: options.force
   });
