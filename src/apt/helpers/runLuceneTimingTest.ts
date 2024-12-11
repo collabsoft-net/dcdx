@@ -56,7 +56,7 @@ export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options:
   const baseUrl = options.baseUrl || await getClusterURL(cwd, options.product);
 
   // Install the app into the cluster
-  await installApp(baseUrl, options.appKey, options.appLicense, options.force);
+  await installApp(baseUrl, options.appKey, options.appLicense, 'admin', 'admin', options.force);
 
   // Inform the user that we will now start the Lucene index test
   console.log(messages.startTest);

@@ -36,7 +36,7 @@ const Command = () => {
           throw new InvalidOptionArgumentError('Missing argument "--appKey", required for installing from the Atlassian Marketplace');
         }
 
-        await installApp(options.baseUrl, options.appKey, undefined, true);
+        await installApp(options.baseUrl, options.appKey, undefined, options.username, options.password, true);
 
       } else {
 
@@ -91,10 +91,10 @@ If there is a running instance, it will try to install the plugin using QuickRel
   .showHelpAfterError(true)
   .addOption(new Option('-w, --watch', 'Watch for filesystem changes to JAR or OBR files in the current working directory').default(false))
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR or OBR files (defaults to `target`)'))
-  .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app').default(false))
-  .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr)'))
-  .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
+  .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app').default(false))
+  .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr, optional for --mpac)'))
+  .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr, optional for --mpac)'))
   .addOption(new Option('--mpac', 'Install the app from the Atlassian Marketplace'))
   .addOption(new Option('--baseUrl <url>', 'URL of the instance (required with --mpac)'))
   .addOption(new Option('--appKey <key>', 'The key of the app to be installed (required with --mpac)'))

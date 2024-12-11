@@ -1,4 +1,4 @@
-import { confirm, input, select } from '@inquirer/prompts';
+import { confirm, input, password as passwordPrompt,select } from '@inquirer/prompts';
 import axios from 'axios';
 import { Presets, SingleBar } from 'cli-progress';
 import { parse } from 'content-disposition';
@@ -29,9 +29,15 @@ const download = async (addonKey: string) => {
   let tmpFile = join(tmpDir, addonKey);
   mkdirSync(tmpDir, { recursive: true });
 
+  let downloadUrl = `https://marketplace.atlassian.com/download/plugins/${addonKey}`;
+  const { data: listing } = await axios.get(`https://marketplace.atlassian.com/rest/2/addons/${addonKey}?hosting=datacenter&withVersion=true`).catch(() => ({ data: null }));
+  if (listing) {
+    downloadUrl = listing._embedded?.version?._embedded?.artifact?._links?.binary?.href || downloadUrl;
+  }
+
   await axios({
     method: 'get',
-    url: `https://marketplace.atlassian.com/download/plugins/${addonKey}`,
+    url: downloadUrl,
     responseType: 'stream'
   }).then(response => {
     const disposition = parse(response.headers['content-disposition']);
@@ -44,7 +50,7 @@ const download = async (addonKey: string) => {
   return tmpFile;
 }
 
-export const installApp = async (baseUrl: string, appKey?: string, license: string = app3hour, force?: boolean) => {
+export const installApp = async (baseUrl: string, appKey?: string, license: string = app3hour, username: string = 'admin', password: string = 'admin', force?: boolean) => {
 
   // If we are in non-interactive mode, we will download it from MPAC
   if (force) {
@@ -77,19 +83,19 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
         timerId = setInterval(() => progressBar.increment(), 1000);
 
         // Upload it into the cluster using the UPM REST API
-        const isInstalled = await uploadToUPM(baseUrl, file, 'admin', 'admin', false);
+        const isInstalled = await uploadToUPM(baseUrl, file, username, password, false);
         if (!isInstalled) {
           throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
         }
 
         // Wait for the plugin to be enabled
-        const isEnabled = await waitForPluginToBeEnabled(appKey, baseUrl, 'admin', 'admin', false);
+        const isEnabled = await waitForPluginToBeEnabled(appKey, baseUrl, username, password, false);
         if (!isEnabled) {
           throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
         }
 
         // Register the license (use the 3 hour timebomb in non-interactive mode)
-        const isLicensed = await registerLicense(appKey, license, baseUrl, 'admin', 'admin', false);
+        const isLicensed = await registerLicense(appKey, license, baseUrl, username, password, false);
         if (!isLicensed) {
           throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
         }
@@ -155,6 +161,19 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
         required: true
       });
 
+      // Ask them nicely for the username
+      const adminUsername = await input({
+        message: 'Please provide the username of a system administrator',
+        default: username,
+        required: true
+      });
+
+      // Ask them nicely for the username
+      const adminPassword = await passwordPrompt({
+        message: 'Please provide the username of a system administrator',
+        validate: item => typeof item === 'string' && item.length > 0
+      });
+
       // Tell them we are starting
       console.log(`
   Installing the app (${addonKey}) into the cluster using the Universal Plugin Manager REST API`);
@@ -167,19 +186,19 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
       const file = await download(addonKey);
 
       // Upload it into the cluster using the UPM REST API
-      const isInstalled = await uploadToUPM(baseUrl, file, 'admin', 'admin', false);
+      const isInstalled = await uploadToUPM(baseUrl, file, adminUsername, adminPassword, false);
       if (!isInstalled) {
         throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
       }
 
       // Wait for the plugin to be enabled
-      const isEnabled = await waitForPluginToBeEnabled(addonKey, baseUrl, 'admin', 'admin', false);
+      const isEnabled = await waitForPluginToBeEnabled(addonKey, baseUrl, adminUsername, adminPassword, false);
       if (!isEnabled) {
         throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
       }
 
       // Register the provided license
-      const isLicensed = await registerLicense(addonKey, appLicense, baseUrl, 'admin', 'admin', false);
+      const isLicensed = await registerLicense(addonKey, appLicense, baseUrl, adminUsername, adminPassword, false);
       if (!isLicensed) {
         throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
       }
@@ -200,7 +219,7 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
       // Rub it in their face
       console.log(`
   You can now install the app manually into the cluster.
-  Please go to the following page (login with 'admin'/'admin'):
+  Please go to the following page:
     
   ${baseUrl}/plugins/servlet/upm?source=side_nav_manage_addons
 `);
