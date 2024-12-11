@@ -87,22 +87,23 @@ const DefaultCommand = () => ({
 const ReportCommand = () => ({
   action: async (options: TAPTPerformanceReportArgs|TAPTScalabilityReportArgs) => {
     if (options.type === 'performance') {
-
-      if (!options.resultsDir1) {
+      const ops = options as TAPTPerformanceReportArgs;
+      if (!ops.resultsDir1) {
         throw new Error('The option `--resultsDir1` is required');
-      } else if (!options.resultsDir2) {
+      } else if (!ops.resultsDir2) {
         throw new Error('The option `--resultsDir2` is required');
       }
 
       await generatePerformanceReport({
-        ...options,
-        outputDir: getOutputDirectory(options.outputDir, options.timestamp)
+        ...ops,
+        outputDir: getOutputDirectory(ops.outputDir, ops.timestamp)
       });
     } else {
+      const ops = options as TAPTScalabilityReportArgs;
       await generateScalabilityReport({
-        ...options,
-        product: options.product,
-        outputDir: getOutputDirectory(options.outputDir, options.timestamp)
+        ...ops,
+        product: ops.product,
+        outputDir: getOutputDirectory(ops.outputDir, ops.timestamp)
       });
     }
   },
