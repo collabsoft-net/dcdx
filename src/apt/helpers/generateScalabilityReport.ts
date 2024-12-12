@@ -100,7 +100,7 @@ ${humanReadableOutput}
   const reportBaseDir = await getReportDirectory(cwd, options.force);
 
   // Generate the actual report
-  await scalabilityReport(cwd, join(options.outputDir, options.resultsDir1), join(options.outputDir, options.resultsDir2), join(options.outputDir, options.resultsDir3));
+  await scalabilityReport(cwd, options.resultsDir1, options.resultsDir2, options.resultsDir3);
 
   // Get the report directory
   const reportDir = getReport(reportBaseDir, 'scalability');
