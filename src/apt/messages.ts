@@ -448,6 +448,17 @@ export const ScalabilityReportMessages = {
 `
 }
 
+export const Restart = {
+  header: `                                           
+  _____ _____ _____ _____ _____ _____ _____ 
+  | __  |   __|   __|_   _|  _  | __  |_   _|
+  |    -|   __|__   | | | |     |    -| | |  
+  |__|__|_____|_____| |_| |__|__|__|__| |_|  
+                                           
+  We will now restart the cluster used in the Data Center Application Performance testing.
+`
+}
+
 export const Teardown = {
   header: `
   _____ _____ _____ _____ ____  _____ _ _ _ _____ 

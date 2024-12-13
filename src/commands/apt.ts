@@ -10,6 +10,7 @@ import { getHostLicense } from '../apt/helpers/getHostLicense';
 import { getOutputDirectory } from '../apt/helpers/getOutputDirectory';
 import { getProduct } from '../apt/helpers/getProduct';
 import { provisionCluster } from '../apt/helpers/provisionCluster';
+import { restartCluster } from '../apt/helpers/restartCluster';
 import { runLuceneTimingTest } from '../apt/helpers/runLuceneTimingTest';
 import { runPerformanceTest } from '../apt/helpers/runPerformanceTest';
 import { runScalabilityTest } from '../apt/helpers/runScalabilityTest';
@@ -20,7 +21,7 @@ import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { SupportedApplications } from '../types/Application';
-import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -263,6 +264,20 @@ const ProvisionCommand = () => ({
   }
 })
 
+const RestartCommand = () => ({
+  action: async (options: TAPTRestartArgs) => {
+    await restartCluster({
+      product: options.product,
+      cwd: options.cwd,
+      environment: options.environment,
+      force: options.force
+    });
+  },
+  errorHandler: async () => {
+
+  }
+})
+
 const TeardownCommand = () => ({
   action: async (options: TAPTTeardownArgs) => {
     await teardownCluster({
@@ -422,6 +437,15 @@ program
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, Run5Command(), options));
+
+program
+  .command('restart')
+  .description('Restart the Data Center App Performance Testing cluster on AWS')
+  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
+  .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
+  .action(options => ActionHandler(program, RestartCommand(), options));
 
 program
   .command('teardown')

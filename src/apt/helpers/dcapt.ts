@@ -111,6 +111,36 @@ export const scalabilityReport = async (cwd: string, resultsDir1: string, result
   console.log(`✔ Finished generating the Scalability Benchmark Report`);
 }
 
+export const restart = async (cwd: string, environment: string, product: TSupportedApplications) => {
+
+  writeFileSync(join(cwd, './app/util/k8s/delete_pod.sh'), `
+aws eks update-kubeconfig --name atlas-$ENVIRONMENT_NAME-cluster --region $REGION
+kubectl rollout restart sts/$PRODUCT -n atlassian
+kubectl rollout status sts $PRODUCT -n atlassian`, 'utf8');
+
+  await new Promise<void>((resolve, reject) => {
+    const docker = spawn(
+      'docker',
+      [
+        'run',
+        '-it',
+        `--pull=always`,
+        '--env-file', './app/util/k8s/aws_envs',
+        '-e', `REGION=us-east-2`,
+        '-e', `ENVIRONMENT_NAME=${environment}`,
+        '-e', `PRODUCT=${product}`,
+        '-v', `${cwd}:/data-center-terraform/dc-app-performance-toolkit`,
+        '-v', `${cwd}/app/util/k8s/delete_pod.sh:/data-center-terraform/delete_pod.sh`,
+        'atlassianlabs/terraform:latest',
+        'bash', 'delete_pod.sh'
+      ],
+      { cwd, stdio: 'inherit' }
+    );
+    docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
+  });
+}
+
+
 export const terminate = async (cwd: string, environment: string) => {
   const baseDir = resolve(join(cwd, 'app/util/k8s'));
   await new Promise<void>((resolve, reject) => {

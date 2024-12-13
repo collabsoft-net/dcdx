@@ -190,6 +190,9 @@ export const APTTeardownOptions = z.object({
   force: true
 });
 
+export const APTRestartArgs = APTTeardownArgs.extend({});
+export const APTRestartOptions = APTTeardownOptions.extend({});
+
 export const APTArgs = z.intersection(
   APTProvisionOptions,
   APTPerformanceTestArgs,
@@ -214,6 +217,9 @@ export type TScalabilityTestTypes = z.infer<typeof ScalabilityTestTypes>;
 export type TAPTScalabilityTestArgs = z.infer<typeof APTScalabilityTestArgs>;
 export type TAPTScalabilityTestOptions = z.infer<typeof APTScalabilityTestOptions>;
 export type TAPTScalabilityReportOptions = z.infer<typeof APTScalabilityReportOptions>;
+
+export type TAPTRestartArgs = z.infer<typeof APTRestartArgs>;
+export type TAPTRestartOptions = z.infer<typeof APTRestartOptions>;
 
 export type TAPTTeardownArgs = z.infer<typeof APTTeardownArgs>;
 export type TAPTTeardownOptions = z.infer<typeof APTTeardownOptions>;
