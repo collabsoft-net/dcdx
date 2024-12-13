@@ -14,7 +14,7 @@ export const getHostLicense = (product: TSupportedApplications, license?: string
     return productLicense || timebomb[product];
   }
 
-  console.log(provisioning.askForLicense);
+  console.log(provisioning.askForHostLicense);
 
   return input({
     message: `License`,

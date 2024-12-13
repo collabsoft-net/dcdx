@@ -92,7 +92,15 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   const baseUrl = await getClusterURL(cwd, options.product);
 
   // Install the app into the cluster
-  await installApp(baseUrl, options.appKey, options.appLicense, 'admin', 'admin', options.force);
+  await installApp({
+    baseUrl,
+    appKey: options.appKey,
+    license: options.appLicense,
+    username: 'admin',
+    password: 'admin',
+    restartAfterInstall: options.restartAfterInstall,
+    force: options.force
+  });
 
   // Allow users to set a different test duration (for validation purposes)
   const duration = await getDuration(options.force);

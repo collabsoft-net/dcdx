@@ -41,6 +41,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     license,
     appKey: options.appKey,
     appLicense: options.appLicense,
+    restartAfterInstall: options.restartAfterInstall,
     force: options.force
   }, ScalabilityTestMessages);
 
@@ -56,6 +57,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     license,
     appKey: options.appKey,
     appLicense: options.appLicense,
+    restartAfterInstall: options.restartAfterInstall,
     force: options.force
   }, ScalabilityTestMessages);
 
@@ -71,6 +73,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     license,
     appKey: options.appKey,
     appLicense: options.appLicense,
+    restartAfterInstall: options.restartAfterInstall,
     force: options.force
   }, ScalabilityTestMessages);
 

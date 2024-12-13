@@ -50,6 +50,7 @@ const DefaultCommand = () => ({
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
+      restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
       force: options.force
     });
@@ -65,6 +66,7 @@ const DefaultCommand = () => ({
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
+      restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
       force: options.force
     });
@@ -122,6 +124,7 @@ const PerformanceTestCommand = () => ({
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
+      restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
       force: options.force
     });
@@ -190,6 +193,7 @@ const ScalabilityTestCommand = () => ({
       environment: options.environment,
       appKey: options.appKey,
       appLicense: options.appLicense,
+      restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
       force: options.force
     });
@@ -292,7 +296,6 @@ const TeardownCommand = () => ({
   }
 })
 
-
 program
   .name('dcdx apt')
   .showHelpAfterError(true);
@@ -303,6 +306,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -327,6 +331,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -340,6 +345,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -353,6 +359,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -380,7 +387,6 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
-  .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
@@ -394,6 +400,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
@@ -407,6 +414,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
@@ -420,6 +428,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
@@ -433,6 +442,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))

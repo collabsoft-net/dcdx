@@ -7,6 +7,7 @@ import { glob } from 'glob';
 import { resolve } from 'path';
 import { cwd } from 'process';
 
+import { getAppLicense } from '../apt/helpers/getAppLicense';
 import { installApp } from '../apt/helpers/installApp';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
@@ -36,7 +37,15 @@ const Command = () => {
           throw new InvalidOptionArgumentError('Missing argument "--appKey", required for installing from the Atlassian Marketplace');
         }
 
-        await installApp(options.baseUrl, options.appKey, undefined, options.username, options.password, true);
+        await installApp({
+          baseUrl: options.baseUrl,
+          appKey: options.appKey,
+          license: await getAppLicense(options.license, true),
+          username: options.username,
+          password: options.password,
+          restartAfterInstall: false,
+          force: true
+        });
 
       } else {
 
@@ -98,6 +107,7 @@ If there is a running instance, it will try to install the plugin using QuickRel
   .addOption(new Option('--mpac', 'Install the app from the Atlassian Marketplace'))
   .addOption(new Option('--baseUrl <url>', 'URL of the instance (required with --mpac)'))
   .addOption(new Option('--appKey <key>', 'The key of the app to be installed (required with --mpac)'))
+  .addOption(new Option('--license <path_or_license>', 'The app license, either as a path to a file or the license itself'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration'))
   .action(options => ActionHandler(program, Command(), { ...options, install: true }));
 

@@ -7,7 +7,7 @@ import simpleGit from 'simple-git';
 
 import { emptyLine } from '../messages';
 
-export const getAptDictory = async (cwd: string, mustUseDefaultConfiguration: boolean, force?: boolean) => {
+export const getAptDictory = async (cwd?: string, mustUseDefaultConfiguration?: boolean, force?: boolean) => {
   // Translate common relative paths to absolute paths
   let result: string = cwd ?
     cwd.startsWith('~/')

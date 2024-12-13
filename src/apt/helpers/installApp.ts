@@ -6,8 +6,14 @@ import { createWriteStream, mkdirSync, rmSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 
-import { app3hour } from '../../helpers/licences';
 import { registerLicense, uploadToUPM, waitForPluginToBeEnabled } from '../../helpers/upm';
+import { TInstallOptions } from '../../types/Install';
+import { getAppLicense } from './getAppLicense';
+import { getAptDictory } from './getAptDirectory';
+import { getAWSCredentials } from './getAWSCredentials';
+import { getEnvironmentName } from './getEnvironmentName';
+import { getProduct } from './getProduct';
+import { restartCluster } from './restartCluster';
 
 const progressBar = new SingleBar({
   format: '  [{bar}] {percentage}% | ETA: {eta_formatted}m',
@@ -50,18 +56,25 @@ const download = async (addonKey: string) => {
   return tmpFile;
 }
 
-export const installApp = async (baseUrl: string, appKey?: string, license: string = app3hour, username: string = 'admin', password: string = 'admin', force?: boolean) => {
+export const installApp = async (options: TInstallOptions) => {
+
+  // Set default value for username/password
+  const username = options.username || 'admin';
+  const password = options.password || 'admin';
 
   // If we are in non-interactive mode, we will download it from MPAC
-  if (force) {
+  if (options.force) {
 
     // In order to do so, we need an appkey. If this is not provided, throw a hissy fit
-    if (!appKey) {
+    if (!options.appKey) {
       throw new Error('Failed to automatically install app into cluster, `appKey` was not provided');
     }
 
+    // Get the app license
+    const appLicense = await getAppLicense(options.license, options.force);
+
     // Download the file from MPAC
-    const file = await download(appKey);
+    const file = await download(options.appKey);
 
     let count = 0;
     let timerId = null;
@@ -72,10 +85,10 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
 
         if (count === 0) {
           console.log(`
-  Installing the app (${appKey}) into the cluster using the Universal Plugin Manager REST API`);
+  Installing the app (${options.appKey}) into the cluster using the Universal Plugin Manager REST API`);
         } else {
           console.log(`
-  Retrying installation of the app (${appKey}) into the cluster using the Universal Plugin Manager REST API (attempt ${count + 1})`);
+  Retrying installation of the app (${options.appKey}) into the cluster using the Universal Plugin Manager REST API (attempt ${count + 1})`);
         }
 
         // Show a progress bar
@@ -83,19 +96,48 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
         timerId = setInterval(() => progressBar.increment(), 1000);
 
         // Upload it into the cluster using the UPM REST API
-        const isInstalled = await uploadToUPM(baseUrl, file, username, password, false);
+        const isInstalled = await uploadToUPM(options.baseUrl, file, username, password, false);
         if (!isInstalled) {
           throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
         }
 
+        // Check if we need to restart the application container
+        if (options.restartAfterInstall) {
+
+          // For restarts, the product option is required
+          if (!options.product) {
+            console.log('  Failed to restart application, required option `product` is missing');
+
+          // For restarts, the environment option is required
+          } else if (!options.environment) {
+            console.log('  Failed to restart application, required option `product` is missing');
+
+          // Ok, good to go!
+          } else {
+            // Oh right, we also need DCAPT in order to be able to restart the cluster
+            const cwd = await getAptDictory(options.cwd, false, options.force);
+
+            // We are now going to restart the cluster and hope for the best
+            console.log(`  Restarting ${options.product} to ensure app installation`);
+            await restartCluster({
+              cwd,
+              product: options.product,
+              environment: options.environment,
+              aws_access_key_id: options.aws_access_key_id,
+              aws_secret_access_key: options.aws_secret_access_key,
+              force: options.force
+            });
+          }
+        }
+
         // Wait for the plugin to be enabled
-        const isEnabled = await waitForPluginToBeEnabled(appKey, baseUrl, username, password, false);
+        const isEnabled = await waitForPluginToBeEnabled(options.appKey, options.baseUrl, username, password, false);
         if (!isEnabled) {
           throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
         }
 
         // Register the license (use the 3 hour timebomb in non-interactive mode)
-        const isLicensed = await registerLicense(appKey, license, baseUrl, username, password, false);
+        const isLicensed = await registerLicense(options.appKey, appLicense, options.baseUrl, username, password, false);
         if (!isLicensed) {
           throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
         }
@@ -123,7 +165,7 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
     rmSync(file, { force: true });
 
     // Tell them we succeeded
-    console.log(`✔ Finished installing the app (${appKey})`);
+    console.log(`✔ Finished installing the app (${options.appKey})`);
 
   // If we're in interactive mode, let's be nice
   } else {
@@ -150,16 +192,12 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
       // Ask them nicely for the app key
       const addonKey = await input({
         message: 'Please provide the key of the app to be installed',
-        default: appKey,
+        default: options.appKey,
         required: true
       });
 
       // Ask them nicely for the app license to be used
-      const appLicense = await input({
-        message: `License`,
-        default: license,
-        required: true
-      });
+      const appLicense = await getAppLicense(options.license, options.force);
 
       // Ask them nicely for the username
       const adminUsername = await input({
@@ -174,6 +212,11 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
         validate: item => typeof item === 'string' && item.length > 0
       });
 
+      // Ask them nicely if we need to restart the application
+      const restartAfterInstall = await confirm({
+        message: 'Restart the host application after installation?',
+      });
+
       // Tell them we are starting
       console.log(`
   Installing the app (${addonKey}) into the cluster using the Universal Plugin Manager REST API`);
@@ -186,19 +229,46 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
       const file = await download(addonKey);
 
       // Upload it into the cluster using the UPM REST API
-      const isInstalled = await uploadToUPM(baseUrl, file, adminUsername, adminPassword, false);
+      const isInstalled = await uploadToUPM(options.baseUrl, file, adminUsername, adminPassword, false);
       if (!isInstalled) {
         throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
       }
 
+      // Check if we need to restart the application container
+      if (restartAfterInstall) {
+
+        // Ask them nicely for the host product
+        const product = options.product || await getProduct();
+
+        // Ask for the AWS credentials
+        const [ aws_access_key_id, aws_secret_access_key ] = await getAWSCredentials(product, options.force);
+
+        // Ask for the environment name
+        const environment = options.environment || await getEnvironmentName();
+
+        // Oh right, we also need DCAPT in order to be able to restart the cluster
+        const cwd = await getAptDictory(options.cwd, false, options.force);
+
+        // We are now going to restart the cluster and hope for the best
+        console.log(`  Restarting ${options.product} to ensure app installation`);
+        await restartCluster({
+          cwd,
+          product: product,
+          environment: environment,
+          aws_access_key_id: aws_access_key_id,
+          aws_secret_access_key: aws_secret_access_key,
+          force: options.force
+        });
+      }
+
       // Wait for the plugin to be enabled
-      const isEnabled = await waitForPluginToBeEnabled(addonKey, baseUrl, adminUsername, adminPassword, false);
+      const isEnabled = await waitForPluginToBeEnabled(addonKey, options.baseUrl, adminUsername, adminPassword, false);
       if (!isEnabled) {
         throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
       }
 
       // Register the provided license
-      const isLicensed = await registerLicense(addonKey, appLicense, baseUrl, adminUsername, adminPassword, false);
+      const isLicensed = await registerLicense(addonKey, appLicense, options.baseUrl, adminUsername, adminPassword, false);
       if (!isLicensed) {
         throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
       }
@@ -221,7 +291,7 @@ export const installApp = async (baseUrl: string, appKey?: string, license: stri
   You can now install the app manually into the cluster.
   Please go to the following page:
     
-  ${baseUrl}/plugins/servlet/upm?source=side_nav_manage_addons
+  ${options.baseUrl}/plugins/servlet/upm?source=side_nav_manage_addons
 `);
 
       // Make them grovel

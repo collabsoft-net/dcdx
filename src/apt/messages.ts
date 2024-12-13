@@ -116,11 +116,18 @@ export const provisioning = {
   This will allow you to create multiple clusters (i.e. for different host products) and to identify which cluster to use during testing & teardown.
 `,
 
-  askForLicense: `
+  askForHostLicense: `
   The host product requires a valid license.
 
   By default we use the 72h developer license provided by Atlassian. If you need a more extensive license,
   you can generate an evaluation license from my.atlassian.com or ask Atlassian Marketplace Developer Support for a test license.
+`,
+
+  askForAppLicense: `
+The app requires a valid license.
+
+By default we use the 3 hour timebomb license provided by Atlassian. If you need a more extensive license,
+you can generate an evaluation license from my.atlassian.com or ask Atlassian Marketplace Developer Support for a test license.
 `,
 
   ready: `

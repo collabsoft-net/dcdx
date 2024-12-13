@@ -108,7 +108,15 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   if (stage === 'regression') {
 
     // Install the app into the cluster
-    await installApp(baseUrl, options.appKey, options.appLicense, 'admin', 'admin', options.force);
+    await installApp({
+      baseUrl,
+      appKey: options.appKey,
+      license: options.appLicense,
+      username: 'admin',
+      password: 'admin',
+      restartAfterInstall: options.restartAfterInstall,
+      force: options.force
+    });
 
   }
 

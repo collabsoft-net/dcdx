@@ -73,12 +73,14 @@ export const APTPerformanceTestArgs = z.object({
   license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
+  restartAfterInstall: z.boolean(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
   outputDir: true,
   license: true,
   timestamp: true,
+  restartAfterInstall: true,
   force: true
 });
 
@@ -93,6 +95,7 @@ export const APTPerformanceTestOptions = z.object({
   license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
+  restartAfterInstall: z.boolean(),
   force: z.boolean()
 }).partial({
   baseUrl: true,
@@ -100,6 +103,7 @@ export const APTPerformanceTestOptions = z.object({
   aws_secret_access_key: true,
   appKey: true,
   appLicense: true,
+  restartAfterInstall: true,
   force: true
 });
 
@@ -132,12 +136,14 @@ export const APTScalabilityTestArgs = z.object({
   license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
+  restartAfterInstall: z.boolean(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
   outputDir: true,
   license: true,
   appLicense: true,
+  restartAfterInstall: true,
   timestamp: true,
   force: true
 });
@@ -150,10 +156,12 @@ export const APTScalabilityTestOptions = z.object({
   license: z.string(),
   appKey: z.string(),
   appLicense: z.string(),
+  restartAfterInstall: z.boolean(),
   force: z.boolean()
 }).partial({
   appKey: true,
   appLicense: true,
+  restartAfterInstall: true,
   force: true
 });
 
