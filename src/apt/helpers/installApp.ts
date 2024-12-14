@@ -1,13 +1,10 @@
 import { confirm, input, password as passwordPrompt,select } from '@inquirer/prompts';
-import axios from 'axios';
 import { Presets, SingleBar } from 'cli-progress';
-import { parse } from 'content-disposition';
-import { createWriteStream, mkdirSync, rmSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
+import { rmSync } from 'fs';
 
 import { registerLicense, uploadToUPM, waitForPluginToBeEnabled } from '../../helpers/upm';
 import { TInstallOptions } from '../../types/Install';
+import { downloadApp } from './downloadApp';
 import { getAppLicense } from './getAppLicense';
 import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
@@ -30,32 +27,6 @@ const round = (value: number, step: number = 1.0) => {
   return Math.floor(value * inv) / inv;
 }
 
-const download = async (addonKey: string) => {
-  const tmpDir = join(homedir(), '.dcdx', 'tmp');
-  let tmpFile = join(tmpDir, addonKey);
-  mkdirSync(tmpDir, { recursive: true });
-
-  let downloadUrl = `https://marketplace.atlassian.com/download/plugins/${addonKey}`;
-  const { data: listing } = await axios.get(`https://marketplace.atlassian.com/rest/2/addons/${addonKey}?hosting=datacenter&withVersion=true`).catch(() => ({ data: null }));
-  if (listing) {
-    downloadUrl = listing._embedded?.version?._embedded?.artifact?._links?.binary?.href || downloadUrl;
-  }
-
-  await axios({
-    method: 'get',
-    url: downloadUrl,
-    responseType: 'stream'
-  }).then(response => {
-    const disposition = parse(response.headers['content-disposition']);
-    const filename = disposition?.parameters?.filename || addonKey;
-    tmpFile = filename;
-
-    response.data.pipe(createWriteStream(tmpFile));
-  }).catch(() => null);
-
-  return tmpFile;
-}
-
 export const installApp = async (options: TInstallOptions) => {
 
   // Set default value for username/password
@@ -74,7 +45,7 @@ export const installApp = async (options: TInstallOptions) => {
     const appLicense = await getAppLicense(options.license, options.force);
 
     // Download the file from MPAC
-    const file = await download(options.appKey);
+    const file = await downloadApp(options.appKey);
 
     let count = 0;
     let timerId = null;
@@ -226,7 +197,7 @@ export const installApp = async (options: TInstallOptions) => {
       const timerId = setInterval(() => progressBar.increment(), 1000);
 
       // Download the file from MPAC
-      const file = await download(addonKey);
+      const file = await downloadApp(addonKey);
 
       // Upload it into the cluster using the UPM REST API
       const isInstalled = await uploadToUPM(options.baseUrl, file, adminUsername, adminPassword, false);
