@@ -201,6 +201,18 @@ export const APTTeardownOptions = z.object({
 export const APTRestartArgs = APTTeardownArgs.extend({});
 export const APTRestartOptions = APTTeardownOptions.extend({});
 
+export const APTDependencyTreeArgs = z.object({
+  appKey: z.string(),
+  outputFile: z.string()
+}).partial({
+  outputFile: true
+});
+
+export const APTDependencyTreeOptions = z.object({
+  appKey: z.string(),
+  outputFile: z.string()
+});
+
 export const APTArgs = z.intersection(
   APTProvisionOptions,
   APTPerformanceTestArgs,
@@ -235,3 +247,5 @@ export type TAPTTeardownOptions = z.infer<typeof APTTeardownOptions>;
 export type TTestResults = z.infer<typeof TestResults>;
 export type TReportTypes = z.infer<typeof ReportTypes>;
 
+export type TAPTDependencyTreeArgs = z.infer<typeof APTDependencyTreeArgs>;
+export type TAPTDependencyTreeOptions = z.infer<typeof APTDependencyTreeOptions>;

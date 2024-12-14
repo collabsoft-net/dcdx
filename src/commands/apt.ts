@@ -2,8 +2,10 @@
 
 import { Command as Commander, Option } from 'commander';
 import { gracefulExit } from 'exit-hook';
+import { join } from 'path';
 import { cwd } from 'process';
 
+import { generateDependencyTree } from '../apt/helpers/generateDependencyTree';
 import { generatePerformanceReport } from '../apt/helpers/generatePerformanceReport';
 import { generateScalabilityReport } from '../apt/helpers/generateScalabilityReport';
 import { getHostLicense } from '../apt/helpers/getHostLicense';
@@ -21,7 +23,7 @@ import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { SupportedApplications } from '../types/Application';
-import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTDependencyTreeArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -296,6 +298,18 @@ const TeardownCommand = () => ({
   }
 })
 
+const DependencyTreeCommand = () => ({
+  action: async (options: TAPTDependencyTreeArgs) => {
+    await generateDependencyTree({
+      appKey: options.appKey,
+      outputFile: options.outputFile || join(cwd(), 'maven_dependency_tree.gv')
+    });
+  },
+  errorHandler: async () => {
+
+  }
+})
+
 program
   .name('dcdx apt')
   .showHelpAfterError(true);
@@ -465,6 +479,14 @@ program
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
   .action(options => ActionHandler(program, TeardownCommand(), options));
+
+program
+  .command('dependencies')
+  .description('Generate the Data Center App Performance Testing dependency tree')
+  .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('-O, --outputFile <path>', 'Specify the output file where to store the generated dependency tree (defaults to `./maven_dependency_tree.gv`)'))
+  .action(options => ActionHandler(program, DependencyTreeCommand(), options));
+
 
 program.parseAsync(process.argv).catch(() => gracefulExit(1));
 

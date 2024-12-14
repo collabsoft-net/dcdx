@@ -55,6 +55,7 @@
     "@types/js-yaml": "4",
     "@types/node": "18.16.0",
     "@types/pg": "8",
+    "@types/unzipper": "^0",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
     "@vitest/coverage-v8": "2.1.5",
@@ -95,6 +96,7 @@
     "sequelize": "6.37.2",
     "simple-git": "3.24.0",
     "tedious": "18.1.0",
+    "unzipper": "0.12.3",
     "xpath": "0.0.34",
     "yaml": "2.6.0",
     "zod": "3.23.6"
