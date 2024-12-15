@@ -50,6 +50,9 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
   mkdirSync(dataDir, { recursive: true });
 
   try {
+    console.log('Running OWASP dependency-check with the following arguments:')
+    console.log(`owasp/dependency-check --nvdApiKey ${options.nvdApiKey} --scan ${file} --suppression https://dcapt-downloads.s3.amazonaws.com/atlassian-security-scanner-dc-apps-suppressions.xml --out ${options.outputDir}`);
+
     await new Promise<void>((resolve, reject) => {
       const docker = spawn(
         'docker',
