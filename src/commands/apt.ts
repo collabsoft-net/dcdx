@@ -8,6 +8,7 @@ import { cwd } from 'process';
 import { generateDependencyTree } from '../apt/helpers/generateDependencyTree';
 import { generatePerformanceReport } from '../apt/helpers/generatePerformanceReport';
 import { generateScalabilityReport } from '../apt/helpers/generateScalabilityReport';
+import { generateSCAReport } from '../apt/helpers/generateSCAReport';
 import { getHostLicense } from '../apt/helpers/getHostLicense';
 import { getOutputDirectory } from '../apt/helpers/getOutputDirectory';
 import { getProduct } from '../apt/helpers/getProduct';
@@ -23,7 +24,7 @@ import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { SupportedApplications } from '../types/Application';
-import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTDependencyTreeArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTDependencyTreeArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTSCAArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -310,6 +311,19 @@ const DependencyTreeCommand = () => ({
   }
 })
 
+const SCACommand = () => ({
+  action: async (options: TAPTSCAArgs) => {
+    await generateSCAReport({
+      nvdApiKey: options.nvdApiKey,
+      appKey: options.appKey,
+      outputDir: options.outputDir || join(cwd(), 'sca_report')
+    });
+  },
+  errorHandler: async () => {
+
+  }
+})
+
 program
   .name('dcdx apt')
   .showHelpAfterError(true);
@@ -483,10 +497,17 @@ program
 program
   .command('dependencies')
   .description('Generate the Data Center App Performance Testing dependency tree')
-  .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--appKey <appKey>', 'The key of the app to graph dependencies for'))
   .addOption(new Option('-O, --outputFile <path>', 'Specify the output file where to store the generated dependency tree (defaults to `./maven_dependency_tree.gv`)'))
   .action(options => ActionHandler(program, DependencyTreeCommand(), options));
 
+program
+  .command('sca')
+  .description('Run the Data Center App Performance Testing software composition analysis (SCA) tool')
+  .addOption(new Option('--nvdApiKey <key>', 'The NVD API key (required due to rate limiting, see https://nvd.nist.gov/developers/request-an-api-key)'))
+  .addOption(new Option('--appKey <appKey>', 'The key of the app to scan'))
+  .addOption(new Option('-O, --outputDir <path>', 'Specify the output directory where to store the generated report (defaults to `./sca_report`)'))
+  .action(options => ActionHandler(program, SCACommand(), options));
 
 program.parseAsync(process.argv).catch(() => gracefulExit(1));
 

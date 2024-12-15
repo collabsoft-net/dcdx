@@ -1,0 +1,79 @@
+import { spawn } from 'child_process';
+import { mkdirSync, rmSync } from 'fs';
+import { glob } from 'glob';
+import { homedir } from 'os';
+import { basename, join } from 'path';
+import { Open } from 'unzipper';
+
+import { TAPTSCAOptions } from '../../types/DCAPT';
+import { downloadApp } from './downloadApp';
+
+export const generateSCAReport = async (options: TAPTSCAOptions) => {
+
+  // Placeholder for temporary directory
+  const tmpDir = join(homedir(), '.dcdx', 'tmp');
+
+  // Placeholder for archive directory
+  const archiveDir = join(tmpDir, `.${options.appKey}`);
+
+  // Download the file from MPAC
+  console.log('Downloading archive from the Atlassian Marketplace');
+  let file = await downloadApp(options.appKey);
+
+  if (file.endsWith('.obr')) {
+    console.log('The archive is an OSGi Bundle Repository (OBR)');
+    console.log(`Extracting archive to a temporary location (${archiveDir})`);
+
+    const archive = await Open.file(file);
+    await archive.extract({ path: archiveDir })
+
+    // Get the main JAR file (which is located in the root directory)
+    const [ relativePathToJar ] = await glob(`*.jar`, { cwd: archiveDir });
+
+    // Make sure we actually found the main jar
+    if (!relativePathToJar) {
+      console.log('Failed to locate the main JAR file in the archive');
+      return;
+    } else {
+      console.log(`Found the main artifact (${relativePathToJar})`);
+
+      // Get the full path to the JAR file
+      file = join(archiveDir, relativePathToJar);
+    }
+  }
+
+  // Create the output directory
+  mkdirSync(options.outputDir, { recursive: true });
+
+  // Create the data directory
+  const dataDir = join(homedir(), '.dcdx', 'owasp');
+  mkdirSync(dataDir, { recursive: true });
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const docker = spawn(
+        'docker',
+        [
+          'run',
+          `--pull=always`,
+          '-v', `${file}:/src/${basename(file)}`,
+          '-v', `${options.outputDir}:/report`,
+          '-v', `${dataDir}:/usr/share/dependency-check/data`,
+          '-v', `${options.outputDir}:/report`,
+          'owasp/dependency-check',
+          '--nvdApiKey', `${options.nvdApiKey}`,
+          '--scan', `/src`,
+          '--suppression', 'https://dcapt-downloads.s3.amazonaws.com/atlassian-security-scanner-dc-apps-suppressions.xml',
+          '--out', '/report'
+        ],
+        { stdio: 'inherit' }
+      );
+      docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
+    });
+
+    console.log(`✔ Finished running the OWASP dependency check software composition analysis (SCA) scanner`);
+  } finally {
+    rmSync(file, { force: true });
+    rmSync(archiveDir, { recursive: true, force: true });
+  }
+}

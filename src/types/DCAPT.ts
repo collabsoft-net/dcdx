@@ -213,6 +213,20 @@ export const APTDependencyTreeOptions = z.object({
   outputFile: z.string()
 });
 
+export const APTSCAArgs = z.object({
+  nvdApiKey: z.string(),
+  appKey: z.string(),
+  outputDir: z.string()
+}).partial({
+  outputDir: true
+});
+
+export const APTSCAOptions = z.object({
+  nvdApiKey: z.string(),
+  appKey: z.string(),
+  outputDir: z.string()
+});
+
 export const APTArgs = z.intersection(
   APTProvisionOptions,
   APTPerformanceTestArgs,
@@ -249,3 +263,6 @@ export type TReportTypes = z.infer<typeof ReportTypes>;
 
 export type TAPTDependencyTreeArgs = z.infer<typeof APTDependencyTreeArgs>;
 export type TAPTDependencyTreeOptions = z.infer<typeof APTDependencyTreeOptions>;
+
+export type TAPTSCAArgs = z.infer<typeof APTSCAArgs>;
+export type TAPTSCAOptions = z.infer<typeof APTSCAOptions>;
