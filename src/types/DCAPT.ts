@@ -216,20 +216,15 @@ export const APTDependencyTreeOptions = z.object({
 export const APTSCAArgs = z.object({
   nvdApiKey: z.string(),
   appKey: z.string(),
-  dataDir: z.string(),
   outputDir: z.string()
 }).partial({
-  dataDir: true,
   outputDir: true
 });
 
 export const APTSCAOptions = z.object({
   nvdApiKey: z.string(),
   appKey: z.string(),
-  dataDir: z.string(),
   outputDir: z.string()
-}).partial({
-  dataDir: true
 });
 
 export const APTArgs = z.intersection(

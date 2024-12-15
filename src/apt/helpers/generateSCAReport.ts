@@ -45,10 +45,6 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
   // Create the output directory
   mkdirSync(options.outputDir, { recursive: true });
 
-  // Create the data directory
-  const dataDir = options.dataDir || join(homedir(), '.dcdx', 'owasp');
-  mkdirSync(dataDir, { recursive: true });
-
   try {
     console.log('Running OWASP dependency-check with the following arguments:')
     console.log(`owasp/dependency-check --nvdApiKey ${options.nvdApiKey} --scan ${file} --suppression https://dcapt-downloads.s3.amazonaws.com/atlassian-security-scanner-dc-apps-suppressions.xml --out ${options.outputDir}`);
@@ -60,8 +56,6 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
           'run',
           `--pull=always`,
           '-v', `${file}:/src/${basename(file)}`,
-          '-v', `${options.outputDir}:/report`,
-          '-v', `${dataDir}:/usr/share/dependency-check/data`,
           '-v', `${options.outputDir}:/report`,
           'owasp/dependency-check',
           '--nvdApiKey', `${options.nvdApiKey}`,

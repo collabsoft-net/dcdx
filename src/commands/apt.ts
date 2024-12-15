@@ -316,7 +316,6 @@ const SCACommand = () => ({
     await generateSCAReport({
       nvdApiKey: options.nvdApiKey,
       appKey: options.appKey,
-      dataDir: options.dataDir,
       outputDir: options.outputDir || join(cwd(), 'sca_report')
     });
   },
@@ -510,7 +509,6 @@ To avoid rate limiting issues, providing an NVD API Key is required (see https:/
 `)
   .addOption(new Option('--nvdApiKey <key>', 'The NVD API key (defaults to NVD_API_KEY environment variable)').default(process.env.NVD_API_KEY))
   .addOption(new Option('--appKey <appKey>', 'The key of the app to scan'))
-  .addOption(new Option('-D, --dataDir <path>', 'The path to the directory that contains the NVD database'))
   .addOption(new Option('-O, --outputDir <path>', 'Specify the output directory where to store the generated report (defaults to `./sca_report`)'))
   .action(options => ActionHandler(program, SCACommand(), options));
 
