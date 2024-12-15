@@ -503,8 +503,11 @@ program
 
 program
   .command('sca')
-  .description('Run the Data Center App Performance Testing software composition analysis (SCA) tool')
-  .addOption(new Option('--nvdApiKey <key>', 'The NVD API key (required due to rate limiting, see https://nvd.nist.gov/developers/request-an-api-key)'))
+  .description(`Run the Data Center App Performance Testing software composition analysis (SCA) tool
+
+To avoid rate limiting issues, providing an NVD API Key is required (see https://nvd.nist.gov/developers/request-an-api-key)
+`)
+  .addOption(new Option('--nvdApiKey <key>', 'The NVD API key (defaults to NVD_API_KEY environment variable)').default(process.env.NVD_API_KEY))
   .addOption(new Option('--appKey <appKey>', 'The key of the app to scan'))
   .addOption(new Option('-O, --outputDir <path>', 'Specify the output directory where to store the generated report (defaults to `./sca_report`)'))
   .action(options => ActionHandler(program, SCACommand(), options));
