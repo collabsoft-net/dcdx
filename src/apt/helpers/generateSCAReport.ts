@@ -46,7 +46,7 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
   mkdirSync(options.outputDir, { recursive: true });
 
   // Create the data directory
-  const dataDir = join(homedir(), '.dcdx', 'owasp');
+  const dataDir = options.dataDir || join(homedir(), '.dcdx', 'owasp');
   mkdirSync(dataDir, { recursive: true });
 
   try {
