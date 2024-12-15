@@ -55,6 +55,8 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
         [
           'run',
           `--pull=always`,
+          '-u', '0:0',
+          '-e', 'user=root',
           '-v', `${file}:/src/${basename(file)}`,
           '-v', `${options.outputDir}:/report`,
           'owasp/dependency-check',
