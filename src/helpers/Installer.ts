@@ -22,7 +22,7 @@ export const Installer = async (name: TSupportedApplications, path: string, opti
       console.log(`Found updated plugin, uploading it to UPM on running instances of ${name}`);
       const hostUrl = options.port ? `localhost:${options.port}` : `localhost`;
       const baseUrl = options.username && options.password ? `http://${options.username}:${options.password}@${hostUrl}` : `http://${hostUrl}`;
-      await uploadToUPM(resolvePath(options.cwd || cwd(), path), baseUrl).catch(err => {
+      await uploadToUPM(baseUrl, resolvePath(options.cwd || cwd(), path), options.username || 'admin', options.password || 'admin').catch(err => {
         console.log('Failed to upload plugin archive file to UPM', err);
       });
     } else {
