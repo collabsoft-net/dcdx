@@ -111,6 +111,7 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
               const maven = spawn(
                 'mvn',
                 [
+                  ...options.activateProfiles ? [ '-P', options.activateProfiles ] : [],
                   'dependency:tree',
                   '-f', pomFile,
                   '-DoutputType=dot',

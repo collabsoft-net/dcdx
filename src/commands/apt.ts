@@ -303,6 +303,7 @@ const DependencyTreeCommand = () => ({
   action: async (options: TAPTDependencyTreeArgs) => {
     await generateDependencyTree({
       appKey: options.appKey,
+      activateProfiles: options.activateProfiles,
       outputFile: options.outputFile || join(cwd(), 'maven_dependency_tree.gv')
     });
   },
@@ -498,6 +499,7 @@ program
   .command('dependencies')
   .description('Generate the Data Center App Performance Testing dependency tree')
   .addOption(new Option('--appKey <appKey>', 'The key of the app to graph dependencies for'))
+  .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
   .addOption(new Option('-O, --outputFile <path>', 'Specify the output file where to store the generated dependency tree (defaults to `./maven_dependency_tree.gv`)'))
   .action(options => ActionHandler(program, DependencyTreeCommand(), options));
 

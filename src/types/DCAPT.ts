@@ -203,14 +203,19 @@ export const APTRestartOptions = APTTeardownOptions.extend({});
 
 export const APTDependencyTreeArgs = z.object({
   appKey: z.string(),
+  activateProfiles: z.string(),
   outputFile: z.string()
 }).partial({
+  activateProfiles: true,
   outputFile: true
 });
 
 export const APTDependencyTreeOptions = z.object({
   appKey: z.string(),
+  activateProfiles: z.string(),
   outputFile: z.string()
+}).partial({
+  activateProfiles: true
 });
 
 export const APTSCAArgs = z.object({
