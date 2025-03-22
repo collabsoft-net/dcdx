@@ -37,6 +37,7 @@ export const ApplicationOptions = z.object({
   clean: z.boolean().default(false),
   prune: z.boolean().default(false),
   debug: z.boolean().default(true),
+  jvm: z.string(),
   cwd: z.string()
 }).partial({
   contextPath: true,
@@ -44,6 +45,7 @@ export const ApplicationOptions = z.object({
   install: true,
   outputDirectory: true,
   activateProfiles: true,
+  jvm: true,
   cwd: true
 });
 

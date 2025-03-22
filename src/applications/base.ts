@@ -82,7 +82,7 @@ export abstract class Base implements Application {
   protected abstract getService(): Service;
 
   protected getJVMArgs(): Array<string> {
-    const JVM_SUPPORT_RECOMMENDED_ARGS = [];
+    const JVM_SUPPORT_RECOMMENDED_ARGS = this.options.jvm ? [ this.options.jvm ] : [];
     JVM_SUPPORT_RECOMMENDED_ARGS.push('-Dupm.plugin.upload.enabled=true');
 
     if (this.options.debug) {
