@@ -2,15 +2,11 @@ import { Command } from 'commander';
 import { asyncExitHook, gracefulExit } from 'exit-hook';
 import { z } from 'zod';
 
-import { TBuildOptions } from '../types/AMPS';
-import { TApplicationOptions } from '../types/Application';
-import { TDatabaseOptions } from '../types/Database';
-
-export const ActionHandler = async <T extends TApplicationOptions|TDatabaseOptions|TBuildOptions> (program: Command, { action, errorHandler }: {
+export const ActionHandler = async <T> (program: Command, { action, errorHandler }: {
   action: (options: T) => Promise<void>;
   errorHandler: (options: T) => Promise<void>;
 }, options?: T) => {
-  const ops: T = options || program.opts();
+  const ops: T = options || program.opts() as T;
   await new Promise<void>((_, reject) => {
     let errorMessage: string|null = '';
 
