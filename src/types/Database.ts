@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import versions from '../../assets/versions.json';
+import { getVersions } from '../helpers/getVersions';
+
+const versions = getVersions();
 
 export interface DatabaseEngine {
   url: string;

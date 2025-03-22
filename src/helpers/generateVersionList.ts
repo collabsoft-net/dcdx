@@ -13,8 +13,8 @@ import { toAbsolutePath } from './toAbsolutePath';
 const repositories = [
   { name: 'jira', repository: 'atlassian/jira-software' },
   { name: 'confluence', repository: 'atlassian/confluence' },
-  { name: 'bamboo', repository: 'atlassian/bamboo-server' },
-  { name: 'bitbucket', repository: 'atlassian/bitbucket-server' },
+  { name: 'bamboo', repository: 'atlassian/bamboo' },
+  { name: 'bitbucket', repository: 'atlassian/bitbucket' },
   { name: 'mysql', repository: 'library/mysql' },
   { name: 'postgresql', repository: 'library/postgres' },
 ];
