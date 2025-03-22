@@ -250,12 +250,8 @@ export abstract class Base implements Application {
     }
 
     if (arch === 'arm' || arch === 'arm64') {
-      const version = this.options.tag.includes('-')
-        ? this.options.tag.slice(0, this.options.tag.indexOf('-'))
-        : this.options.tag;
-
       try {
-        const semVerVersion = semver.coerce(version);
+        const semVerVersion = this.getSemanticVersion()
         if (semVerVersion) {
           if (this.name === 'jira' || this.name === 'bamboo') {
             return semver.lt(semVerVersion, '9.0.0');
@@ -273,6 +269,15 @@ export abstract class Base implements Application {
     return true;
   }
 
+  private getSemanticVersion(version?: string) {
+    const tag = version || this.options.tag;
+    const sanitizedVersion = tag.includes('-')
+      ? tag.slice(0, tag.indexOf('-'))
+      : tag;
+
+    return semver.coerce(sanitizedVersion);
+  }
+
   private async build(version: string) {
     const repositoryUrl = this.getDockerRepositoryUrl();
     const checkoutPath = join(basedir, this.name, 'source');
@@ -284,10 +289,18 @@ export abstract class Base implements Application {
       await simpleGit({ baseDir: checkoutPath }).pull({ '--recurse-submodule': null });
     }
 
+    const baseImage = this.getBaseImageFor(version);
+
     await new Promise<void>((resolve, reject) => {
       const docker = spawn(
         'docker',
-        [ 'build', '-t', `dcdx/${this.name}:${version}`, '--build-arg', `${this.name.toUpperCase()}_VERSION=${version}`, '.'],
+        [
+          'build',
+          '-t', `dcdx/${this.name}:${version}`,
+          '--build-arg', `${this.name.toUpperCase()}_VERSION=${version}`,
+          '--build-arg', `BASE_IMAGE=${baseImage}`,
+          '.'
+        ],
         { cwd: checkoutPath, stdio: 'inherit' }
       );
       docker.on('exit', (code) => (code === 0) ? resolve() : reject(new Error(`Docker exited with code ${code}`)));
@@ -310,6 +323,39 @@ export abstract class Base implements Application {
     if (isRunning) {
       await this.showApplicationLogs(service.name).catch(() => null);
     }
+  }
+
+  private getBaseImageFor(version: string) {
+    try {
+      const semVerVersion = this.getSemanticVersion(version);
+      if (semVerVersion) {
+        if (this.name === 'jira') {
+          if (semver.lt(semVerVersion, '9.7.0')) {
+            return 'adoptopenjdk/openjdk8:slim';
+          }
+        } else if (this.name === 'confluence') {
+          if (semver.lt(semVerVersion, '7.18.0')) {
+            return 'adoptopenjdk/openjdk8:slim';
+          } else if (semver.lt(semVerVersion, '8.0.0')) {
+            return 'adoptopenjdk/openjdk11:slim';
+          }
+        } else if (this.name === 'bitbucket') {
+          if (semver.lt(semVerVersion, '8.17.0')) {
+            return 'adoptopenjdk/openjdk8:slim';
+          } else if (semver.lt(semVerVersion, '9.4.0')) {
+            return 'adoptopenjdk/openjdk11:slim';
+          }
+        } else if (this.name === 'bamboo') {
+          if (semver.lt(semVerVersion, '9.1.0')) {
+            return 'adoptopenjdk/openjdk8:slim';
+          }
+        }
+      }
+    } catch (_ignored) {
+      return 'eclipse-temurin:17-noble';
+    }
+
+    return 'eclipse-temurin:17-noble';
   }
 
   private async showApplicationLogs(service: string) {
