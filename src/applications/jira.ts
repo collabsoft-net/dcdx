@@ -65,7 +65,7 @@ RUN chown -R jira:jira /var/atlassian/application-data/jira`
       ...this.options.xms ? { 'JVM_MINIMUM_MEMORY': this.options.xms } : '',
       ...this.options.xmx ? { 'JVM_MAXIMUM_MEMORY': this.options.xmx } : '',
       'JVM_SUPPORT_RECOMMENDED_ARGS': this.getJVMArgs().join(' '),
-      'ATL_LICENSE_KEY': timebomb.confluence,
+      'ATL_LICENSE_KEY': timebomb.jira,
       'ATL_JDBC_URL': this.database.url,
       'ATL_JDBC_USER': this.database.options.username,
       'ATL_JDBC_PASSWORD': this.database.options.password,
