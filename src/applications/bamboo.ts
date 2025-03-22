@@ -50,7 +50,7 @@ RUN chown -R bamboo:bamboo /var/atlassian/application-data/bamboo`
     const JVM_SUPPORT_RECOMMENDED_ARGS = super.getJVMArgs();
     if (this.options.debug) {
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xrunjdwp:transport=dt_socket,address=*:5005,suspend=n,server=y');
     }
     return JVM_SUPPORT_RECOMMENDED_ARGS;
   }

@@ -51,7 +51,7 @@ RUN chown -R bitbucket:bitbucket /var/atlassian/application-data/bitbucket`
     const JVM_SUPPORT_RECOMMENDED_ARGS = super.getJVMArgs();
     if (this.options.debug) {
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xdebug');
-      JVM_SUPPORT_RECOMMENDED_ARGS.push('-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Xrunjdwp:transport=dt_socket,address=*:5005,server=y,suspend=n');
     }
     return JVM_SUPPORT_RECOMMENDED_ARGS;
   }
