@@ -70,6 +70,43 @@ program
     program.parse(process.argv);
   });
 
+// ------------------------------------------------------------------------------------------ Configure
+
+program
+  .command('configure', 'Automated initial setup of the Atlassian host application', { executableFile: './commands/configure.js' });
+
+program
+  .command('configure:jira')
+  .description('Automated initial setup of Atlassian Jira')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'configure', 'jira' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('configure:confluence')
+  .description('Automated initial setup of Atlassian Confluence')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'configure', 'confluence' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('configure:bitbucket')
+  .description('Automated initial setup of Atlassian Bitbucket')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'configure', 'bitbucket' ]);
+    program.parse(process.argv);
+  });
+
+program
+  .command('configure:bamboo')
+  .description('Automated initial setup of Atlassian Bamboo')
+  .action(() => {
+    process.argv.splice(2, 1, ...[ 'configure', 'bamboo' ]);
+    program.parse(process.argv);
+  });
+
 // ------------------------------------------------------------------------------------------ Database
 
 program

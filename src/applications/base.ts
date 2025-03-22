@@ -10,9 +10,11 @@ import { arch,cwd } from 'process';
 import semver from 'semver';
 import simpleGit from 'simple-git';
 
+import { getConfig } from '../helpers/getConfig';
 import { getDatabaseEngine } from '../helpers/getDatabaseEngine';
 import { getZodDefaults } from '../helpers/getZodDefaults';
 import { network } from '../helpers/network';
+import { setupHost } from '../helpers/setupHost';
 import { Application,TApplicationOptions,TSupportedApplications } from '../types/Application';
 import { DatabaseEngine, DatabaseOptions, MSSQLOptions, MySQLOptions, PostgreSQLOptions, SupportedDatabaseEngines, TSupportedDatabaseEngines } from '../types/Database';
 import { DockerComposeV3, Service } from '../types/DockerComposeV3';
@@ -171,7 +173,18 @@ export abstract class Base implements Application {
         console.log(`Could not confirm state of ${this.name}, but the container is running. Please consult the application logs 👇`);
         await this.tailApplicationLogs();
       }
+    }
+
+    if (this.options.configure) {
+      const config = await getConfig(undefined, this.options.cwd);
+      const success = await setupHost(this.options.name, config);
+
+      if (success) {
+        // Tail application logs until we receive the TERM signal
+        await this.tailApplicationLogs();
+      }
     } else {
+      // Tail application logs until we receive the TERM signal
       await this.tailApplicationLogs();
     }
 

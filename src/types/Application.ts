@@ -33,6 +33,7 @@ export const ApplicationOptions = z.object({
   install: z.boolean(),
   outputDirectory: z.string(),
   activateProfiles: z.string(),
+  configure: z.boolean().default(false),
   clean: z.boolean().default(false),
   prune: z.boolean().default(false),
   debug: z.boolean().default(true),
