@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import FormData from 'form-data';
 import { createReadStream } from 'fs';
 
@@ -78,6 +78,12 @@ export const registerLicense = async (appKey: string, license: string, baseUrl: 
       verbose && console.log('Finished uploading license to UPM');
       return true;
     }).catch(err => {
+      if (isAxiosError(err)) {
+        if (err.response?.data?.subCode === 'upm.plugin.error.plugin.not.using.licensing') {
+          return true;
+        }
+      }
+
       verbose && console.log('Failed to upload license to UPM', err);
       return false;
     });

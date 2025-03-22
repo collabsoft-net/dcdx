@@ -7,13 +7,15 @@ import { glob } from 'glob';
 import { resolve } from 'path';
 import { cwd } from 'process';
 
+import { getAppLicense } from '../apt/helpers/getAppLicense';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
 import { CustomBuilder } from '../helpers/CustomBuilder';
 import { FileWatcher } from '../helpers/FileWatcher';
 import { generateVersionList } from '../helpers/generateVersionList';
 import { getVersions } from '../helpers/getVersions';
-import { Installer } from '../helpers/Installer';
+import { installFromURL } from '../helpers/installFromURL';
+import { installWithQuickReload } from '../helpers/installWithQuickReload';
 import { TBuildOptions } from '../types/AMPS';
 
 const program = new Commander();
@@ -82,14 +84,32 @@ const Command = () => {
           if (!options.watch && options.install) {
             const outputDirectory = options.outputDirectory || 'target';
             const deliverableExtension = options.obr ? 'obr' : 'jar';
+            const license = await getAppLicense(undefined, true);
             const files = await glob(`${outputDirectory}/*.${deliverableExtension}`, { cwd: resolve(options.cwd || cwd()) });
-            await Promise.all(files.map(path => Installer(name, path, options)));
+            await Promise.all(files.map(path => options.obr ? installFromURL({
+              path,
+              baseUrl: options.baseUrl || 'http://localhost',
+              username: options.username || 'admin',
+              password: options.password || 'admin',
+              license
+            }) : installWithQuickReload({
+              path,
+              product: name,
+              baseUrl: options.baseUrl || 'http://localhost',
+              username: options.username || 'admin',
+              password: options.password || 'admin',
+              license
+            })));
           }
         });
       } else {
         const builder = new CustomBuilder({ cmd: options.exec, cwd: options.cwd || cwd() });
         await builder.build();
         console.log(`Finished building Atlassian Data Center plugin for ${name}... 💪`);
+      }
+
+      if (quickReload) {
+        await new Promise(resolve => setTimeout(resolve, 1 << 30));
       }
     },
     errorHandler: async () => {
@@ -117,6 +137,7 @@ You can add Maven build arguments after the command options.`)
   .addOption(new Option('-i, --install', 'Install the plugin into a running instance of the host application (only available with --watch)'))
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR files (only available with --install, defaults to `target`)'))
   .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app (only available with --install)').default(false))
+  .addOption(new Option('--baseUrl <url>', 'URL of the instance (used in combination with --obr, defaults to http://localhost)'))
   .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr)'))
   .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))

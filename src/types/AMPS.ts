@@ -10,6 +10,7 @@ export const BuildOptions = z.object({
   outputDirectory: z.string(),
   activateProfiles: z.string(),
   obr: z.boolean(),
+  baseUrl: z.string(),
   username: z.string(),
   password: z.string(),
   cwd: z.string()
@@ -20,6 +21,7 @@ export const BuildOptions = z.object({
   outputDirectory: true,
   activateProfiles: true,
   obr: true,
+  baseUrl: true,
   username: true,
   password: true,
   cwd: true

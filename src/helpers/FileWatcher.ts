@@ -1,13 +1,16 @@
 import { watch } from 'chokidar';
+import { join } from 'path';
 import { cwd } from 'process';
 
+import { getAppLicense } from '../apt/helpers/getAppLicense';
 import { isRecursiveBuild } from '../helpers/isRecursiveBuild';
 import { showRecursiveBuildWarning } from '../helpers/showRecursiveBuildWarning';
 import { TSupportedApplications } from '../types/Application';
 import { TFileWatcherOptions } from '../types/FileWatcher';
 import { AMPS } from './amps';
 import { CustomBuilder } from './CustomBuilder';
-import { Installer } from './Installer';
+import { installFromURL } from './installFromURL';
+import { installWithQuickReload } from './installWithQuickReload';
 
 export const FileWatcher = (name: TSupportedApplications, options: TFileWatcherOptions, mavenOpts: Array<string>, installOnly: boolean = false) => {
   let lastBuildStarted = new Date().getTime();
@@ -32,7 +35,25 @@ export const FileWatcher = (name: TSupportedApplications, options: TFileWatcherO
     atomic: true
   }).on('change', async (path) => {
     if (options.install && path.startsWith(outputDirectory) && path.toLowerCase().endsWith(deliverableExtension)) {
-      await Installer(name, path, options);
+      if (deliverableExtension === '.obr') {
+        await installFromURL({
+          path: join(options.cwd || cwd(), path),
+          baseUrl: options.baseUrl || 'http://localhost',
+          username: options.username || 'admin',
+          password: options.password || 'admin',
+          license: await getAppLicense(undefined, true),
+          verbose: true
+        }).catch(() => console.log(`Failed to install Atlassian Data Center plugin for ${name}... 😰`));
+      } else {
+        await installWithQuickReload({
+          path,
+          product: name,
+          baseUrl: options.baseUrl || 'http://localhost',
+          username: options.username || 'admin',
+          password: options.password || 'admin',
+          license: await getAppLicense(undefined, true)
+        }).catch(() => console.log(`Failed to install Atlassian Data Center plugin for ${name}... 😰`));
+      }
     } else if (!path.startsWith(outputDirectory) && !installOnly) {
       if (isRecursiveBuild(lastBuildStarted)) {
         showRecursiveBuildWarning(outputDirectory);

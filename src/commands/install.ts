@@ -8,13 +8,15 @@ import { resolve } from 'path';
 import { cwd } from 'process';
 
 import { getAppLicense } from '../apt/helpers/getAppLicense';
-import { installApp } from '../apt/helpers/installApp';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { AMPS } from '../helpers/amps';
 import { FileWatcher } from '../helpers/FileWatcher';
 import { getVersions } from '../helpers/getVersions';
-import { Installer } from '../helpers/Installer';
-import { TInstallArgs } from '../types/Install';
+import { installFromMPAC } from '../helpers/installFromMPAC';
+import { installFromURL } from '../helpers/installFromURL';
+import { installWithQuickReload } from '../helpers/installWithQuickReload';
+import { isOfType } from '../helpers/isOfType';
+import { TInstallFromAMPSArgs, TInstallFromMPACArgs, TInstallFromURLArgs } from '../types/Install';
 
 const program = new Commander();
 const versions = getVersions();
@@ -23,31 +25,29 @@ const Command = () => {
   let quickReload: FSWatcher|null = null;
 
   return {
-    action: async (options: TInstallArgs) => {
-      const amps = new AMPS({
-        cwd: options.cwd,
-        profiles: options.activateProfiles?.split(',') || []
-      });
-
-      if (options.mpac) {
-
-        if (!options.baseUrl) {
-          throw new InvalidOptionArgumentError('Missing argument "--baseUrl", required for installing from the Atlassian Marketplace');
-        } else if (!options.appKey) {
-          throw new InvalidOptionArgumentError('Missing argument "--appKey", required for installing from the Atlassian Marketplace');
-        }
-
-        await installApp({
-          baseUrl: options.baseUrl,
+    action: async (options: TInstallFromAMPSArgs|TInstallFromMPACArgs|TInstallFromURLArgs) => {
+      if (isOfType<TInstallFromMPACArgs>(options, 'appKey')) {
+        await installFromMPAC({
           appKey: options.appKey,
-          license: await getAppLicense(options.license, true),
-          username: options.username,
-          password: options.password,
-          restartAfterInstall: false,
-          force: true
+          baseUrl: options.baseUrl || 'http://localhost',
+          username: options.username || 'admin',
+          password: options.password || 'admin',
+          license: await getAppLicense(options.license, true)
         });
-
+      } else if (isOfType<TInstallFromURLArgs>(options, 'path')) {
+        await installFromURL({
+          path: options.path,
+          baseUrl: options.baseUrl || 'http://localhost',
+          username: options.username || 'admin',
+          password: options.password || 'admin',
+          license: await getAppLicense(options.license, true),
+          verbose: true
+        });
       } else {
+        const amps = new AMPS({
+          cwd: options.cwd,
+          profiles: options.activateProfiles?.split(',') || []
+        });
 
         if (!amps.isAtlassianPlugin()) {
           throw new Error('Unable to find an Atlassian Plugin project in the current directory 🤔');
@@ -78,8 +78,21 @@ const Command = () => {
         const outputDirectory = options.outputDirectory || 'target';
         const deliverableExtension = options.obr ? 'obr' : 'jar';
         const files = await glob(`${outputDirectory}/*.${deliverableExtension}`, { cwd: resolve(options.cwd || cwd()) });
-        await Promise.all(files.map(path => Installer(name, path, options)));
-
+        const license = await getAppLicense(options.license, true);
+        await Promise.all(files.map(path => options.obr ? installFromURL({
+          path,
+          baseUrl: options.baseUrl || 'http://localhost',
+          username: options.username || 'admin',
+          password: options.password || 'admin',
+          license
+        }) : installWithQuickReload({
+          path,
+          product: name,
+          baseUrl: 'http://localhost',
+          username: options.username || 'admin',
+          password: options.password || 'admin',
+          license
+        })));
       }
     },
     errorHandler: async () => {
@@ -98,18 +111,37 @@ program
 `Install the Atlassian Data Center plugin using the Atlassian Maven Plugin Suite (AMPS) configuration.
 If there is a running instance, it will try to install the plugin using QuickReload or the UPM (for OBR).`)
   .showHelpAfterError(true)
+
+program
+  .command('fromAMPS', { isDefault: true, hidden: true })
   .addOption(new Option('-w, --watch', 'Watch for filesystem changes to JAR or OBR files in the current working directory').default(false))
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR or OBR files (defaults to `target`)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
   .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app').default(false))
-  .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr, optional for --mpac)'))
-  .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr, optional for --mpac)'))
-  .addOption(new Option('--mpac', 'Install the app from the Atlassian Marketplace'))
-  .addOption(new Option('--baseUrl <url>', 'URL of the instance (required with --mpac)'))
-  .addOption(new Option('--appKey <key>', 'The key of the app to be installed (required with --mpac)'))
+  .addOption(new Option('--username <username>', 'The username of an administrator account for the instance (required with --obr)'))
+  .addOption(new Option('--password <password>', 'The password of an administrator account for the instance (required with --obr'))
   .addOption(new Option('--license <path_or_license>', 'The app license, either as a path to a file or the license itself'))
-  .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration'))
-  .action(options => ActionHandler(program, Command(), { ...options, install: true }));
+  .action(options => ActionHandler<TInstallFromAMPSArgs>(program, Command(), options));
+
+program
+  .command('mpac')
+  .description('Install the app from the Atlassian Marketplace')
+  .addOption(new Option('--appKey <key>', 'The key of the app to be installed'))
+  .addOption(new Option('--baseUrl <url>', 'URL of the instance'))
+  .addOption(new Option('--username <username>', 'The username of an administrator account for the instance'))
+  .addOption(new Option('--password <password>', 'The password of an administrator account for the instance'))
+  .addOption(new Option('--license <path_or_license>', 'The app license, either as a path to a file or the license itself'))
+  .action(options => ActionHandler<TInstallFromMPACArgs>(program, Command(), options));
+
+program
+  .command('archive')
+  .description('Install the app from your local machine or a URL')
+  .argument('<path>', 'Path or URL where the app can be found')
+  .addOption(new Option('--baseUrl <url>', 'URL of the instance'))
+  .addOption(new Option('--username <username>', 'The username of an administrator account for the instance'))
+  .addOption(new Option('--password <password>', 'The password of an administrator account for the instance'))
+  .addOption(new Option('--license <path_or_license>', 'The app license, either as a path to a file or the license itself'))
+  .action((path, options) => ActionHandler<TInstallFromURLArgs>(program, Command(), { path, ...options }));
 
 program.parseAsync(process.argv).catch(() => gracefulExit(1));
 
