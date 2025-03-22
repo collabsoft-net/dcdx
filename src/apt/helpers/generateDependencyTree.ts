@@ -6,16 +6,20 @@ import { basename, join } from 'path';
 import { Open } from 'unzipper';
 
 import { TAPTDependencyTreeOptions } from '../../types/DCAPT';
-import { downloadApp } from './downloadApp';
+import { downloadFile } from './downloadFile';
+import { getUrlByAppKey } from './getUrlByAppKey';
 
 export const generateDependencyTree = async (options: TAPTDependencyTreeOptions) => {
 
   // Placeholder for temporary directory
   const tmpDir = join(homedir(), '.dcdx', 'tmp');
 
+  // Get the download URL based on the appKey
+  const url = await getUrlByAppKey(options.appKey);
+
   // Download the file from MPAC
   console.log('Downloading archive from the Atlassian Marketplace');
-  const file = await downloadApp(options.appKey);
+  const file = await downloadFile(url);
 
   try {
     // Placeholder for archive directory

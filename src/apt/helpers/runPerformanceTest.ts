@@ -13,7 +13,7 @@ import { getDuration } from './getDuration';
 import { getResults } from './getResults';
 import { getResultsDirectory } from './getResultsDirectory';
 import { getRunForStage } from './getRunForStage';
-import { installApp } from './installApp';
+import { installAppInCluster } from './installAppInCluster';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
 import { persistAWSCredentials } from './persistsAWSCredentials';
 import { persistTestConfiguration } from './persistTestConfiguration';
@@ -108,7 +108,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   if (stage === 'regression') {
 
     // Install the app into the cluster
-    await installApp({
+    await installAppInCluster({
       baseUrl,
       appKey: options.appKey,
       license: options.appLicense,

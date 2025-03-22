@@ -6,7 +6,8 @@ import { basename, join } from 'path';
 import { Open } from 'unzipper';
 
 import { TAPTSCAOptions } from '../../types/DCAPT';
-import { downloadApp } from './downloadApp';
+import { downloadFile } from './downloadFile';
+import { getUrlByAppKey } from './getUrlByAppKey';
 
 export const generateSCAReport = async (options: TAPTSCAOptions) => {
 
@@ -16,9 +17,12 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
   // Placeholder for archive directory
   const archiveDir = join(tmpDir, `.${options.appKey}`);
 
+  // Get the download URL based on the appKey
+  const url = await getUrlByAppKey(options.appKey);
+
   // Download the file from MPAC
   console.log('Downloading archive from the Atlassian Marketplace');
-  let file = await downloadApp(options.appKey);
+  let file = await downloadFile(url);
 
   if (file.endsWith('.obr')) {
     console.log('The archive is an OSGi Bundle Repository (OBR)');

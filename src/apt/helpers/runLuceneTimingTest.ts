@@ -7,7 +7,7 @@ import { install } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
 import { getClusterURL } from './getClusterURL';
-import { installApp } from './installApp';
+import { installAppInCluster } from './installAppInCluster';
 import { persistClusterConfiguration } from './persistClusterConfiguration';
 import { persistAWSCredentials } from './persistsAWSCredentials';
 import { reindex } from './reindex';
@@ -56,7 +56,7 @@ export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options:
   const baseUrl = options.baseUrl || await getClusterURL(cwd, options.product);
 
   // Install the app into the cluster
-  await installApp({
+  await installAppInCluster({
     baseUrl,
     appKey: options.appKey,
     license: options.appLicense,

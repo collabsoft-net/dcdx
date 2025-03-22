@@ -4,12 +4,13 @@ import { rmSync } from 'fs';
 
 import { registerLicense, uploadToUPM, waitForPluginToBeEnabled } from '../../helpers/upm';
 import { TInstallOptions } from '../../types/Install';
-import { downloadApp } from './downloadApp';
+import { downloadFile } from './downloadFile';
 import { getAppLicense } from './getAppLicense';
 import { getAptDictory } from './getAptDirectory';
 import { getAWSCredentials } from './getAWSCredentials';
 import { getEnvironmentName } from './getEnvironmentName';
 import { getProduct } from './getProduct';
+import { getUrlByAppKey } from './getUrlByAppKey';
 import { restartCluster } from './restartCluster';
 
 const progressBar = new SingleBar({
@@ -27,7 +28,7 @@ const round = (value: number, step: number = 1.0) => {
   return Math.floor(value * inv) / inv;
 }
 
-export const installApp = async (options: TInstallOptions) => {
+export const installAppInCluster = async (options: TInstallOptions) => {
 
   // Set default value for username/password
   const username = options.username || 'admin';
@@ -44,8 +45,11 @@ export const installApp = async (options: TInstallOptions) => {
     // Get the app license
     const appLicense = await getAppLicense(options.license, options.force);
 
+    // Get the download URL from the appKey
+    const url = await getUrlByAppKey(options.appKey);
+
     // Download the file from MPAC
-    const file = await downloadApp(options.appKey);
+    const file = await downloadFile(url);
 
     let count = 0;
     let timerId = null;
@@ -196,8 +200,11 @@ export const installApp = async (options: TInstallOptions) => {
       progressBar.start(180, 0)
       const timerId = setInterval(() => progressBar.increment(), 1000);
 
+      // Get the download URL from the appKey
+      const url = await getUrlByAppKey(addonKey);
+
       // Download the file from MPAC
-      const file = await downloadApp(addonKey);
+      const file = await downloadFile(url);
 
       // Upload it into the cluster using the UPM REST API
       const isInstalled = await uploadToUPM(options.baseUrl, file, adminUsername, adminPassword, false);
