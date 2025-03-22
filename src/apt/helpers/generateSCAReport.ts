@@ -62,6 +62,7 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
           '-u', '0:0',
           '-e', 'user=root',
           '-v', `${file}:/src/${basename(file)}`,
+          ...options.dataDir ? [ '-v', `${options.dataDir}:/usr/share/dependency-check/data` ] : [],
           '-v', `${options.outputDir}:/report`,
           'owasp/dependency-check',
           '--nvdApiKey', `${options.nvdApiKey}`,
