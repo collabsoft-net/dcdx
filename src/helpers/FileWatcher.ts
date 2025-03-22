@@ -10,7 +10,7 @@ import { CustomBuilder } from './CustomBuilder';
 import { Installer } from './Installer';
 
 export const FileWatcher = (name: TSupportedApplications, options: TFileWatcherOptions, mavenOpts: Array<string>, installOnly: boolean = false) => {
-  let lastBuildCompleted = new Date().getTime();
+  let lastBuildStarted = new Date().getTime();
   const outputDirectory = options.outputDirectory || 'target';
   const patterns = options.ext || [ '**/*' ];
   console.log(`Watching filesystem for changes to source files (${patterns.join(', ')})`);
@@ -34,9 +34,10 @@ export const FileWatcher = (name: TSupportedApplications, options: TFileWatcherO
     if (options.install && path.startsWith(outputDirectory) && path.toLowerCase().endsWith(deliverableExtension)) {
       await Installer(name, path, options);
     } else if (!path.startsWith(outputDirectory) && !installOnly) {
-      if (isRecursiveBuild(lastBuildCompleted)) {
+      if (isRecursiveBuild(lastBuildStarted)) {
         showRecursiveBuildWarning(outputDirectory);
       } else {
+        lastBuildStarted = new Date().getTime();
         console.log('Detected file change, rebuilding Atlasian Data Center plugin');
         if (!options.exec) {
           await amps.build(mavenOpts).then(() => {
@@ -52,7 +53,6 @@ export const FileWatcher = (name: TSupportedApplications, options: TFileWatcherO
             console.log(`Failed to build Atlassian Data Center plugin for ${name}... 😰`);
           });
         }
-        lastBuildCompleted = new Date().getTime();
       }
     }
   });
