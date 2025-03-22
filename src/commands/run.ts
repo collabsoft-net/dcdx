@@ -18,44 +18,46 @@ const Command = () => {
 
   return {
     action: async (options: TApplicationOptions) => {
-      return new Promise<void>((resolve, reject) => {
-        const amps = new AMPS({
-          cwd: options.cwd,
-          profiles: options.activateProfiles?.split(',') || []
-        });
+      const amps = new AMPS({
+        cwd: options.cwd,
+        profiles: options.activateProfiles?.split(',') || []
+      });
 
-        if (options.name && options.tag && options.activateProfiles) {
-          throw new InvalidOptionArgumentError('Invalid argument "--activate-profiles"');
-        } else if (options.name && options.tag && options.cwd) {
-          throw new InvalidOptionArgumentError('Invalid argument "--cwd"');
+      if (options.name && options.tag && options.activateProfiles) {
+        throw new InvalidOptionArgumentError('Invalid argument "--activate-profiles"');
+      } else if (options.name && options.tag && options.cwd) {
+        throw new InvalidOptionArgumentError('Invalid argument "--cwd"');
+      }
+
+      if (!options.name && !amps.isAtlassianPlugin()) {
+        throw new Error('Unable to find an Atlassian Plugin project in the current directory 🤔');
+      }
+
+      options.name = options.name || amps.getApplication();
+      if (!options.name) {
+        throw new Error('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
+      }
+
+      if (!options.tag) {
+        const version = amps.getApplicationVersion();
+        if (!version) {
+          throw new Error('Failed to determine version from AMPS and no product version provided (--tag)');
+        } else {
+          options.tag = version;
         }
+      }
 
-        if (!options.name && !amps.isAtlassianPlugin()) {
-          throw new Error('Unable to find an Atlassian Plugin project in the current directory 🤔');
-        }
+      if (!versions[options.name].includes(options.tag)) {
+        throw new Error(`Product version '${options.tag}' is invalid. Allowed choices are ${versions[options.name].join(', ')}.`);
+      }
 
-        options.name = options.name || amps.getApplication();
-        if (!options.name) {
-          throw new Error('The Atlassian Plugin project does not contain an AMPS configuration, unable to detect product 😰');
-        }
+      if (options.databaseTag && !versions[options.database].includes(options.databaseTag)) {
+        throw new Error(`Database tag '${options.databaseTag}' is invalid. Allowed choices are ${versions[options.database].join(', ')}.`);
+      }
 
-        if (!options.tag) {
-          const version = amps.getApplicationVersion();
-          if (!version) {
-            throw new Error('Failed to determine version from AMPS and no product version provided (--tag)');
-          } else {
-            options.tag = version;
-          }
-        }
-
-        if (!versions[options.name].includes(options.tag)) {
-          throw new Error(`Product version '${options.tag}' is invalid. Allowed choices are ${versions[options.name].join(', ')}.`);
-        }
-
-        instance = getApplication(options);
-        console.log(`Starting ${instance.name}... 💃`);
-        instance.start().then(resolve).catch(reject);
-      })
+      instance = getApplication(options);
+      console.log(`Starting ${instance.name}... 💃`);
+      await instance.start();
     },
     errorHandler: async () => {
       if (instance) {
