@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmSync } from 'fs';
 import { move } from 'fs-extra';
 import { join } from 'path';
 
-import { TAPTPerformanceTestOptions, TAPTTestMessages, TPerformanceTestTypes } from '../../types/DCAPT';
+import { TAPTPerformanceTestOptions, TAPTTestMessages } from '../../types/DCAPT';
 import { emptyLine } from '../messages';
 import { install, runTest } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
@@ -19,16 +19,16 @@ import { persistAWSCredentials } from './persistsAWSCredentials';
 import { persistTestConfiguration } from './persistTestConfiguration';
 import { waitForUserInput } from './waitForUserInput';
 
-export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: TAPTPerformanceTestOptions, messages: TAPTTestMessages) => {
+export const runPerformanceTest = async (options: TAPTPerformanceTestOptions, messages: TAPTTestMessages) => {
 
   // Show the welcome message
-  console.log(messages.header(options.product, stage));
+  console.log(messages.header(options.product, options.stage));
 
   // We are going to reconfirm that we are running on the default configuration (and fetch it if required)
   const cwd = await getAptDictory(options.cwd, true, options.force);
 
   // Get the path to the 'private' subdirectory of APT in which we store the test results
-  const runOutputDir = join(options.outputDir, `run${getRunForStage(stage)}`);
+  const runOutputDir = join(options.outputDir, `run${getRunForStage(options.stage)}`);
 
   // Check if there are existing test results for the current run
   if (existsSync(runOutputDir)) {
@@ -50,7 +50,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
 
       // If we are not allowed to overwrite the test results, there is no point in running this test
       } else {
-        console.log(`Skipping performance ${stage} test execution, a successful test run was already completed`);
+        console.log(`Skipping performance ${options.stage} test execution, a successful test run was already completed`);
         return;
       }
 
@@ -105,7 +105,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   const resultsBaseDir = await getResultsDirectory(cwd, options.product, options.force);
 
   // Regression tests require the app to be installed
-  if (stage === 'regression') {
+  if (options.stage === 'regression') {
 
     // Install the app into the cluster
     await installAppInCluster({
@@ -131,7 +131,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   if (results['Summary run status'] !== 'OK') {
 
     // If not, let the people know and terminate
-    console.log(messages.failure(stage, cwd, options.product, options.environment, resultsBaseDir, results));
+    console.log(messages.failure(options.stage, cwd, options.product, options.environment, resultsBaseDir, results));
     throw new Error('Performance regression test failed');
 
   }

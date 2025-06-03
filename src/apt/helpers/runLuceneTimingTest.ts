@@ -1,7 +1,7 @@
 import { mkdirSync } from 'fs';
 import { join } from 'path';
 
-import { TAPTPerformanceTestOptions, TAPTTestMessages, TPerformanceTestTypes } from '../../types/DCAPT';
+import { TAPTPerformanceTestOptions, TAPTTestMessages } from '../../types/DCAPT';
 import { emptyLine } from '../messages';
 import { install } from './dcapt';
 import { getAptDictory } from './getAptDirectory';
@@ -13,10 +13,10 @@ import { persistAWSCredentials } from './persistsAWSCredentials';
 import { reindex } from './reindex';
 import { waitForUserInput } from './waitForUserInput';
 
-export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options: TAPTPerformanceTestOptions, messages: TAPTTestMessages) => {
+export const runLuceneTimingTest = async (options: TAPTPerformanceTestOptions, messages: TAPTTestMessages) => {
 
   // Show the welcome message
-  console.log(messages.header(options.product, stage));
+  console.log(messages.header(options.product, options.stage));
 
   // We are going to reconfirm that we are running on the default configuration (and fetch it if required)
   const cwd = await getAptDictory(options.cwd, true, options.force);

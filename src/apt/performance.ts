@@ -36,7 +36,8 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the baseline performance test (run 1)
-  await runPerformanceTest(PerformanceTestTypes.Values.baseline, APTPerformanceTestOptions.parse({
+  await runPerformanceTest(APTPerformanceTestOptions.parse({
+    stage: PerformanceTestTypes.Values.baseline,
     product: options.product,
     cwd,
     outputDir,
@@ -55,7 +56,8 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the lucene timing test (part of run 2)
-  await runLuceneTimingTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
+  await runLuceneTimingTest(APTPerformanceTestOptions.parse({
+    stage: PerformanceTestTypes.Values.regression,
     product: options.product,
     cwd,
     outputDir,
@@ -74,7 +76,8 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the performance regression test (run 2)
-  await runPerformanceTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
+  await runPerformanceTest(APTPerformanceTestOptions.parse({
+    stage: PerformanceTestTypes.Values.regression,
     product: options.product,
     cwd,
     outputDir,

@@ -152,8 +152,9 @@ const PerformanceTestCommand = () => ({
 
 const Run1Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest(PerformanceTestTypes.Values.baseline, APTPerformanceTestOptions.parse({
+    await runPerformanceTest(APTPerformanceTestOptions.parse({
       ...options,
+      stage: PerformanceTestTypes.Values.baseline,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
     }), Run1);
@@ -165,8 +166,9 @@ const Run1Command = () => ({
 
 const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
+    await runPerformanceTest(APTPerformanceTestOptions.parse({
       ...options,
+      stage: PerformanceTestTypes.Values.regression,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
     }), Run2);
@@ -178,8 +180,9 @@ const Run2Command = () => ({
 
 const ReindexCommand = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runLuceneTimingTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
+    await runLuceneTimingTest(APTPerformanceTestOptions.parse({
       ...options,
+      stage: PerformanceTestTypes.Values.regression,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
     }), LuceneTimingTest);

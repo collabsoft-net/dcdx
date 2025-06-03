@@ -86,6 +86,7 @@ export const APTPerformanceTestArgs = z.object({
 });
 
 export const APTPerformanceTestOptions = z.object({
+  stage: PerformanceTestTypes,
   product: SupportedApplications,
   cwd: z.string(),
   outputDir: z.string(),
