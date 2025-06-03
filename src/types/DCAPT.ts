@@ -151,6 +151,7 @@ export const APTScalabilityTestArgs = z.object({
   archive: z.string(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
+  locust: z.boolean(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
@@ -160,6 +161,7 @@ export const APTScalabilityTestArgs = z.object({
   archive: true,
   appLicense: true,
   restartAfterInstall: true,
+  locust: true,
   timestamp: true,
   force: true
 });
@@ -174,10 +176,12 @@ export const APTScalabilityTestOptions = z.object({
   archive: z.string().optional(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
+  locust: z.boolean(),
   force: z.boolean()
 }).partial({
   appLicense: true,
   restartAfterInstall: true,
+  locust: true,
   force: true
 }).superRefine((input, ctx) => {
   if (

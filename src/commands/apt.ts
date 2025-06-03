@@ -201,6 +201,7 @@ const ScalabilityTestCommand = () => ({
       archive: options.archive,
       appLicense: options.appLicense,
       restartAfterInstall: options.restartAfterInstall,
+      locust: options.locust,
       timestamp: options.timestamp,
       force: options.force
     });
@@ -385,6 +386,7 @@ program
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
+  .addOption(new Option('--locust', 'Use locust load executor (instead of JMeter)').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))

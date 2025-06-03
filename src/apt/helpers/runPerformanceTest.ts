@@ -99,7 +99,7 @@ export const runPerformanceTest = async (stage: TPerformanceTestTypes, options: 
   const duration = await getDuration(options.force);
 
   // Write test configuration to disk
-  await persistTestConfiguration(cwd, options.product, baseUrl, duration, false, options.force);
+  await persistTestConfiguration(cwd, options.product, baseUrl, duration, false, false, options.force);
 
   // Get the results directory (and make sure it is empty)
   const resultsBaseDir = await getResultsDirectory(cwd, options.product, options.force);
