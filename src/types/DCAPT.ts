@@ -108,7 +108,7 @@ export const APTPerformanceTestOptions = z.object({
   restartAfterInstall: true,
   force: true
 }).superRefine((input, ctx) => {
-  if (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') {
+  if (input.stage === 'regression' && (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Either `appKey` or `archive` argument needs to be provided'
