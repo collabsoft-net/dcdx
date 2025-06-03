@@ -5,6 +5,7 @@ import { homedir } from 'os';
 import { basename, join, resolve } from 'path';
 import { Open } from 'unzipper';
 
+import { findInFile } from '../../helpers/findInFile';
 import { TAPTDependencyTreeOptions } from '../../types/DCAPT';
 import { downloadFile } from './downloadFile';
 import { getUrlByAppKey } from './getUrlByAppKey';
@@ -30,7 +31,7 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
 
   try {
     // Placeholder for archive directory
-    const archiveDir = join(tmpDir, `.${options.appKey}`);
+    const archiveDir = join(tmpDir, `.${options.groupId}.${options.artifactId}`);
 
     try {
       // Make sure that we have a valid path to the JAR file
@@ -73,7 +74,15 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
 
           // Now try to find the POM file for the main JAR
           console.log(`Searching for POM file in the main artifact`);
-          const [ relativePathToPOM ] = await glob(`META-INF/maven/**/pom.xml`, { cwd: jarDir });
+          const pomFiles = await glob(`META-INF/maven/**/pom.xml`, { cwd: jarDir });
+
+          const relativePathToPOM = pomFiles.find(path => {
+            const pomFile = join(jarDir, path);
+            return findInFile(pomFile, [
+              `<groupId>${options.groupId}</groupId>`,
+              `<artifactId>${options.artifactId}</artifactId>`
+            ]);
+          });
 
           // Make sure we have found the POM file
           if (!relativePathToPOM) {
@@ -109,8 +118,16 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
       } else {
 
           // Now try to find the POM file for the main JAR
-          console.log(`Searching for POM file in the artifact`);
-          const [ relativePathToPOM ] = await glob(`META-INF/maven/**/pom.xml`, { cwd: archiveDir });
+          console.log(`Searching for POM file in the main artifact`);
+          const pomFiles = await glob(`META-INF/maven/**/pom.xml`, { cwd: archiveDir });
+
+          const relativePathToPOM = pomFiles.find(path => {
+            const pomFile = join(archiveDir, path);
+            return findInFile(pomFile, [
+              `<groupId>${options.groupId}</groupId>`,
+              `<artifactId>${options.artifactId}</artifactId>`
+            ]);
+          });
 
           // Make sure we have found the POM file
           if (!relativePathToPOM) {

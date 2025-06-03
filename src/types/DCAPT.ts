@@ -234,6 +234,8 @@ export const APTRestartArgs = APTTeardownArgs.extend({});
 export const APTRestartOptions = APTTeardownOptions.extend({});
 
 export const APTDependencyTreeArgs = z.object({
+  groupId: z.string(),
+  artifactId: z.string(),
   appKey: z.string(),
   archive: z.string(),
   activateProfiles: z.string(),
@@ -246,6 +248,8 @@ export const APTDependencyTreeArgs = z.object({
 });
 
 export const APTDependencyTreeOptions = z.object({
+  groupId: z.string(),
+  artifactId: z.string(),
   appKey: z.string().optional(),
   archive: z.string().optional(),
   activateProfiles: z.string(),

@@ -307,6 +307,8 @@ const TeardownCommand = () => ({
 const DependencyTreeCommand = () => ({
   action: async (options: TAPTDependencyTreeArgs) => {
     await generateDependencyTree(APTDependencyTreeOptions.parse({
+      groupId: options.groupId,
+      artifactId: options.artifactId,
       appKey: options.appKey,
       archive: options.archive,
       activateProfiles: options.activateProfiles,
@@ -515,6 +517,8 @@ program
 program
   .command('dependencies')
   .description('Generate the Data Center App Performance Testing dependency tree')
+  .addOption(new Option('--groupId <groupId>', 'The groupId of the artifact to graph dependencies for'))
+  .addOption(new Option('--artifactId <artifactId>', 'The artifactId of the artifact to graph dependencies for'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app to graph dependencies for'))
   .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive to graph dependencies for'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
