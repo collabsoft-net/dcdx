@@ -108,8 +108,8 @@ export const APTPerformanceTestOptions = z.object({
   force: true
 }).superRefine((input, ctx) => {
   if (
-    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
-    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
+    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -185,8 +185,8 @@ export const APTScalabilityTestOptions = z.object({
   force: true
 }).superRefine((input, ctx) => {
   if (
-    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
-    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
+    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -254,8 +254,8 @@ export const APTDependencyTreeOptions = z.object({
   activateProfiles: true
 }).superRefine((input, ctx) => {
   if (
-    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
-    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
+    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -289,8 +289,8 @@ export const APTSCAOptions = z.object({
   dataDir: true
 }).superRefine((input, ctx) => {
   if (
-    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
-    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
+    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

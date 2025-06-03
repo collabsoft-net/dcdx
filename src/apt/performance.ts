@@ -1,7 +1,7 @@
 
 import { join } from 'path';
 
-import { PerformanceTestTypes, TAPTPerformanceTestArgs } from '../types/DCAPT';
+import { APTPerformanceReportOptions, APTPerformanceTestOptions, APTProvisionOptions, PerformanceTestTypes, TAPTPerformanceTestArgs } from '../types/DCAPT';
 import { generatePerformanceReport } from './helpers/generatePerformanceReport';
 import { getOutputDirectory } from './helpers/getOutputDirectory';
 import { getRunForStage } from './helpers/getRunForStage';
@@ -24,19 +24,19 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     aws_access_key_id,
     aws_secret_access_key,
     license
-  } = await provisionCluster({
+  } = await provisionCluster(APTProvisionOptions.parse({
     product: options.product,
     cwd: options.cwd,
     environment: options.environment,
     license: options.license,
     force: options.force
-  }, true);
+  }), true);
 
   // Ask permission to continue with the next step
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the baseline performance test (run 1)
-  await runPerformanceTest(PerformanceTestTypes.Values.baseline, {
+  await runPerformanceTest(PerformanceTestTypes.Values.baseline, APTPerformanceTestOptions.parse({
     product: options.product,
     cwd,
     outputDir,
@@ -49,13 +49,13 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     archive: options.archive,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
-  }, Run1);
+  }), Run1);
 
   // Ask permission to continue with the next step
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the lucene timing test (part of run 2)
-  await runLuceneTimingTest(PerformanceTestTypes.Values.regression, {
+  await runLuceneTimingTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
     product: options.product,
     cwd,
     outputDir,
@@ -68,13 +68,13 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     archive: options.archive,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
-  }, LuceneTimingTest)
+  }), LuceneTimingTest)
 
   // Ask permission to continue with the next step
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Run the performance regression test (run 2)
-  await runPerformanceTest(PerformanceTestTypes.Values.regression, {
+  await runPerformanceTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
     product: options.product,
     cwd,
     outputDir,
@@ -87,18 +87,18 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     archive: options.archive,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
-  }, Run2);
+  }), Run2);
 
   // Ask permission to continue with the next step
   await waitForUserInput('Press a key to continue with the next step...', options.force);
 
   // Generate the performance report
-  await generatePerformanceReport({
+  await generatePerformanceReport(APTPerformanceReportOptions.parse({
     cwd,
     outputDir,
     resultsDir1: join(outputDir, `run${getRunForStage('baseline')}`),
     resultsDir2: join(outputDir, `run${getRunForStage('regression')}`),
     force: options.force
-  });
+  }));
 
 }

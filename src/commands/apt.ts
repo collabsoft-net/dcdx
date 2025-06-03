@@ -24,7 +24,7 @@ import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
 import { SupportedApplications } from '../types/Application';
-import { PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTDependencyTreeArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTSCAArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
+import { APTDependencyTreeOptions, APTPerformanceReportOptions, APTPerformanceTestOptions, APTProvisionOptions, APTRestartOptions, APTScalabilityReportOptions, APTScalabilityTestOptions, APTSCAOptions, APTTeardownOptions, PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTDependencyTreeArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTSCAArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
 
@@ -80,12 +80,12 @@ const DefaultCommand = () => ({
     await waitForUserInput('Press a key to continue with the next step...', options.force);
 
     // Teardown the cluster
-    await teardownCluster({
+    await teardownCluster(APTTeardownOptions.parse({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
       force: options.force
-    });
+    }));
   },
   errorHandler: async () => {
 
@@ -102,17 +102,17 @@ const ReportCommand = () => ({
         throw new Error('The option `--resultsDir2` is required');
       }
 
-      await generatePerformanceReport({
+      await generatePerformanceReport(APTPerformanceReportOptions.parse({
         ...ops,
         outputDir: getOutputDirectory(ops.outputDir, ops.timestamp)
-      });
+      }));
     } else {
       const ops = options as TAPTScalabilityReportArgs;
-      await generateScalabilityReport({
+      await generateScalabilityReport(APTScalabilityReportOptions.parse({
         ...ops,
         product: ops.product,
         outputDir: getOutputDirectory(ops.outputDir, ops.timestamp)
-      });
+      }));
     }
   },
   errorHandler: async () => {
@@ -139,12 +139,12 @@ const PerformanceTestCommand = () => ({
     await waitForUserInput('Press a key to continue with the next step...', options.force);
 
     // Teardown the cluster
-    await teardownCluster({
+    await teardownCluster(APTTeardownOptions.parse({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
       force: options.force
-    });
+    }));
   },
   errorHandler: async () => {
   }
@@ -152,11 +152,11 @@ const PerformanceTestCommand = () => ({
 
 const Run1Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest(PerformanceTestTypes.Values.baseline, {
+    await runPerformanceTest(PerformanceTestTypes.Values.baseline, APTPerformanceTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
-    }, Run1);
+    }), Run1);
   },
   errorHandler: async () => {
 
@@ -165,11 +165,11 @@ const Run1Command = () => ({
 
 const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runPerformanceTest(PerformanceTestTypes.Values.regression, {
+    await runPerformanceTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
-    }, Run2);
+    }), Run2);
   },
   errorHandler: async () => {
 
@@ -178,11 +178,11 @@ const Run2Command = () => ({
 
 const ReindexCommand = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
-    await runLuceneTimingTest(PerformanceTestTypes.Values.regression, {
+    await runLuceneTimingTest(PerformanceTestTypes.Values.regression, APTPerformanceTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
-    }, LuceneTimingTest);
+    }), LuceneTimingTest);
   },
   errorHandler: async () => {
 
@@ -210,12 +210,12 @@ const ScalabilityTestCommand = () => ({
     await waitForUserInput('Press a key to continue with the next step...', options.force);
 
     // Teardown the cluster
-    await teardownCluster({
+    await teardownCluster(APTTeardownOptions.parse({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
       force: options.force
-    });
+    }));
   },
   errorHandler: async () => {
   }
@@ -223,11 +223,11 @@ const ScalabilityTestCommand = () => ({
 
 const Run3Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
-    await runScalabilityTest('one-node', {
+    await runScalabilityTest('one-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
-    }, ScalabilityTestMessages);
+    }), ScalabilityTestMessages);
   },
   errorHandler: async () => {
 
@@ -236,11 +236,11 @@ const Run3Command = () => ({
 
 const Run4Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
-    await runScalabilityTest('two-node', {
+    await runScalabilityTest('two-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
-    }, ScalabilityTestMessages);
+    }), ScalabilityTestMessages);
   },
   errorHandler: async () => {
 
@@ -249,11 +249,11 @@ const Run4Command = () => ({
 
 const Run5Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
-    await runScalabilityTest('four-node', {
+    await runScalabilityTest('four-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
       license: await getHostLicense(options.product, options.license, options.force)
-    }, ScalabilityTestMessages);
+    }), ScalabilityTestMessages);
   },
   errorHandler: async () => {
 
@@ -262,14 +262,14 @@ const Run5Command = () => ({
 
 const ProvisionCommand = () => ({
   action: async (options: TAPTProvisionArgs) => {
-    await provisionCluster({
+    await provisionCluster(APTProvisionOptions.parse({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
       license: options.license,
       nodes: options.nodes,
       force: options.force
-    }, options.cwd === undefined);
+    }), options.cwd === undefined);
   },
   errorHandler: async () => {
 
@@ -278,12 +278,12 @@ const ProvisionCommand = () => ({
 
 const RestartCommand = () => ({
   action: async (options: TAPTRestartArgs) => {
-    await restartCluster({
+    await restartCluster(APTRestartOptions.parse({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
       force: options.force
-    });
+    }));
   },
   errorHandler: async () => {
 
@@ -292,12 +292,12 @@ const RestartCommand = () => ({
 
 const TeardownCommand = () => ({
   action: async (options: TAPTTeardownArgs) => {
-    await teardownCluster({
+    await teardownCluster(APTTeardownOptions.parse({
       product: options.product,
       cwd: options.cwd,
       environment: options.environment,
       force: options.force
-    });
+    }));
   },
   errorHandler: async () => {
 
@@ -306,12 +306,12 @@ const TeardownCommand = () => ({
 
 const DependencyTreeCommand = () => ({
   action: async (options: TAPTDependencyTreeArgs) => {
-    await generateDependencyTree({
+    await generateDependencyTree(APTDependencyTreeOptions.parse({
       appKey: options.appKey,
       archive: options.archive,
       activateProfiles: options.activateProfiles,
       outputFile: options.outputFile || join(cwd(), 'maven_dependency_tree.gv')
-    });
+    }));
   },
   errorHandler: async () => {
 
@@ -320,13 +320,13 @@ const DependencyTreeCommand = () => ({
 
 const SCACommand = () => ({
   action: async (options: TAPTSCAArgs) => {
-    await generateSCAReport({
+    await generateSCAReport(APTSCAOptions.parse({
       nvdApiKey: options.nvdApiKey,
       appKey: options.appKey,
       archive: options.archive,
       dataDir: options.dataDir,
       outputDir: options.outputDir || join(cwd(), 'sca_report')
-    });
+    }));
   },
   errorHandler: async () => {
 
