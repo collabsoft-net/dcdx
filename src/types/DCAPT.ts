@@ -107,10 +107,7 @@ export const APTPerformanceTestOptions = z.object({
   restartAfterInstall: true,
   force: true
 }).superRefine((input, ctx) => {
-  if (
-    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
-    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
-  ) {
+  if (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Either `appKey` or `archive` argument needs to be provided'
@@ -184,10 +181,7 @@ export const APTScalabilityTestOptions = z.object({
   locust: true,
   force: true
 }).superRefine((input, ctx) => {
-  if (
-    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
-    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
-  ) {
+  if (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Either `appKey` or `archive` argument needs to be provided'
@@ -257,10 +251,7 @@ export const APTDependencyTreeOptions = z.object({
 }).partial({
   activateProfiles: true
 }).superRefine((input, ctx) => {
-  if (
-    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
-    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
-  ) {
+  if (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Either `appKey` or `archive` argument needs to be provided'
@@ -292,10 +283,7 @@ export const APTSCAOptions = z.object({
 }).partial({
   dataDir: true
 }).superRefine((input, ctx) => {
-  if (
-    (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') ||
-    (typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
-  ) {
+  if (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Either `appKey` or `archive` argument needs to be provided'
