@@ -55,13 +55,11 @@ export const APTProvisionOptions = z.object({
   environment: z.string(),
   license: z.string(),
   nodes: z.number(),
-  appKey: z.string(),
   force: z.boolean()
 }).partial({
   environment: true,
   license: true,
   nodes: true,
-  appKey: true,
   force: true
 });
 
@@ -72,6 +70,7 @@ export const APTPerformanceTestArgs = z.object({
   environment: z.string(),
   license: z.string(),
   appKey: z.string(),
+  archive: z.string(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
   timestamp: z.string(),
@@ -79,6 +78,8 @@ export const APTPerformanceTestArgs = z.object({
 }).partial({
   outputDir: true,
   license: true,
+  appKey: true,
+  archive: true,
   timestamp: true,
   restartAfterInstall: true,
   force: true
@@ -93,7 +94,8 @@ export const APTPerformanceTestOptions = z.object({
   aws_access_key_id: z.string(),
   aws_secret_access_key: z.string(),
   license: z.string(),
-  appKey: z.string(),
+  appKey: z.string().optional(),
+  archive: z.string().optional(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
   force: z.boolean()
@@ -101,10 +103,21 @@ export const APTPerformanceTestOptions = z.object({
   baseUrl: true,
   aws_access_key_id: true,
   aws_secret_access_key: true,
-  appKey: true,
   appLicense: true,
   restartAfterInstall: true,
   force: true
+}).superRefine((input, ctx) => {
+  if (
+    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
+    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Either `appKey` or `archive` argument needs to be provided'
+    });
+    return false;
+  }
+  return true;
 });
 
 export const APTPerformanceReportArgs = z.object({
@@ -135,6 +148,7 @@ export const APTScalabilityTestArgs = z.object({
   environment: z.string(),
   license: z.string(),
   appKey: z.string(),
+  archive: z.string(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
   timestamp: z.string(),
@@ -142,6 +156,8 @@ export const APTScalabilityTestArgs = z.object({
 }).partial({
   outputDir: true,
   license: true,
+  appKey: true,
+  archive: true,
   appLicense: true,
   restartAfterInstall: true,
   timestamp: true,
@@ -154,15 +170,27 @@ export const APTScalabilityTestOptions = z.object({
   outputDir: z.string(),
   environment: z.string(),
   license: z.string(),
-  appKey: z.string(),
+  appKey: z.string().optional(),
+  archive: z.string().optional(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
   force: z.boolean()
 }).partial({
-  appKey: true,
   appLicense: true,
   restartAfterInstall: true,
   force: true
+}).superRefine((input, ctx) => {
+  if (
+    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
+    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Either `appKey` or `archive` argument needs to be provided'
+    });
+    return false;
+  }
+  return true;
 });
 
 export const APTScalabilityReportArgs = APTPerformanceReportArgs.extend({
@@ -203,38 +231,70 @@ export const APTRestartOptions = APTTeardownOptions.extend({});
 
 export const APTDependencyTreeArgs = z.object({
   appKey: z.string(),
+  archive: z.string(),
   activateProfiles: z.string(),
   outputFile: z.string()
 }).partial({
+  appKey: true,
+  archive: true,
   activateProfiles: true,
   outputFile: true
 });
 
 export const APTDependencyTreeOptions = z.object({
-  appKey: z.string(),
+  appKey: z.string().optional(),
+  archive: z.string().optional(),
   activateProfiles: z.string(),
   outputFile: z.string()
 }).partial({
   activateProfiles: true
+}).superRefine((input, ctx) => {
+  if (
+    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
+    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Either `appKey` or `archive` argument needs to be provided'
+    });
+    return false;
+  }
+  return true;
 });
 
 export const APTSCAArgs = z.object({
   nvdApiKey: z.string(),
   appKey: z.string(),
+  archive: z.string(),
   dataDir: z.string(),
   outputDir: z.string()
 }).partial({
+  appKey: true,
+  archive: true,
   dataDir: true,
   outputDir: true
 });
 
 export const APTSCAOptions = z.object({
   nvdApiKey: z.string(),
-  appKey: z.string(),
+  appKey: z.string().optional(),
+  archive: z.string().optional(),
   dataDir: z.string(),
   outputDir: z.string()
 }).partial({
   dataDir: true
+}).superRefine((input, ctx) => {
+  if (
+    !(typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') &&
+    !(typeof input.appKey !== 'undefined' && typeof input.archive !== 'undefined')
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Either `appKey` or `archive` argument needs to be provided'
+    });
+    return false;
+  }
+  return true;
 });
 
 export const APTArgs = z.intersection(

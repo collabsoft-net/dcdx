@@ -25,7 +25,6 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     cwd: options.cwd,
     environment: options.environment,
     license: options.license,
-    appKey: options.appKey,
     force: options.force
   }, false);
 
@@ -40,6 +39,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     environment,
     license,
     appKey: options.appKey,
+    archive: options.archive,
     appLicense: options.appLicense,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
@@ -56,6 +56,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     environment,
     license,
     appKey: options.appKey,
+    archive: options.archive,
     appLicense: options.appLicense,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
@@ -72,6 +73,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     environment,
     license,
     appKey: options.appKey,
+    archive: options.archive,
     appLicense: options.appLicense,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force

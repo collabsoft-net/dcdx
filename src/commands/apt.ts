@@ -52,6 +52,7 @@ const DefaultCommand = () => ({
       outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
+      archive: options.archive,
       appLicense: options.appLicense,
       restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
@@ -68,6 +69,7 @@ const DefaultCommand = () => ({
       outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
+      archive: options.archive,
       appLicense: options.appLicense,
       restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
@@ -126,6 +128,7 @@ const PerformanceTestCommand = () => ({
       outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
+      archive: options.archive,
       appLicense: options.appLicense,
       restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
@@ -195,6 +198,7 @@ const ScalabilityTestCommand = () => ({
       outputDir: options.outputDir,
       environment: options.environment,
       appKey: options.appKey,
+      archive: options.archive,
       appLicense: options.appLicense,
       restartAfterInstall: options.restartAfterInstall,
       timestamp: options.timestamp,
@@ -303,6 +307,7 @@ const DependencyTreeCommand = () => ({
   action: async (options: TAPTDependencyTreeArgs) => {
     await generateDependencyTree({
       appKey: options.appKey,
+      archive: options.archive,
       activateProfiles: options.activateProfiles,
       outputFile: options.outputFile || join(cwd(), 'maven_dependency_tree.gv')
     });
@@ -317,6 +322,7 @@ const SCACommand = () => ({
     await generateSCAReport({
       nvdApiKey: options.nvdApiKey,
       appKey: options.appKey,
+      archive: options.archive,
       dataDir: options.dataDir,
       outputDir: options.outputDir || join(cwd(), 'sca_report')
     });
@@ -336,6 +342,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -361,6 +368,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -375,6 +383,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -389,6 +398,7 @@ program
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -430,6 +440,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -444,6 +455,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -458,6 +470,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -472,6 +485,7 @@ program
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
   .addOption(new Option('--restartAfterInstall', 'Restart the container after installing the app').default(false))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
@@ -500,6 +514,7 @@ program
   .command('dependencies')
   .description('Generate the Data Center App Performance Testing dependency tree')
   .addOption(new Option('--appKey <appKey>', 'The key of the app to graph dependencies for'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive to graph dependencies for'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
   .addOption(new Option('-O, --outputFile <path>', 'Specify the output file where to store the generated dependency tree (defaults to `./maven_dependency_tree.gv`)'))
   .action(options => ActionHandler(program, DependencyTreeCommand(), options));
@@ -512,6 +527,7 @@ To avoid rate limiting issues, providing an NVD API Key is required (see https:/
 `)
   .addOption(new Option('--nvdApiKey <key>', 'The NVD API key (defaults to NVD_API_KEY environment variable)').default(process.env.NVD_API_KEY))
   .addOption(new Option('--appKey <appKey>', 'The key of the app to scan'))
+  .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive to scan'))
   .addOption(new Option('-D, --dataDir <path>', 'The path to the directory that contains the NVD database'))
   .addOption(new Option('-O, --outputDir <path>', 'Specify the output directory where to store the generated report (defaults to `./sca_report`)'))
   .action(options => ActionHandler(program, SCACommand(), options));

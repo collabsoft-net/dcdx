@@ -8,6 +8,7 @@ import { APTRestartOptions } from './DCAPT';
 export const InstallOptions = APTRestartOptions.extend({
   baseUrl: z.string(),
   appKey: z.string(),
+  archive: z.string(),
   license: z.string(),
   username: z.string(),
   password: z.string(),
@@ -15,6 +16,7 @@ export const InstallOptions = APTRestartOptions.extend({
   force: z.boolean()
 }).partial({
   appKey: true,
+  archive: true,
   license: true,
   username: true,
   password: true,

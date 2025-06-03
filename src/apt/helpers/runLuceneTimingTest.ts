@@ -59,6 +59,7 @@ export const runLuceneTimingTest = async (stage: TPerformanceTestTypes, options:
   await installAppInCluster({
     baseUrl,
     appKey: options.appKey,
+    archive: options.archive,
     license: options.appLicense,
     username: 'admin',
     password: 'admin',

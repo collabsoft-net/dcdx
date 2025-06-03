@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { existsSync, rmSync } from 'fs';
 import { glob } from 'glob';
 import { homedir } from 'os';
-import { basename, join } from 'path';
+import { basename, join, resolve } from 'path';
 import { Open } from 'unzipper';
 
 import { TAPTDependencyTreeOptions } from '../../types/DCAPT';
@@ -14,18 +14,31 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
   // Placeholder for temporary directory
   const tmpDir = join(homedir(), '.dcdx', 'tmp');
 
-  // Get the download URL based on the appKey
-  const url = await getUrlByAppKey(options.appKey);
+  // Placeholder for the path to the JAR file
+  let file = options.archive;
 
-  // Download the file from MPAC
-  console.log('Downloading archive from the Atlassian Marketplace');
-  const file = await downloadFile(url);
+  // Check if we need to download the file based on the appKey
+  // If both archive and appKey were provided, we will use the archive
+  if (!options.archive && options.appKey) {
+    // Get the download URL based on the appKey
+    const url = await getUrlByAppKey(options.appKey);
+
+    // Download the file from MPAC
+    console.log('Downloading archive from the Atlassian Marketplace');
+    file = await downloadFile(url);
+  }
 
   try {
     // Placeholder for archive directory
     const archiveDir = join(tmpDir, `.${options.appKey}`);
 
     try {
+      // Make sure that we have a valid path to the JAR file
+      if (!file || !existsSync(resolve(file))) {
+        console.log(`Unable to locate the archive in path ${file}`)
+        return;
+      }
+
       // Extract the file to a temporary directory
       console.log(`Extracting archive to a temporary location (${archiveDir})`);
       const archive = await Open.file(file);
@@ -133,6 +146,9 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
       rmSync(archiveDir, { force: true, recursive: true });
     }
   } finally {
-    rmSync(file, { force: true });
+    // Only remove the file if we downloaded it from MPAC
+    if (!options.archive && file) {
+      rmSync(file, { force: true });
+    }
   }
 }

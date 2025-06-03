@@ -29,7 +29,6 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     cwd: options.cwd,
     environment: options.environment,
     license: options.license,
-    appKey: options.appKey,
     force: options.force
   }, true);
 
@@ -47,6 +46,7 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     aws_secret_access_key,
     license,
     appKey: options.appKey,
+    archive: options.archive,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
   }, Run1);
@@ -65,6 +65,7 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     aws_secret_access_key,
     license,
     appKey: options.appKey,
+    archive: options.archive,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
   }, LuceneTimingTest)
@@ -83,6 +84,7 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     aws_secret_access_key,
     license,
     appKey: options.appKey,
+    archive: options.archive,
     restartAfterInstall: options.restartAfterInstall,
     force: options.force
   }, Run2);

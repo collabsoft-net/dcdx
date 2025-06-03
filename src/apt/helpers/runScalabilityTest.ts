@@ -95,6 +95,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   await installAppInCluster({
     baseUrl,
     appKey: options.appKey,
+    archive: options.archive,
     license: options.appLicense,
     username: 'admin',
     password: 'admin',

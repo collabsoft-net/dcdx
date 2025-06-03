@@ -1,6 +1,7 @@
 import { confirm, input, password as passwordPrompt,select } from '@inquirer/prompts';
 import { Presets, SingleBar } from 'cli-progress';
-import { rmSync } from 'fs';
+import { existsSync, rmSync } from 'fs';
+import { resolve } from 'path';
 
 import { registerLicense, uploadToUPM, waitForPluginToBeEnabled } from '../../helpers/upm';
 import { TInstallOptions } from '../../types/Install';
@@ -34,22 +35,37 @@ export const installAppInCluster = async (options: TInstallOptions) => {
   const username = options.username || 'admin';
   const password = options.password || 'admin';
 
-  // If we are in non-interactive mode, we will download it from MPAC
+  // If we are in non-interactive mode, we will either download it from MPAC or install it directly if a file path was provided
   if (options.force) {
 
-    // In order to do so, we need an appkey. If this is not provided, throw a hissy fit
+    // In order to install the app , we need an appkey. If this is not provided, throw a hissy fit
+    // TODO: it should be possible to extract the key from the archive
     if (!options.appKey) {
-      throw new Error('Failed to automatically install app into cluster, `appKey` was not provided');
+      throw new Error('Failed to automatically install app into cluster, `appKey` needs to be provided');
     }
 
     // Get the app license
     const appLicense = await getAppLicense(options.license, options.force);
 
-    // Get the download URL from the appKey
-    const url = await getUrlByAppKey(options.appKey);
+    // Placeholder for the path to the JAR file
+    let file = options.archive;
 
-    // Download the file from MPAC
-    const file = await downloadFile(url);
+    // Check if we need to download the file based on the appKey
+    // If both archive and appKey were provided, we will use the archive
+    if (!options.archive && options.appKey) {
+
+      // Get the download URL from the appKey
+      const url = await getUrlByAppKey(options.appKey);
+
+      // Download the file from MPAC
+      file = await downloadFile(url);
+    }
+
+    // Make sure that we have a valid path to the JAR file
+    if (!file || !existsSync(resolve(file))) {
+      console.log(`Unable to locate the archive in path ${file}`)
+      return;
+    }
 
     let count = 0;
     let timerId = null;
@@ -136,8 +152,10 @@ export const installAppInCluster = async (options: TInstallOptions) => {
       }
     }
 
-    // Remove the temporary file
-    rmSync(file, { force: true });
+    // Remove the temporary file (only when downloaded from MPAC using appKey)
+    if (!options.archive) {
+      rmSync(file, { force: true });
+    }
 
     // Tell them we succeeded
     console.log(`✔ Finished installing the app (${options.appKey})`);
