@@ -204,10 +204,16 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
         await page.goto(`${baseUrl}${progressUrl}`);
 
         // Log in
-        await page.waitForSelector('#login-form-username');
-        await page.locator('#login-form-username').fill('admin');
-        await page.locator('#login-form-password').fill('admin');
-        await page.locator('#login-form-submit').click();
+        const hasLegacyLoginScreen = await page.$('#login-form-username');
+        if (hasLegacyLoginScreen) {
+          await page.locator('#login-form-username').fill('admin');
+          await page.locator('#login-form-password').fill('admin');
+          await page.locator('#login-form-submit').click();
+        } else {
+          await page.locator('#username-field').fill('admin');
+          await page.locator('#password-field').fill('admin');
+          await page.locator('#login-button').click();
+        }
         await page.waitForNavigation({ waitUntil: ['domcontentloaded', 'load', 'networkidle0'], timeout: 5 * 60 * 1000 })
 
         // Websudo
