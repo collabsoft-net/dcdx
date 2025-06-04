@@ -401,7 +401,6 @@ program
 program
   .command('reindex')
   .description('Run the Data Center App Performance Toolkit Lucene Index Timing test')
-  .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -411,7 +410,7 @@ program
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit').default(cwd()))
   .addOption(new Option('-y, --force', 'Use default values for input questions when available').default(false))
-  .action(options => ActionHandler(program, ReindexCommand(), options));
+  .action(options => ActionHandler(program, ReindexCommand(), { ...options, product: SupportedApplications.Values.jira }));
 
 program
   .command('report')

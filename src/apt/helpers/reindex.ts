@@ -185,7 +185,11 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
       }
 
       // Start the browser session
-      const browser = await puppeteer.launch({ headless: (!force && retryCount < 4) });
+      const browser = await puppeteer.launch({
+        headless: (!force && retryCount < 4),
+        args: ['--disable-features=HttpsFirstBalancedModeAutoEnable'],
+      });
+
       try {
         const page = await browser.newPage();
         await page.setViewport({width: 1080, height: 1024});
@@ -194,9 +198,11 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
         await page.goto(`${baseUrl}${progressUrl}`);
 
         // Log in
+        await page.waitForSelector('#login-form-username');
         await page.locator('#login-form-username').fill('admin');
         await page.locator('#login-form-password').fill('admin');
         await page.locator('#login-form-submit').click();
+        await page.waitForNavigation({ waitUntil: ['domcontentloaded', 'load', 'networkidle0'], timeout: 5 * 60 * 1000 })
 
         // Websudo
         await page.locator('#login-form-authenticatePassword').fill('admin');
