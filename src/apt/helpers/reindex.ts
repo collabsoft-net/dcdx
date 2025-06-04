@@ -157,7 +157,8 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
   let screenshotCreated = false;
 
   console.log(`
-Navigating to ${baseUrl}${progressUrl} to create a screenshot of the completed reindex operation
+
+  Navigating to ${baseUrl}${progressUrl} to create a screenshot of the completed reindex operation
 `);
 
   // Loop until we've made a screen shot or tried it 5 times (incl. one time manually)
