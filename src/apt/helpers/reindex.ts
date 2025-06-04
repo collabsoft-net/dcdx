@@ -156,6 +156,10 @@ export const reindex = async (baseUrl: string, outputDir: string, force?: boolea
   // Placeholder indicating whether the screenshot was successfully created
   let screenshotCreated = false;
 
+  console.log(`
+Navigating to ${baseUrl}${progressUrl} to create a screenshot of the completed reindex operation
+`);
+
   // Loop until we've made a screen shot or tried it 5 times (incl. one time manually)
   while (!screenshotCreated && retryCount < 5) {
     try {
