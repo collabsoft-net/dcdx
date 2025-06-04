@@ -194,10 +194,11 @@ Navigating to ${baseUrl}${progressUrl} to create a screenshot of the completed r
         args: ['--disable-features=HttpsFirstBalancedModeAutoEnable'],
       });
 
-      try {
-        const page = await browser.newPage();
-        await page.setViewport({width: 1080, height: 1024});
+      // Create a new page session
+      const page = await browser.newPage();
+      await page.setViewport({width: 1080, height: 1024});
 
+      try {
         // Open the reindex progress page
         await page.goto(`${baseUrl}${progressUrl}`);
 
@@ -226,6 +227,12 @@ Navigating to ${baseUrl}${progressUrl} to create a screenshot of the completed r
         // Make sure that we have captured the screen shot in the output directory
         screenshotCreated = existsSync(join(outputDir, 'lucene-reindex.png'));
       } catch (err) {
+        // Create a screenshot of the current page to assist with debugging
+        // Ignore the error if we fail to create a screenshot
+        await page.screenshot({
+          path: join(outputDir, `lucene-reindex-error-${retryCount}.png`)
+        }).catch(() => {});
+
         console.log(err);
         console.log(`  Could not get a screen shot of the lucene indexing result, retrying...`);
       } finally {
