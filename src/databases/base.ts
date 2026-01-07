@@ -3,7 +3,7 @@ import { downAll, ps, stop,upAll } from 'docker-compose/dist/v2.js';
 import { gracefulExit } from 'exit-hook';
 import { dump } from 'js-yaml';
 import { cwd } from 'process';
-import { ConnectionAcquireTimeoutError, ConnectionError, ConnectionRefusedError, ConnectionTimedOutError, Dialect, Sequelize, TimeoutError } from 'sequelize';
+import { ConnectionAcquireTimeoutError, ConnectionError, ConnectionRefusedError, ConnectionTimedOutError, Dialect, QueryTypes, Sequelize, TimeoutError } from 'sequelize';
 
 import { network } from '../helpers/network';
 import { DatabaseEngine, TDatabaseOptions } from '../types/Database';
@@ -35,6 +35,10 @@ export abstract class Base implements DatabaseEngine {
   }
 
   // ------------------------------------------------------------------------------------------ Public Methods
+
+  async select<T extends object>(query: string, values: Array<unknown> = []): Promise<Array<T>> {
+    return this.sequelize.query<T>({ query, values }, { type: QueryTypes.SELECT });
+  }
 
   async run(sql: string | { query: string; values: unknown[] }, logging?: boolean): Promise<void> {
     try {

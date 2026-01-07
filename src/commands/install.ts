@@ -16,6 +16,7 @@ import { installFromMPAC } from '../helpers/installFromMPAC';
 import { installFromURL } from '../helpers/installFromURL';
 import { installWithQuickReload } from '../helpers/installWithQuickReload';
 import { isOfType } from '../helpers/isOfType';
+import { PAT } from '../helpers/PAT';
 import { TInstallFromAMPSArgs, TInstallFromMPACArgs, TInstallFromURLArgs } from '../types/Install';
 
 const program = new Commander();
@@ -32,6 +33,7 @@ const Command = () => {
           baseUrl: options.baseUrl || 'http://localhost',
           username: options.username || 'admin',
           password: options.password || 'admin',
+          pat: options.pat || PAT.token,
           license: await getAppLicense(options.license, true)
         });
       } else if (isOfType<TInstallFromURLArgs>(options, 'path')) {
@@ -40,6 +42,7 @@ const Command = () => {
           baseUrl: options.baseUrl || 'http://localhost',
           username: options.username || 'admin',
           password: options.password || 'admin',
+          pat: options.pat || PAT.token,
           license: await getAppLicense(options.license, true),
           verbose: true
         });
@@ -108,7 +111,7 @@ const Command = () => {
 program
   .name('dcdx install')
   .description(
-`Install the Atlassian Data Center plugin using the Atlassian Maven Plugin Suite (AMPS) configuration.
+`Install the Atlassian Data Center plugin in the running host application cluster.
 If there is a running instance, it will try to install the plugin using QuickReload or the UPM (for OBR).`)
   .showHelpAfterError(true)
 
@@ -140,6 +143,7 @@ program
   .addOption(new Option('--baseUrl <url>', 'URL of the instance'))
   .addOption(new Option('--username <username>', 'The username of an administrator account for the instance'))
   .addOption(new Option('--password <password>', 'The password of an administrator account for the instance'))
+  .addOption(new Option('--pat <pat>', 'The Personal Access Token (PAT) of an administrator account for the instance'))
   .addOption(new Option('--license <path_or_license>', 'The app license, either as a path to a file or the license itself'))
   .action((path, options) => ActionHandler<TInstallFromURLArgs>(program, Command(), { path, ...options }));
 

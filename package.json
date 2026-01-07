@@ -73,6 +73,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "7.0.1",
+    "@sqb/builder": "4.20.4",
     "@xmldom/xmldom": "0.8.10",
     "axios": "1.6.8",
     "chokidar": "3.6.0",

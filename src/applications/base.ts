@@ -1,3 +1,4 @@
+import { SelectQuery, SerializeContext } from '@sqb/builder';
 import axios from 'axios';
 import { spawn } from 'child_process';
 import { downAll, logs, ps, stop, upAll } from 'docker-compose/dist/v2.js';
@@ -14,6 +15,7 @@ import { getConfig } from '../helpers/getConfig';
 import { getDatabaseEngine } from '../helpers/getDatabaseEngine';
 import { getZodDefaults } from '../helpers/getZodDefaults';
 import { network } from '../helpers/network';
+import { PAT } from '../helpers/PAT';
 import { setupHost } from '../helpers/setupHost';
 import { Application,TApplicationOptions,TSupportedApplications } from '../types/Application';
 import { DatabaseEngine, DatabaseOptions, MSSQLOptions, MySQLOptions, PostgreSQLOptions, SupportedDatabaseEngines, TSupportedDatabaseEngines } from '../types/Database';
@@ -88,6 +90,9 @@ export abstract class Base implements Application {
     if (this.options.debug) {
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Djira.dev.mode=true');
       JVM_SUPPORT_RECOMMENDED_ARGS.push('-Datlassian.dev.mode=true');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Datlassian.upm.signature.check.disabled=true');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Datlassian.upm.signature.check.upload.disabled=true');
+      JVM_SUPPORT_RECOMMENDED_ARGS.push('-Datlassian.upm.signature.check.marketplace.disabled=true');
     }
 
     if (this.options.watch) {
@@ -180,6 +185,9 @@ export abstract class Base implements Application {
       const success = await setupHost(this.options.name, config);
 
       if (success) {
+        // Inject the personal access token
+        await this.injectPersonalAccessToken();
+
         // Tail application logs until we receive the TERM signal
         await this.tailApplicationLogs();
       }
@@ -380,4 +388,122 @@ export abstract class Base implements Application {
     }
   }
 
+  private async injectPersonalAccessToken() {
+    if (this.name === 'jira' || this.name === 'confluence' || this.name === 'bitbucket') {
+      console.log('Ensuring availability of a Personal Access Token for REST API access');
+
+      // Get the user key from the database
+      console.log('Retrieving user information from the database');
+      const userKey = await this.getUserKeyFromDatabase();
+
+
+      // If we don't have an account, we should bail out
+      if (!userKey) {
+        throw new Error(`Unable to find the user key in the ${this.name} database`);
+      }
+
+      if (this.name === 'jira' || this.name === 'confluence') {
+
+        // Check if the PAT already exists
+        const [ existingPAT ] = await this.database.select<{ ID: number, USER_KEY: string }>(`SELECT "ID", "USER_KEY" FROM "AO_81F455_PERSONAL_TOKEN" WHERE "NAME" = ?`, [ 'DCDX' ]).catch(() => [ null ]);
+
+        // If the PAT does not exist or does not match the current user, create one
+        if (!existingPAT || existingPAT.USER_KEY !== userKey) {
+
+          console.log('Personal Access Token not available, inserting one into the database');
+          await this.database.run({
+            query: `insert into "AO_81F455_PERSONAL_TOKEN" ("CREATED_AT", "EXPIRING_AT", "HASHED_TOKEN", "NAME", "NOTIFICATION_STATE", "TOKEN_ID", "USER_KEY") values ( ?, ?, ?, ?, ?, ?, ? )`,
+            values: [
+              PAT.createdAt,
+              PAT.expires,
+              PAT.hashedToken,
+              PAT.name,
+              PAT.notificationState,
+              PAT.tokenId,
+              userKey
+            ]
+          }).catch(() => {
+            console.log('Failed to insert Personal Access Token, defaulting to Basic Authentication for API access');
+          }).then(() => {
+            console.log('Successfully inserted Personal Access Token into the database');
+          });
+
+        }
+
+      } else if (this.name === 'bitbucket') {
+
+        // Check if the PAT already exists
+        const [ existingPAT ] = await this.database.select<{ USER_ID: number }>(`SELECT "USER_ID" FROM "AO_E5A814_ACCESS_TOKEN" WHERE "NAME" = ?`, [ 'DCDX' ]).catch(() => [ null ]);
+
+        // If the PAT does not exist or does not match the current user, create one
+        if (!existingPAT || existingPAT.USER_ID !== Number(userKey)) {
+
+          await this.database.run({
+            query: `insert into "AO_E5A814_ACCESS_TOKEN" ("CREATED_DATE", "HASHED_TOKEN", "NAME", "TOKEN_ID", "USER_ID") values ( ?, ?, ?, ?, ? )`,
+            values: [
+              PAT.createdAt,
+              PAT.hashedToken,
+              PAT.name,
+              PAT.tokenId,
+              Number(userKey)
+            ]
+          }).catch(() => {
+            console.log('Failed to insert Personal Access Token, defaulting to Basic Authentication for API access');
+          }).then(() => {
+            console.log('Successfully inserted Personal Access Token into the database');
+          });
+
+        }
+      }
+    }
+  }
+
+  private async getUserKeyFromDatabase() {
+    // Get the configuration file
+    const config = await getConfig(undefined, this.options.cwd);
+
+    // Get the Administrator username from configuration
+    const username = config.setup[this.name]?.username.toLowerCase();
+    if (!username) {
+      throw new Error(`Unable to determine the Administrator user account name from configuration`);
+    }
+
+    if (this.name === 'jira') {
+      const [ account ] = await this.database.select<{ user_key: string }>(
+        new SelectQuery('user_key').from('app_user').where({ 'lower_user_name': username.toLowerCase() })._serialize(new SerializeContext({ dialect: this.database.options.name })),
+      );
+
+      // If we don't have an account, we should bail out
+      if (!account) {
+        throw new Error(`Unable to find the user account ${username} in the ${this.name} database`);
+      }
+
+      return account.user_key;
+    } else if (this.name === 'confluence') {
+      const [ account ] = await this.database.select<{ user_key: string }>(
+        new SelectQuery('user_key').from('user_mapping').where({ 'username': username })._serialize(new SerializeContext({ dialect: this.database.options.name })),
+      );
+
+      // If we don't have an account, we should bail out
+      if (!account) {
+        throw new Error(`Unable to find the user account ${username} in the ${this.name} database`);
+      }
+
+      return account.user_key;
+
+    } else if (this.name === 'bitbucket') {
+
+      const [ account ] = await this.database.select<{ user_id: number }>(
+        new SelectQuery('user_id').from('sta_normal_user').where({ 'name': username })._serialize(new SerializeContext({ dialect: this.database.options.name })),
+      );
+
+      // If we don't have an account, we should bail out
+      if (!account) {
+        throw new Error(`Unable to find the user account ${username} in the ${this.name} database`);
+      }
+
+      return account.user_id;
+
+    }
+  }
 }

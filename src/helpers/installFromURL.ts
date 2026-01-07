@@ -1,4 +1,4 @@
-import { input, password as passwordPrompt } from '@inquirer/prompts';
+import { input, password as passwordPrompt, select } from '@inquirer/prompts';
 import { Presets, SingleBar } from 'cli-progress';
 import { existsSync, rmSync } from 'fs';
 
@@ -37,17 +37,33 @@ export const installFromURL = async (options: TInstallFromURLOptions) => {
     required: true
   }) : options.baseUrl;
 
+  // If there is no username or PAT, ask them nicely how they want to authenticate
+  const authType: 'basic'|'pat' = options.username ? 'basic' : options.pat ? 'pat' : await select({
+    message: `How do you wish to authenticate?`,
+    default: 'basic',
+    choices: [
+      { name: 'Username/password', value: 'basic' },
+      { name: 'Personal Access Token', value: 'pat' }
+    ]
+  });
+
   // Ask them nicely for the username
-  const adminUsername = !options.username ? await input({
+  const adminUsername = authType === 'basic' && !options.username ? await input({
     message: 'Please provide the username of a system administrator',
     required: true
   }) : options.username;
 
   // Ask them nicely for the username
-  const adminPassword = !options.password ? await passwordPrompt({
+  const adminPassword = authType === 'basic' && !options.password ? await passwordPrompt({
     message: 'Please provide the username of a system administrator',
     validate: item => typeof item === 'string' && item.length > 0
   }) : options.password;
+
+  // Ask them nicely for the PAT
+  const adminPAT = authType === 'pat' && !options.pat ? await passwordPrompt({
+    message: 'Please provide the Personal Access Token of a system administrator',
+    validate: item => typeof item === 'string' && item.length > 0
+  }) : options.pat;
 
   // Ask them nicely for the app license to be used
   const appLicense = await getAppLicense(options.license, options.license !== undefined);
@@ -78,7 +94,7 @@ export const installFromURL = async (options: TInstallFromURLOptions) => {
   const { appKey } = await validateAtlassianPlugin(file, options.verbose);
 
   // Upload it into the cluster using the UPM REST API
-  const isInstalled = await uploadToUPM(baseUrl, file, adminUsername, adminPassword, options.verbose);
+  const isInstalled = await uploadToUPM(baseUrl, file, adminUsername, adminPassword, adminPAT, options.verbose);
   if (!isInstalled) {
     throw new Error('Failed to install the app using the Universal Plugin Manager REST API');
   }

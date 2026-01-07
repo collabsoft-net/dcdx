@@ -3,6 +3,7 @@ import { Presets, SingleBar } from 'cli-progress';
 import { existsSync, rmSync } from 'fs';
 import { resolve } from 'path';
 
+import { PAT } from '../../helpers/PAT';
 import { registerLicense, uploadToUPM, waitForPluginToBeEnabled } from '../../helpers/upm';
 import { TInstallOptions } from '../../types/Install';
 import { downloadFile } from './downloadFile';
@@ -34,6 +35,7 @@ export const installAppInCluster = async (options: TInstallOptions) => {
   // Set default value for username/password
   const username = options.username || 'admin';
   const password = options.password || 'admin';
+  const pat = options.pat || PAT.token;
 
   // If we are in non-interactive mode, we will either download it from MPAC or install it directly if a file path was provided
   if (options.force) {
@@ -87,7 +89,7 @@ export const installAppInCluster = async (options: TInstallOptions) => {
         timerId = setInterval(() => progressBar.increment(), 1000);
 
         // Upload it into the cluster using the UPM REST API
-        const isInstalled = await uploadToUPM(options.baseUrl, file, username, password, false);
+        const isInstalled = await uploadToUPM(options.baseUrl, file, username, password, pat, false);
         if (!isInstalled) {
           throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
         }
@@ -192,18 +194,33 @@ export const installAppInCluster = async (options: TInstallOptions) => {
       // Ask them nicely for the app license to be used
       const appLicense = await getAppLicense(options.license, options.force);
 
-      // Ask them nicely for the username
-      const adminUsername = await input({
-        message: 'Please provide the username of a system administrator',
-        default: username,
-        required: true
+      // If there is no username or PAT, ask them nicely how they want to authenticate
+      const authType: 'basic'|'pat' = options.username ? 'basic' : options.pat ? 'pat' : await select({
+        message: `How do you wish to authenticate?`,
+        default: 'basic',
+        choices: [
+          { name: 'Username/password', value: 'basic' },
+          { name: 'Personal Access Token', value: 'pat' }
+        ]
       });
 
       // Ask them nicely for the username
-      const adminPassword = await passwordPrompt({
+      const adminUsername = authType === 'basic' && !options.username ? await input({
+        message: 'Please provide the username of a system administrator',
+        required: true
+      }) : options.username;
+
+      // Ask them nicely for the username
+      const adminPassword = authType === 'basic' && !options.password ? await passwordPrompt({
         message: 'Please provide the username of a system administrator',
         validate: item => typeof item === 'string' && item.length > 0
-      });
+      }) : options.password;
+
+      // Ask them nicely for the PAT
+      const adminPAT = authType === 'pat' && !options.pat ? await passwordPrompt({
+        message: 'Please provide the Personal Access Token of a system administrator',
+        validate: item => typeof item === 'string' && item.length > 0
+      }) : options.pat;
 
       // Ask them nicely if we need to restart the application
       const restartAfterInstall = await confirm({
@@ -225,7 +242,7 @@ export const installAppInCluster = async (options: TInstallOptions) => {
       const file = await downloadFile(url);
 
       // Upload it into the cluster using the UPM REST API
-      const isInstalled = await uploadToUPM(options.baseUrl, file, adminUsername, adminPassword, false);
+      const isInstalled = await uploadToUPM(options.baseUrl, file, adminUsername, adminPassword, adminPAT, false);
       if (!isInstalled) {
         throw new Error('Failed to install app into the cluster using the Universal Plugin Manager REST API');
       }

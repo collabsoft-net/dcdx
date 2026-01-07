@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { FSWatcher } from 'chokidar';
-import { Command as Commander, InvalidOptionArgumentError, Option } from 'commander';
+import { Command as Commander, Option } from 'commander';
 import { gracefulExit } from 'exit-hook';
 
 import { ActionHandler } from '../helpers/ActionHandler';
@@ -54,12 +54,6 @@ const Command = () => {
           throw new Error(`Database tag '${options.databaseTag}' is invalid. Allowed choices are ${versions[options.database].join(', ')}.`);
         }
 
-        if (options.obr && !options.username) {
-          throw new InvalidOptionArgumentError('Missing argument "--username", required for installing OBR artifacts');
-        } else if (options.obr && !options.password) {
-          throw new InvalidOptionArgumentError('Missing argument "--password", required for installing OBR artifacts');
-        }
-
         const mavenOpts = program.args.slice();
         mavenOpts.push(...options.activateProfiles ? [ '-P', options.activateProfiles ] : []);
         quickReload = FileWatcher(name, options, mavenOpts);
@@ -106,15 +100,12 @@ You can add Maven build arguments after the command options`)
   .addOption(new Option('--ext <patterns...>', 'Glob patterns to use while watching for file changes (defaults to **/*)'))
   .addOption(new Option('-o, --outputDirectory <directory>', 'Output directory where to look for generated JAR files (defaults to `target`)'))
   .addOption(new Option('--obr', 'Upload generated OBR file instead of JAR file when installing the app').default(false))
-  .addOption(new Option('--username <username>', 'The username of the administrator (required with --obr)'))
-  .addOption(new Option('--password <password>', 'The password of the administrator (required with --obr)'))
   .addOption(new Option('-P, --activate-profiles <arg>', 'Comma-delimited list of profiles to activate'))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the AMPS configuration'))
   .addOption(new Option('--exec <command>', 'Build command to run instead of Maven'))
-  .addOption(new Option('--configure', 'Automated initial setup of the host application').default(false))
   .addOption(new Option('--clean', 'Remove data files before starting the database').default(false))
   .addOption(new Option('--prune', 'Remove data files when stopping the database').default(false))
-  .action(options => ActionHandler(program, Command(), { ...options, debug: true, watch: true, install: true }))
+  .action(options => ActionHandler(program, Command(), { ...options, debug: true, watch: true, install: true, configure: true }))
   .allowUnknownOption(true)
   .showHelpAfterError(true);
 

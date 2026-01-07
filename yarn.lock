@@ -1734,6 +1734,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@sqb/builder@npm:4.20.4":
+  version: 4.20.4
+  resolution: "@sqb/builder@npm:4.20.4"
+  dependencies:
+    debug: "npm:^4.4.3"
+    putil-flattentext: "npm:^2.1.1"
+    putil-isplainobject: "npm:^1.1.5"
+    putil-merge: "npm:^3.13.0"
+    putil-varhelpers: "npm:^1.6.5"
+    tslib: "npm:^2.8.1"
+  checksum: 10c0/35f0d57198348470c7d45a984914923f5f93185fc653c15d971101504e4e9b11d52734407d7b59b0e8d3acd5193e2e7e9ced32581ace20d7ffe8e6b4884d9970
+  languageName: node
+  linkType: hard
+
 "@tootallnate/quickjs-emscripten@npm:^0.23.0":
   version: 0.23.0
   resolution: "@tootallnate/quickjs-emscripten@npm:0.23.0"
@@ -3356,6 +3370,7 @@ __metadata:
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@rollup/plugin-terser": "npm:0.4.4"
+    "@sqb/builder": "npm:4.20.4"
     "@types/cli-progress": "npm:^3"
     "@types/content-disposition": "npm:^0"
     "@types/dockerode": "npm:3.3.28"
@@ -3432,6 +3447,18 @@ __metadata:
     supports-color:
       optional: true
   checksum: 10c0/1471db19c3b06d485a622d62f65947a19a23fbd0dd73f7fd3eafb697eec5360cde447fb075919987899b1a2096e85d35d4eb5a4de09a57600ac9cf7e6c8e768b
+  languageName: node
+  linkType: hard
+
+"debug@npm:^4.4.3":
+  version: 4.4.3
+  resolution: "debug@npm:4.4.3"
+  dependencies:
+    ms: "npm:^2.1.3"
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 10c0/d79136ec6c83ecbefd0f6a5593da6a9c91ec4d7ddc4b54c883d6e71ec9accb5f67a1a5e96d00a328196b5b5c86d365e98d8a3a70856aaf16b4e7b1985e67f5a6
   languageName: node
   linkType: hard
 
@@ -7989,6 +8016,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"putil-flattentext@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "putil-flattentext@npm:2.1.1"
+  checksum: 10c0/7a2c136c16843677acba7bf992c1b2691a6cfbe9cbff7e24f985c26b9aeb62d7cc9c7df535f412b3a1c8d1415aebbad8f4d54907b08389f45c1bc3b534b371f7
+  languageName: node
+  linkType: hard
+
+"putil-isplainobject@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "putil-isplainobject@npm:1.1.5"
+  checksum: 10c0/80e15f1596bc97e8efe04feb430da80290998b871ba9f499155e8318bdbf87c252ec85f86d896d64cefcc5c4d1fc34ed3a3cd85f5eb7cc0f9ce06aeae1e3caab
+  languageName: node
+  linkType: hard
+
+"putil-merge@npm:^3.13.0":
+  version: 3.13.0
+  resolution: "putil-merge@npm:3.13.0"
+  checksum: 10c0/f591430ce4467bf9dbc548ac553980ae3e56c03a70b8a75072f3fe9a26b3f0a80d831b18531b416cecb7aeb4839e1ed22ee45d18809ab8c4e3af95d162971af1
+  languageName: node
+  linkType: hard
+
+"putil-varhelpers@npm:^1.6.5":
+  version: 1.6.5
+  resolution: "putil-varhelpers@npm:1.6.5"
+  checksum: 10c0/534e611a6dcd1f26999a55438faa9f46724b8f78b8c304e18d4ca9d9793b25b0ef03ee5651de0a9875a1b33194c48e5f2681191662ce00f86dc65b9b4fab006b
+  languageName: node
+  linkType: hard
+
 "qrcode-terminal@npm:^0.12.0":
   version: 0.12.0
   resolution: "qrcode-terminal@npm:0.12.0"
@@ -9544,7 +9599,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.1":
+"tslib@npm:^2.0.1, tslib@npm:^2.8.1":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62

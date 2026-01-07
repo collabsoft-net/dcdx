@@ -12,6 +12,7 @@ export const InstallOptions = APTRestartOptions.extend({
   license: z.string(),
   username: z.string(),
   password: z.string(),
+  pat: z.string(),
   restartAfterInstall: z.boolean(),
   force: z.boolean()
 }).partial({
@@ -20,6 +21,7 @@ export const InstallOptions = APTRestartOptions.extend({
   license: true,
   username: true,
   password: true,
+  pat: true,
   restartAfterInstall: true,
   product: true,
   cwd: true,
@@ -68,11 +70,13 @@ export const InstallFromMPACArgs = z.object({
   baseUrl: z.string(),
   username: z.string(),
   password: z.string(),
+  pat: z.string(),
   license: z.string()
 }).partial({
   baseUrl: true,
   username: true,
   password: true,
+  pat: true,
   license: true
 });
 
@@ -81,6 +85,7 @@ export const InstallFromMPACOptions = z.object({
   baseUrl: z.string(),
   username: z.string(),
   password: z.string(),
+  pat: z.string(),
   license: z.string()
 });
 
@@ -89,11 +94,13 @@ export const InstallFromURLArgs = z.object({
   baseUrl: z.string(),
   username: z.string(),
   password: z.string(),
+  pat: z.string(),
   license: z.string(),
 }).partial({
   baseUrl: true,
   username: true,
   password: true,
+  pat: true,
   license: true
 });
 
@@ -102,6 +109,7 @@ export const InstallFromURLOptions = z.object({
   baseUrl: z.string(),
   username: z.string(),
   password: z.string(),
+  pat: z.string(),
   license: z.string(),
   verbose: z.boolean()
 }).partial();

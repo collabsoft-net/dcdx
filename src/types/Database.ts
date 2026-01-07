@@ -9,6 +9,7 @@ export interface DatabaseEngine {
   options: TDatabaseOptions;
   start(clean?: boolean): Promise<void>;
   stop(prune?: boolean): Promise<void>;
+  select<T extends object>(query: string, values?: Array<unknown>): Promise<Array<T>>
   run(sql: string | { query: string; values: unknown[] }): Promise<void>;
 }
 

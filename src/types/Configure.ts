@@ -11,14 +11,17 @@ export const ConfigureOptions = z.object({
   cwd: true
 });
 
-export const ConfigureJira = z.object({
+export const ConfigureBase = z.object({
+  username: z.string(),
+  password: z.string()
+})
+
+export const ConfigureJira = ConfigureBase.extend({
   title: z.string(),
   mode: z.enum([ 'private', 'public' ]),
   baseUrl: z.string(),
   fullname: z.string(),
   email: z.string(),
-  username: z.string(),
-  password: z.string(),
   configureEmail: z.enum([ 'later', 'now' ]),
   emailName: z.string(),
   emailFromAddress: z.string(),
@@ -75,15 +78,22 @@ export const ConfigureJira = z.object({
   emailPassword: true,
   language: true,
   avatarPath: true
+}).default({
+  title: 'Jira',
+  mode: 'private',
+  baseUrl: 'http://localhost',
+  fullname: 'Administrator',
+  email: 'admin@example.org',
+  configureEmail: 'later',
+  username: 'admin',
+  password: 'admin'
 });
 
-export const ConfigureConfluence = z.object({
+export const ConfigureConfluence = ConfigureBase.extend({
   baseUrl: z.string(),
   deploymentType: z.enum(['non-clustered', 'clustered']),
-  username: z.string(),
   fullName: z.string(),
   email: z.string(),
-  password: z.string(),
   clusterName: z.string(),
   clusterHome: z.string(),
   clusterJoinMode: z.enum(['useMulticast', 'useTcpIp', 'useAws']),
@@ -105,9 +115,30 @@ export const ConfigureConfluence = z.object({
   jiraPassword: true,
   jiraUserGroups: true,
   jiraAdminGroups: true
+}).default({
+  baseUrl: 'http://localhost',
+  deploymentType: 'non-clustered',
+  fullName: 'Administrator',
+  email: 'admin@example.org',
+  loadContent: 'empty',
+  userManagement: 'confluence',
+  username: 'admin',
+  password: 'admin'
+});
+
+export const ConfigureBitbucket = ConfigureBase.extend({}).default({
+  username: 'admin',
+  password: 'admin'
+});
+
+export const ConfigureBamboo = ConfigureBase.extend({}).default({
+  username: 'admin',
+  password: 'admin'
 });
 
 export type TConfigureOptions = z.infer<typeof ConfigureOptions>;
 
 export type TConfigureJira = z.infer<typeof ConfigureJira>;
 export type TConfigureConfluence = z.infer<typeof ConfigureConfluence>;
+export type TConfigureBitbucket = z.infer<typeof ConfigureBitbucket>;
+export type TConfigureBamboo = z.infer<typeof ConfigureBamboo>;
