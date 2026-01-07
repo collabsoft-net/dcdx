@@ -54,7 +54,7 @@ export const runTest = async (cwd: string, environment: string, product: TSuppor
         '-v', `${cwd}:/data-center-terraform/dc-app-performance-toolkit`,
         '-v', `${cwd}/app/util/k8s/bzt_on_pod.sh:/data-center-terraform/bzt_on_pod.sh`,
         'atlassianlabs/terraform:latest',
-        'bash', 'bzt_on_pod.sh', `${product}.yml`
+        'bash', 'bzt_on_pod.sh', `${product}.yml`, '--ci'
       ],
       { cwd, stdio: 'inherit' }
     );
