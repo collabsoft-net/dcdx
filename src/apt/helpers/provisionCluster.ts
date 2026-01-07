@@ -38,7 +38,14 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
   persistAWSCredentials(directory, aws_access_key_id, aws_secret_access_key);
 
   // Write Terraform variables to disk
-  persistClusterConfiguration(directory, environment, options.product, license, nodes);
+  persistClusterConfiguration({
+    product: options.product,
+    tag: options.tag,
+    cwd: directory,
+    environment,
+    license,
+    nodes
+  });
 
   // Run the DCAPT install script
   await install(directory);

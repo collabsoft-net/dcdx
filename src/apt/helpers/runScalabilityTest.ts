@@ -80,7 +80,14 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   persistAWSCredentials(cwd, aws_access_key_id, aws_secret_access_key);
 
   // Write Terraform variables to disk (one-node cluster)
-  persistClusterConfiguration(cwd, options.environment, options.product, options.license, nodes);
+  persistClusterConfiguration({
+    product: options.product,
+    tag: options.tag,
+    cwd,
+    environment: options.environment,
+    license: options.license,
+    nodes
+  });
 
   // Run the DCAPT install script
   await install(cwd);

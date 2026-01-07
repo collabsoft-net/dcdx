@@ -39,24 +39,28 @@ export const APTTestMessages = z.object({
 
 export const APTProvisionArgs = z.object({
   product: SupportedApplications,
+  tag: z.string(),
   cwd: z.string(),
   environment: z.string(),
   license: z.string(),
   nodes: z.number(),
   force: z.boolean()
 }).partial({
+  tag: true,
   license: true,
   force: true
 });
 
 export const APTProvisionOptions = z.object({
   product: SupportedApplications,
+  tag: z.string(),
   cwd: z.string(),
   environment: z.string(),
   license: z.string(),
   nodes: z.number(),
   force: z.boolean()
 }).partial({
+  tag: true,
   environment: true,
   license: true,
   nodes: true,
@@ -65,6 +69,7 @@ export const APTProvisionOptions = z.object({
 
 export const APTPerformanceTestArgs = z.object({
   product: SupportedApplications,
+  tag: z.string(),
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
@@ -76,6 +81,7 @@ export const APTPerformanceTestArgs = z.object({
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
+  tag: true,
   outputDir: true,
   license: true,
   appKey: true,
@@ -88,6 +94,7 @@ export const APTPerformanceTestArgs = z.object({
 export const APTPerformanceTestOptions = z.object({
   stage: PerformanceTestTypes,
   product: SupportedApplications,
+  tag: z.string(),
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
@@ -101,6 +108,7 @@ export const APTPerformanceTestOptions = z.object({
   restartAfterInstall: z.boolean(),
   force: z.boolean()
 }).partial({
+  tag: true,
   baseUrl: true,
   aws_access_key_id: true,
   aws_secret_access_key: true,
@@ -141,6 +149,7 @@ export const APTPerformanceReportOptions = z.object({
 
 export const APTScalabilityTestArgs = z.object({
   product: SupportedApplications,
+  tag: z.string(),
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
@@ -153,6 +162,7 @@ export const APTScalabilityTestArgs = z.object({
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
+  tag: true,
   outputDir: true,
   license: true,
   appKey: true,
@@ -166,6 +176,7 @@ export const APTScalabilityTestArgs = z.object({
 
 export const APTScalabilityTestOptions = z.object({
   product: SupportedApplications,
+  tag: z.string(),
   cwd: z.string(),
   outputDir: z.string(),
   environment: z.string(),
@@ -177,6 +188,7 @@ export const APTScalabilityTestOptions = z.object({
   locust: z.boolean(),
   force: z.boolean()
 }).partial({
+  tag: true,
   appLicense: true,
   restartAfterInstall: true,
   locust: true,

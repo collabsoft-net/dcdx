@@ -23,10 +23,13 @@ import { emptyLine, generic, init, LuceneTimingTest, Run1, Run2, ScalabilityTest
 import { Performance } from '../apt/performance';
 import { Scalability } from '../apt/scalability';
 import { ActionHandler } from '../helpers/ActionHandler';
+import { generateVersionList } from '../helpers/generateVersionList';
+import { getVersions } from '../helpers/getVersions';
 import { SupportedApplications } from '../types/Application';
 import { APTDependencyTreeOptions, APTPerformanceReportOptions, APTPerformanceTestOptions, APTProvisionOptions, APTRestartOptions, APTScalabilityReportOptions, APTScalabilityTestOptions, APTSCAOptions, APTTeardownOptions, PerformanceTestTypes, ReportTypes, TAPTArgs, TAPTDependencyTreeArgs, TAPTPerformanceReportArgs, TAPTPerformanceTestArgs, TAPTProvisionArgs, TAPTRestartArgs, TAPTSCAArgs, TAPTScalabilityReportArgs, TAPTScalabilityTestArgs, TAPTTeardownArgs } from '../types/DCAPT';
 
 const program = new Commander();
+const versions = getVersions();
 
 const DefaultCommand = () => ({
   action: async (options: TAPTArgs) => {
@@ -34,6 +37,17 @@ const DefaultCommand = () => ({
     // Clear the console and show a welcome message
     process.stdout.write('\x1Bc')
     console.log(generic.header);
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
 
     // Get the product from the args or ask for it nicely
     const product = options.product || await getProduct();
@@ -48,6 +62,7 @@ const DefaultCommand = () => ({
     // Start the performance testing
     await Performance({
       product: product,
+      tag: options.tag,
       cwd: options.cwd,
       outputDir: options.outputDir,
       environment: options.environment,
@@ -65,6 +80,7 @@ const DefaultCommand = () => ({
     // Start the scalability testing
     await Scalability({
       product,
+      tag: options.tag,
       cwd: options.cwd,
       outputDir: options.outputDir,
       environment: options.environment,
@@ -121,9 +137,22 @@ const ReportCommand = () => ({
 
 const PerformanceTestCommand = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     // Start the performance testing
     await Performance({
       product: options.product,
+      tag: options.tag,
       cwd: options.cwd,
       outputDir: options.outputDir,
       environment: options.environment,
@@ -152,6 +181,18 @@ const PerformanceTestCommand = () => ({
 
 const Run1Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await runPerformanceTest(APTPerformanceTestOptions.parse({
       ...options,
       stage: PerformanceTestTypes.Values.baseline,
@@ -166,6 +207,18 @@ const Run1Command = () => ({
 
 const Run2Command = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await runPerformanceTest(APTPerformanceTestOptions.parse({
       ...options,
       stage: PerformanceTestTypes.Values.regression,
@@ -180,6 +233,18 @@ const Run2Command = () => ({
 
 const ReindexCommand = () => ({
   action: async (options: TAPTPerformanceTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await runLuceneTimingTest(APTPerformanceTestOptions.parse({
       ...options,
       stage: PerformanceTestTypes.Values.regression,
@@ -194,9 +259,22 @@ const ReindexCommand = () => ({
 
 const ScalabilityTestCommand = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     // Start the scalability testing
     await Scalability({
       product: options.product,
+      tag: options.tag,
       cwd: options.cwd,
       outputDir: options.outputDir,
       environment: options.environment,
@@ -226,6 +304,18 @@ const ScalabilityTestCommand = () => ({
 
 const Run3Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await runScalabilityTest('one-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
@@ -239,6 +329,18 @@ const Run3Command = () => ({
 
 const Run4Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await runScalabilityTest('two-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
@@ -252,6 +354,18 @@ const Run4Command = () => ({
 
 const Run5Command = () => ({
   action: async (options: TAPTScalabilityTestArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await runScalabilityTest('four-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
@@ -265,12 +379,25 @@ const Run5Command = () => ({
 
 const ProvisionCommand = () => ({
   action: async (options: TAPTProvisionArgs) => {
+
+    const version = options.tag
+    if (version) {
+      if (!versions[options.product].includes(version)) {
+        console.log(`Could not find specified version ${version}, updating ${options.product} version list`);
+        const updatedVersions = await generateVersionList(options.product);
+        if (!updatedVersions[options.product].includes(version)) {
+          throw new Error(`Product version '${version}' is invalid. Allowed choices are ${versions[options.product].join(', ')}.`);
+        }
+      }
+    }
+
     await provisionCluster(APTProvisionOptions.parse({
       product: options.product,
-      cwd: options.cwd,
+      tag: options.tag,
+      cwd: options.cwd || cwd(),
       environment: options.environment,
       license: options.license,
-      nodes: options.nodes,
+      nodes: Number(options.nodes),
       force: options.force
     }), options.cwd === undefined);
   },
@@ -345,6 +472,7 @@ program
 program
   .command('default', { isDefault: true, hidden: true })
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -360,6 +488,7 @@ program
   .command('provision')
   .description('Provision the Data Center App Performance Testing cluster on AWS')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--nodes <number>', 'The number of nodes for the cluster').default(1))
@@ -371,6 +500,7 @@ program
   .command('performance')
   .description('Run the Data Center App Performance Toolkit performance regression test')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -386,6 +516,7 @@ program
   .command('scalability')
   .description('Run the Data Center App Performance Toolkit scalability test')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -417,6 +548,7 @@ program
   .description('Generate a Data Center App Performance Testing report')
   .addOption(new Option('--type <type>', 'The type of report to generate').choices(Object.values(ReportTypes.Values)).makeOptionMandatory(true))
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--resultsDir1 <directory>', 'Specify the directory where to find the results of the 1st run used to generate the report'))
   .addOption(new Option('--resultsDir2 <directory>', 'Specify the directory where to find the results of run 2nd run used to generate the report'))
   .addOption(new Option('--resultsDir3 <directory>', 'Specify the directory where to find the results of run 3rd run used to generate the report (only for Scalability report)'))
@@ -430,6 +562,7 @@ program
   .command('run1')
   .description('Start the Data Center App Performance Testing Performance baseline test (run 1)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
@@ -442,6 +575,7 @@ program
   .command('run2')
   .description('Start the Data Center App Performance Testing Performance regression test (run 2)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
@@ -457,6 +591,7 @@ program
   .command('run3')
   .description('Start the Data Center App Performance Testing Scalability test on a one-node DC cluster (run 3)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
@@ -473,6 +608,7 @@ program
   .command('run4')
   .description('Start the Data Center App Performance Testing Scalability test on a two-node DC cluster (run 4)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
@@ -489,6 +625,7 @@ program
   .command('run5')
   .description('Start the Data Center App Performance Testing Scalability test on a four-node DC cluster (run 5)')
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))

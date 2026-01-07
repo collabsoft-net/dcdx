@@ -82,7 +82,14 @@ export const runPerformanceTest = async (options: TAPTPerformanceTestOptions, me
     emptyLine();
 
     // Write Terraform variables to disk (one-node cluster)
-    persistClusterConfiguration(cwd, options.environment, options.product, options.license, 1);
+    persistClusterConfiguration({
+      product: options.product,
+      tag: options.tag,
+      cwd,
+      environment: options.environment,
+      license: options.license,
+      nodes: 1
+    });
 
     // Run the DCAPT install script
     await install(cwd);
