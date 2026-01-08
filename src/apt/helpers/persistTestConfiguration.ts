@@ -4,7 +4,7 @@ import { replaceLinesInFile } from '../../helpers/replaceLinesInFile';
 import { TSupportedApplications } from '../../types/Application';
 import { waitForUserInput } from './waitForUserInput';
 
-export const persistTestConfiguration = async (cwd: string, product: TSupportedApplications, baseUrl: string, duration: string, withAppSpecificActions?: boolean, useLocust?: boolean, force?: boolean) => {
+export const persistTestConfiguration = async (cwd: string, product: TSupportedApplications, baseUrl: string, duration: string, useJMeter?: boolean, useLocust?: boolean, force?: boolean) => {
   const productURI = new URL(baseUrl);
   const protocol = productURI.protocol.startsWith('https') ? 'https' : 'http';
   const port = protocol === 'http' ? '80' : '443';
@@ -18,7 +18,7 @@ export const persistTestConfiguration = async (cwd: string, product: TSupportedA
   application_postfix = ${productURI.pathname}
   test_duration = ${duration}
   load_executor = ${useLocust ? 'locust' : 'jmeter'}
-  standalone_extension = ${withAppSpecificActions ? '1' : '0'}
+  standalone_extension = ${useLocust || useJMeter ? '1' : '0'}
 
   The configuration will be written to disk and overwrite existing configuration:
   ${join(cwd, 'app', `${product}.yml`)}
@@ -36,7 +36,7 @@ export const persistTestConfiguration = async (cwd: string, product: TSupportedA
     } else if (line.startsWith(`    load_executor:`)) {
       return `    load_executor: ${useLocust ? 'locust' : 'jmeter'}`;
     } else if (line.startsWith(`    standalone_extension:`)) {
-      return `    standalone_extension: ${withAppSpecificActions ? '1' : '0'}`;
+      return `    standalone_extension: ${useLocust || useJMeter ? '1' : '0'}`;
     } else if (line.startsWith(`    test_duration:`)) {
       return `    test_duration: ${duration}`;
     }

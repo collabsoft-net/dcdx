@@ -158,6 +158,7 @@ export const APTScalabilityTestArgs = z.object({
   archive: z.string(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
+  jmeter: z.boolean(),
   locust: z.boolean(),
   timestamp: z.string(),
   force: z.boolean()
@@ -169,6 +170,7 @@ export const APTScalabilityTestArgs = z.object({
   archive: true,
   appLicense: true,
   restartAfterInstall: true,
+  jmeter: true,
   locust: true,
   timestamp: true,
   force: true
@@ -185,12 +187,14 @@ export const APTScalabilityTestOptions = z.object({
   archive: z.string().optional(),
   appLicense: z.string(),
   restartAfterInstall: z.boolean(),
+  jmeter: z.boolean(),
   locust: z.boolean(),
   force: z.boolean()
 }).partial({
   tag: true,
   appLicense: true,
   restartAfterInstall: true,
+  jmeter: true,
   locust: true,
   force: true
 }).superRefine((input, ctx) => {
@@ -308,8 +312,7 @@ export const APTSCAOptions = z.object({
 
 export const APTArgs = z.intersection(
   APTProvisionOptions,
-  APTPerformanceTestArgs,
-  APTScalabilityTestArgs
+  z.intersection(APTPerformanceTestArgs, APTScalabilityTestArgs)
 );
 
 export type TAPTArgs = z.infer<typeof APTArgs>;
