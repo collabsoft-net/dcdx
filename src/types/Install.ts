@@ -87,6 +87,12 @@ export const InstallFromMPACOptions = z.object({
   password: z.string(),
   pat: z.string(),
   license: z.string()
+}).partial({
+  baseUrl: true,
+  username: true,
+  password: true,
+  pat: true,
+  license: true,
 });
 
 export const InstallFromURLArgs = z.object({

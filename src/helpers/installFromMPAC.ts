@@ -25,17 +25,9 @@ const round = (value: number, step: number = 1.0) => {
 
 export const installFromMPAC = async (options: TInstallFromMPACOptions) => {
 
-  // Ask them nicely for the app key
-  const addonKey = await input({
-    message: 'Please provide the key of the app to be installed',
-    default: options.appKey,
-    required: true
-  });
-
   // Ask them nicely for base URL of the instance
-  const baseUrl = await input({
+  const baseUrl = options.baseUrl || await input({
     message: 'Please provide the URL to the instance in which the app should be installed',
-    default: options.baseUrl,
     required: true
   });
 
@@ -68,7 +60,7 @@ export const installFromMPAC = async (options: TInstallFromMPACOptions) => {
   }) : options.pat;
 
   // Ask them nicely for the app license to be used
-  const appLicense = await getAppLicense(options.license, false);
+  const appLicense = options.license || await getAppLicense(options.license, false);
 
   // Tell them we are starting
   console.log(`Installing the app using the Universal Plugin Manager REST API`);
@@ -78,7 +70,7 @@ export const installFromMPAC = async (options: TInstallFromMPACOptions) => {
   const timerId = setInterval(() => progressBar.increment(), 1000);
 
   // Get the download URL based on the appKey
-  const url = await getUrlByAppKey(addonKey);
+  const url = await getUrlByAppKey(options.appKey);
 
   // Download the file from MPAC
   const file = await downloadFile(url);
@@ -90,13 +82,13 @@ export const installFromMPAC = async (options: TInstallFromMPACOptions) => {
   }
 
   // Wait for the plugin to be enabled
-  const isEnabled = await waitForPluginToBeEnabled(addonKey, baseUrl, adminUsername, adminPassword, false);
+  const isEnabled = await waitForPluginToBeEnabled(options.appKey, baseUrl, adminUsername, adminPassword, false);
   if (!isEnabled) {
     throw new Error('The app could not be enabled on the cluster, please refer to the application log files for more information');
   }
 
   // Register the provided license
-  const isLicensed = await registerLicense(addonKey, appLicense, baseUrl, adminUsername, adminPassword, false);
+  const isLicensed = await registerLicense(options.appKey, appLicense, baseUrl, adminUsername, adminPassword, false);
   if (!isLicensed) {
     throw new Error('The license could not be applied for the app on the cluster, please refer to the application log files for more information');
   }

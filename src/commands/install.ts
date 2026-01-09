@@ -30,7 +30,7 @@ const Command = () => {
       if (isOfType<TInstallFromMPACArgs>(options, 'appKey')) {
         await installFromMPAC({
           appKey: options.appKey,
-          baseUrl: options.baseUrl || 'http://localhost',
+          baseUrl: options.baseUrl,
           username: options.username || 'admin',
           password: options.password || 'admin',
           pat: options.pat || PAT.token,
@@ -53,7 +53,7 @@ const Command = () => {
         });
 
         if (!amps.isAtlassianPlugin()) {
-          throw new Error('Unable to find an Atlassian Plugin project in the current directory 🤔');
+          throw new Error('Unable to find an Atlassian Plugin project in the current directory, and no --appKey argument provided 🤔');
         }
 
         const name = amps.getApplication();
