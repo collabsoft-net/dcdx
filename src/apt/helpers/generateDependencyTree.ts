@@ -5,9 +5,9 @@ import { homedir } from 'os';
 import { basename, join, resolve } from 'path';
 import { Open } from 'unzipper';
 
-import { findInFile } from '../../helpers/findInFile';
 import { TAPTDependencyTreeOptions } from '../../types/DCAPT';
 import { downloadFile } from './downloadFile';
+import { getPropertyFromPomFile } from './getPropertyFromPomFile';
 import { getUrlByAppKey } from './getUrlByAppKey';
 
 export const generateDependencyTree = async (options: TAPTDependencyTreeOptions) => {
@@ -76,13 +76,20 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
           console.log(`Searching for POM file in the main artifact`);
           const pomFiles = await glob(`META-INF/maven/**/pom.xml`, { cwd: jarDir });
 
-          const relativePathToPOM = pomFiles.find(path => {
+          let relativePathToPOM: string|null = null;
+          for await (const path of pomFiles) {
+            if (relativePathToPOM) {
+              continue;
+            }
+
             const pomFile = join(jarDir, path);
-            return findInFile(pomFile, [
-              `<groupId>${options.groupId}</groupId>`,
-              `<artifactId>${options.artifactId}</artifactId>`
-            ]);
-          });
+            const groupId = await getPropertyFromPomFile(pomFile, 'project.groupId', options.activateProfiles);
+            const artifactId = await getPropertyFromPomFile(pomFile, 'project.artifactId', options.activateProfiles);
+
+            if (options.groupId === groupId && options.artifactId === artifactId) {
+              relativePathToPOM = path;
+            }
+          }
 
           // Make sure we have found the POM file
           if (!relativePathToPOM) {
@@ -122,13 +129,20 @@ export const generateDependencyTree = async (options: TAPTDependencyTreeOptions)
           console.log(`Searching for POM file in the main artifact`);
           const pomFiles = await glob(`META-INF/maven/**/pom.xml`, { cwd: archiveDir });
 
-          const relativePathToPOM = pomFiles.find(path => {
+          let relativePathToPOM: string|null = null;
+          for await (const path of pomFiles) {
+            if (relativePathToPOM) {
+              continue;
+            }
+
             const pomFile = join(archiveDir, path);
-            return findInFile(pomFile, [
-              `<groupId>${options.groupId}</groupId>`,
-              `<artifactId>${options.artifactId}</artifactId>`
-            ]);
-          });
+            const groupId = await getPropertyFromPomFile(pomFile, 'project.groupId');
+            const artifactId = await getPropertyFromPomFile(pomFile, 'project.artifactId');
+
+            if (options.groupId === groupId && options.artifactId === artifactId) {
+              relativePathToPOM = path;
+            }
+          }
 
           // Make sure we have found the POM file
           if (!relativePathToPOM) {
