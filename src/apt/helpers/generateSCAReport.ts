@@ -79,7 +79,7 @@ export const generateSCAReport = async (options: TAPTSCAOptions) => {
           ...options.dataDir ? [ '-v', `${options.dataDir}:/usr/share/dependency-check/data` ] : [],
           '-v', `${options.outputDir}:/report`,
           'owasp/dependency-check',
-          '--failOnCVSS', '0',
+          ...options.failOnError ? [ '--failOnCVSS', '0' ] : [],
           '--nvdApiKey', `${options.nvdApiKey}`,
           '--scan', `/src`,
           '--suppression', 'https://dcapt-downloads.s3.amazonaws.com/atlassian-security-scanner-dc-apps-suppressions.xml',

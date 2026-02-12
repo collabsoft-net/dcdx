@@ -283,11 +283,13 @@ export const APTSCAArgs = z.object({
   appKey: z.string(),
   archive: z.string(),
   dataDir: z.string(),
+  failOnError: z.boolean(),
   outputDir: z.string()
 }).partial({
   appKey: true,
   archive: true,
   dataDir: true,
+  failOnError: true,
   outputDir: true
 });
 
@@ -296,6 +298,7 @@ export const APTSCAOptions = z.object({
   appKey: z.string().optional(),
   archive: z.string().optional(),
   dataDir: z.string(),
+  failOnError: z.boolean(),
   outputDir: z.string()
 }).partial({
   dataDir: true
