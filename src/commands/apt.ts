@@ -547,6 +547,7 @@ program
 program
   .command('reindex')
   .description('Run the Data Center App Performance Toolkit Lucene Index Timing test')
+  .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
