@@ -169,6 +169,7 @@ export const APTScalabilityTestArgs = z.object({
   restartAfterInstall: z.boolean(),
   jmeter: z.boolean(),
   locust: z.boolean(),
+  query: z.string(),
   timestamp: z.string(),
   force: z.boolean()
 }).partial({
@@ -182,6 +183,7 @@ export const APTScalabilityTestArgs = z.object({
   restartAfterInstall: true,
   jmeter: true,
   locust: true,
+  query: true,
   timestamp: true,
   force: true
 });
@@ -200,6 +202,7 @@ export const APTScalabilityTestOptions = z.object({
   restartAfterInstall: z.boolean(),
   jmeter: z.boolean(),
   locust: z.boolean(),
+  query: z.string(),
   force: z.boolean()
 }).partial({
   tag: true,
@@ -208,6 +211,7 @@ export const APTScalabilityTestOptions = z.object({
   restartAfterInstall: true,
   jmeter: true,
   locust: true,
+  query: true,
   force: true
 }).superRefine((input, ctx) => {
   if (typeof input.appKey === 'undefined' && typeof input.archive === 'undefined') {

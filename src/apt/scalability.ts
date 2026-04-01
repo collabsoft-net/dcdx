@@ -45,6 +45,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     restartAfterInstall: options.restartAfterInstall,
     jmeter: options.jmeter,
     locust: options.locust,
+    query: options.query,
     force: options.force
   }), ScalabilityTestMessages);
 
@@ -64,6 +65,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     restartAfterInstall: options.restartAfterInstall,
     jmeter: options.jmeter,
     locust: options.locust,
+    query: options.query,
     force: options.force
   }), ScalabilityTestMessages);
 
@@ -83,6 +85,7 @@ export const Scalability = async (options: TAPTScalabilityTestArgs) => {
     restartAfterInstall: options.restartAfterInstall,
     jmeter: options.jmeter,
     locust: options.locust,
+    query: options.query,
     force: options.force
   }), ScalabilityTestMessages);
 

@@ -4,7 +4,7 @@ import { replaceLinesInFile } from '../../helpers/replaceLinesInFile';
 import { TSupportedApplications } from '../../types/Application';
 import { waitForUserInput } from './waitForUserInput';
 
-export const persistTestConfiguration = async (cwd: string, product: TSupportedApplications, baseUrl: string, duration: string, useJMeter?: boolean, useLocust?: boolean, force?: boolean) => {
+export const persistTestConfiguration = async (cwd: string, product: TSupportedApplications, baseUrl: string, duration: string, useJMeter?: boolean, useLocust?: boolean, query: string = '', force?: boolean) => {
   const productURI = new URL(baseUrl);
   const protocol = productURI.protocol.startsWith('https') ? 'https' : 'http';
   const port = protocol === 'http' ? '80' : '443';
@@ -19,6 +19,7 @@ export const persistTestConfiguration = async (cwd: string, product: TSupportedA
   test_duration = ${duration}
   load_executor = ${useLocust ? 'locust' : 'jmeter'}
   standalone_extension = ${useLocust || useJMeter ? '1' : '0'}
+  custom_dataset_query = ${query}
 
   The configuration will be written to disk and overwrite existing configuration:
   ${join(cwd, 'app', `${product}.yml`)}
@@ -39,6 +40,8 @@ export const persistTestConfiguration = async (cwd: string, product: TSupportedA
       return `    standalone_extension: ${useLocust || useJMeter ? '1' : '0'}`;
     } else if (line.startsWith(`    test_duration:`)) {
       return `    test_duration: ${duration}`;
+    } else if (line.startsWith(`    custom_dataset_query:`)) {
+      return `    custom_dataset_query: ${query}`;
     }
     return line;
   })

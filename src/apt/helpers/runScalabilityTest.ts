@@ -115,7 +115,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
   const duration = await getDuration(options.force);
 
   // Write test configuration to disk
-  await persistTestConfiguration(cwd, options.product, baseUrl, duration, options.jmeter, options.locust, options.force);
+  await persistTestConfiguration(cwd, options.product, baseUrl, duration, options.jmeter, options.locust, options.query, options.force);
 
   // Get the results directory (and make sure it is empty)
   const resultsBaseDir = await getResultsDirectory(cwd, options.product, options.force);
