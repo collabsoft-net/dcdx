@@ -87,6 +87,7 @@ export const runPerformanceTest = async (options: TAPTPerformanceTestOptions, me
       tag: options.tag,
       cwd,
       environment: options.environment,
+      monitoring: options.monitoring,
       license: options.license,
       nodes: 1
     });

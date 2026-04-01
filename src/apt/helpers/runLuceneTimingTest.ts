@@ -50,6 +50,7 @@ export const runLuceneTimingTest = async (options: TAPTPerformanceTestOptions, m
       tag: options.tag,
       cwd,
       environment: options.environment,
+      monitoring: options.monitoring,
       license: options.license,
       nodes: 1
     });

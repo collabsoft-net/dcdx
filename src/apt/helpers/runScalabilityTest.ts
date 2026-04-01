@@ -85,6 +85,7 @@ export const runScalabilityTest = async (stage: TScalabilityTestTypes, options: 
     tag: options.tag,
     cwd,
     environment: options.environment,
+    monitoring: options.monitoring,
     license: options.license,
     nodes
   });

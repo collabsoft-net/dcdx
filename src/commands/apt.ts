@@ -70,6 +70,7 @@ const DefaultCommand = () => ({
       cwd: options.cwd,
       outputDir: options.outputDir,
       environment: options.environment,
+      monitoring: options.monitoring,
       appKey: options.appKey,
       archive: options.archive,
       appLicense: options.appLicense,
@@ -407,6 +408,7 @@ const ProvisionCommand = () => ({
       tag: options.tag,
       cwd: options.cwd || cwd(),
       environment: options.environment,
+      monitoring: options.monitoring,
       license: options.license,
       nodes: Number(options.nodes),
       force: options.force
@@ -486,6 +488,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
@@ -504,6 +507,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--nodes <number>', 'The number of nodes for the cluster').default(1))
   .addOption(new Option('--cwd <directory>', 'Specify the working directory where to find the App Performance Toolkit'))
@@ -516,6 +520,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
@@ -532,6 +537,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
@@ -549,6 +555,7 @@ program
   .description('Run the Data Center App Performance Toolkit Lucene Index Timing test')
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
   .addOption(new Option('--archive <path>', 'The path to the JAR/OBR archive (for automated installation)'))
@@ -580,6 +587,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('-O, --outputDir <directory>', 'Specify the directory where to store the results of the App Performance Toolkit'))
@@ -593,6 +601,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -609,6 +618,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -627,6 +637,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))
@@ -645,6 +656,7 @@ program
   .addOption(new Option('--product <name>', 'The host product').choices(Object.values(SupportedApplications.Values)).makeOptionMandatory(true))
   .addOption(new Option('--tag <name>', 'The host product version tag'))
   .addOption(new Option('--environment <name>', 'The environment name'))
+  .addOption(new Option('--monitoring', 'Enable detailed CPU/Memory monitoring and Grafana dashboards for visualisation').default(false))
   .addOption(new Option('--license <path_or_license>', 'The host product license, either as a path to a file or the license itself'))
   .addOption(new Option('--ts, --timestamp <timestamp>', 'The timestamp of the test run, which can be used to continue an existing test execution'))
   .addOption(new Option('--appKey <appKey>', 'The key of the app (for automated installation)'))

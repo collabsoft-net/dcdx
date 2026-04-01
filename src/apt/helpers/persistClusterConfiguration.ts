@@ -9,6 +9,10 @@ export const persistClusterConfiguration = (options: TAPTProvisionOptions) => {
   replaceLinesInFile(join(options.cwd || cwd(), 'app/util/k8s/dcapt.tfvars'), (line) => {
     if (options.environment && line.startsWith('environment_name =')) {
       return `environment_name = "${options.environment}"`
+    } else if (options.monitoring && line.startsWith('# monitoring_enabled')) {
+      return `monitoring_enabled = true`;
+    } else if (options.monitoring && line.startsWith('# monitoring_grafana_expose_lb')) {
+      return `monitoring_grafana_expose_lb = true`;
     } else if (options.product && line.startsWith('products = ')) {
       return `products = ["${options.product}"]`;
     } else if (options.product && options.license && line.startsWith(`${options.product}_license =`)) {

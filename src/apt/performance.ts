@@ -28,6 +28,7 @@ export const Performance = async (options: TAPTPerformanceTestArgs) => {
     product: options.product,
     cwd: options.cwd,
     environment: options.environment,
+    monitoring: options.monitoring,
     license: options.license,
     force: options.force
   }), true);

@@ -43,6 +43,7 @@ export const provisionCluster = async (options: TAPTProvisionOptions, mustUseDef
     tag: options.tag,
     cwd: directory,
     environment,
+    monitoring: options.monitoring,
     license,
     nodes
   });
