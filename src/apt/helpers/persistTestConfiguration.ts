@@ -19,7 +19,7 @@ export const persistTestConfiguration = async (cwd: string, product: TSupportedA
   test_duration = ${duration}
   load_executor = ${useLocust ? 'locust' : 'jmeter'}
   standalone_extension = ${useLocust || useJMeter ? '1' : '0'}
-  custom_dataset_query = ${query}
+  custom_dataset_query = "${query}"
 
   The configuration will be written to disk and overwrite existing configuration:
   ${join(cwd, 'app', `${product}.yml`)}
@@ -41,7 +41,7 @@ export const persistTestConfiguration = async (cwd: string, product: TSupportedA
     } else if (line.startsWith(`    test_duration:`)) {
       return `    test_duration: ${duration}`;
     } else if (line.startsWith(`    custom_dataset_query:`)) {
-      return `    custom_dataset_query: ${query}`;
+      return `    custom_dataset_query: "${query}"`;
     }
     return line;
   })
