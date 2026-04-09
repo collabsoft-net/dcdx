@@ -328,6 +328,12 @@ const Run3Command = () => ({
       }
     }
 
+    console.log('Starting scalability tests (run 3) with the following arguments:', APTScalabilityTestOptions.parse({
+      ...options,
+      outputDir: getOutputDirectory(options.outputDir, options.timestamp),
+      license: await getHostLicense(options.product, options.license, options.force)
+    }));
+
     await runScalabilityTest('one-node', APTScalabilityTestOptions.parse({
       ...options,
       outputDir: getOutputDirectory(options.outputDir, options.timestamp),
